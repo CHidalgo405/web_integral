@@ -1,0 +1,372 @@
+erDiagram
+
+    shop_config {
+        int         id          PK
+        varchar     shop_name
+        text        address
+        numeric     latitude
+        numeric     longitude
+        char        currency
+    }
+
+    categories {
+        uuid        id          PK
+        uuid        parent_id   FK
+        varchar     name
+        varchar     slug
+    }
+
+    units_of_measure {
+        uuid        id          PK
+        varchar     name
+        varchar     abbreviation
+    }
+
+    suppliers {
+        uuid        id          PK
+        varchar     name
+        varchar     contact_name
+        varchar     phone
+        varchar     email
+        boolean     active
+    }
+
+    inventory {
+        uuid        id              PK
+        uuid        category_id     FK
+        uuid        uom_id          FK
+        varchar     name
+        varchar     sku
+        numeric     price
+        numeric     cost
+        int         stock
+        int         min_stock
+        boolean     has_expiration
+        boolean     active
+    }
+
+    price_history {
+        uuid        id              PK
+        uuid        inventory_id    FK
+        uuid        changed_by      FK
+        numeric     old_price
+        numeric     new_price
+        timestamptz changed_at
+    }
+
+    product_barcodes {
+        varchar     barcode         PK
+        uuid        inventory_id    FK
+        varchar     description
+    }
+
+    supplier_items {
+        uuid        supplier_id     FK
+        uuid        inventory_id    FK
+        varchar     supplier_sku
+        numeric     supplier_price
+        boolean     is_preferred
+    }
+
+    purchase_orders {
+        uuid        id              PK
+        uuid        supplier_id     FK
+        uuid        employee_id     FK
+        varchar     status
+        date        expected_date
+    }
+
+    purchase_order_items {
+        uuid        id              PK
+        uuid        order_id        FK
+        uuid        inventory_id    FK
+        int         quantity_ordered
+        int         quantity_received
+        numeric     unit_cost
+    }
+
+    stock_receipts {
+        uuid        id                  PK
+        uuid        inventory_id        FK
+        uuid        supplier_id         FK
+        uuid        purchase_order_id   FK
+        int         quantity
+        numeric     cost_per_unit
+        date        expiration_date
+    }
+
+    expiration_batches {
+        uuid        id              PK
+        uuid        inventory_id    FK
+        uuid        receipt_id      FK
+        int         quantity
+        date        expiration_date
+        boolean     removed
+    }
+
+    expired_log {
+        uuid        id              PK
+        uuid        inventory_id    FK
+        uuid        batch_id        FK
+        int         quantity_removed
+        date        expiration_date
+    }
+
+    employees {
+        uuid        id          PK
+        varchar     first_name
+        varchar     last_name
+        varchar     phone
+        varchar     role
+        boolean     active
+    }
+
+    schedules {
+        uuid        id              PK
+        uuid        employee_id     FK
+        date        work_date
+        varchar     shift
+    }
+
+    shift_covers {
+        uuid        id                      PK
+        uuid        schedule_id             FK
+        uuid        original_employee_id    FK
+        uuid        covering_employee_id    FK
+        date        work_date
+        varchar     shift
+        boolean     discount_applied
+    }
+
+    users {
+        uuid        id              PK
+        uuid        employee_id     FK
+        varchar     username
+        varchar     role
+        boolean     active
+        boolean     must_change_password
+    }
+
+    user_sessions {
+        uuid        id          PK
+        uuid        user_id     FK
+        text        token_hash
+        timestamptz expires_at
+        boolean     revoked
+    }
+
+    password_reset_tokens {
+        uuid        id          PK
+        uuid        user_id     FK
+        text        token_hash
+        boolean     used
+        timestamptz expires_at
+    }
+
+    login_audit {
+        uuid        id          PK
+        uuid        user_id     FK
+        varchar     username
+        varchar     event
+        inet        ip_address
+    }
+
+    customers {
+        uuid        id      PK
+        varchar     name
+        varchar     phone
+        varchar     email
+        text        address
+    }
+
+    delivery_zones {
+        uuid        id          PK
+        uuid        updated_by  FK
+        varchar     name
+        numeric     min_km
+        numeric     max_km
+        numeric     base_fee
+        numeric     fee_per_km
+        boolean     active
+    }
+
+    delivery_zone_audit {
+        uuid        id              PK
+        uuid        zone_id         FK
+        uuid        changed_by      FK
+        numeric     old_base_fee
+        numeric     new_base_fee
+        numeric     old_fee_per_km
+        numeric     new_fee_per_km
+        numeric     old_max_km
+        numeric     new_max_km
+        timestamptz changed_at
+    }
+
+    promotions {
+        uuid        id              PK
+        uuid        inventory_id    FK
+        varchar     name
+        numeric     discount_pct
+        numeric     discount_fixed
+        boolean     auto_generated
+        boolean     active
+        date        valid_from
+        date        valid_until
+    }
+
+    purchases {
+        uuid        id                  PK
+        uuid        customer_id         FK
+        uuid        employee_id         FK
+        uuid        delivery_zone_id    FK
+        varchar     delivery_method
+        varchar     payment_method
+        varchar     status
+        numeric     subtotal
+        numeric     discount_total
+        numeric     delivery_fee
+        numeric     total
+        numeric     cash_tendered
+        numeric     change_given
+    }
+
+    purchase_items {
+        uuid        id              PK
+        uuid        purchase_id     FK
+        uuid        inventory_id    FK
+        uuid        promotion_id    FK
+        int         quantity
+        numeric     unit_price
+        numeric     discount_pct
+        numeric     line_total
+    }
+
+    purchase_returns {
+        uuid        id              PK
+        uuid        purchase_id     FK
+        uuid        employee_id     FK
+        varchar     refund_method
+        varchar     reason
+        numeric     total_refunded
+    }
+
+    purchase_return_items {
+        uuid        id                  PK
+        uuid        return_id           FK
+        uuid        purchase_item_id    FK
+        uuid        inventory_id        FK
+        int         quantity
+        numeric     unit_price
+        boolean     restock
+    }
+
+    expense_categories {
+        uuid        id      PK
+        varchar     name
+    }
+
+    expenses {
+        uuid        id              PK
+        uuid        category_id     FK
+        uuid        employee_id     FK
+        text        description
+        numeric     amount
+        varchar     payment_method
+        date        expense_date
+    }
+
+    till_movements {
+        uuid        id              PK
+        uuid        employee_id     FK
+        varchar     shift
+        varchar     movement_type
+        numeric     amount
+        uuid        reference_id
+    }
+
+    cash_audit {
+        uuid        id              PK
+        uuid        employee_id     FK
+        varchar     shift
+        varchar     audit_type
+        numeric     expected_amount
+        numeric     counted_amount
+        numeric     difference
+    }
+
+    notifications {
+        uuid        id              PK
+        uuid        seen_by         FK
+        varchar     type
+        uuid        reference_id
+        text        message
+        boolean     seen
+    }
+
+    %% ── Catalog relationships ────────────────────────────────────
+    categories          ||--o{ categories          : "parent"
+    categories          ||--o{ inventory            : "categorizes"
+    units_of_measure    ||--o{ inventory            : "measures"
+
+    %% ── Supplier relationships ───────────────────────────────────
+    suppliers           ||--o{ supplier_items       : "supplies"
+    inventory           ||--o{ supplier_items       : "supplied_by"
+    suppliers           ||--o{ purchase_orders      : "ordered_from"
+    employees           ||--o{ purchase_orders      : "managed_by"
+    purchase_orders     ||--o{ purchase_order_items : "contains"
+    inventory           ||--o{ purchase_order_items : "ordered_in"
+
+    %% ── Stock & expiry ───────────────────────────────────────────
+    suppliers           ||--o{ stock_receipts       : "provides"
+    purchase_orders     ||--o{ stock_receipts       : "fulfills"
+    inventory           ||--o{ stock_receipts       : "restocked_in"
+    stock_receipts      ||--o{ expiration_batches   : "generates"
+    inventory           ||--o{ expiration_batches   : "tracked_by"
+    inventory           ||--o{ expired_log          : "logged_in"
+    expiration_batches  ||--o{ expired_log          : "removed_as"
+
+    %% ── Price & barcodes ─────────────────────────────────────────
+    inventory           ||--o{ price_history        : "history"
+    users               ||--o{ price_history        : "changed_by"
+    inventory           ||--o{ product_barcodes     : "identified_by"
+
+    %% ── Employee / user / auth ───────────────────────────────────
+    employees           ||--o| users                : "has_account"
+    users               ||--o{ user_sessions        : "opens"
+    users               ||--o{ password_reset_tokens: "requests"
+    users               ||--o{ login_audit          : "audited_in"
+    employees           ||--o{ schedules            : "scheduled_in"
+    schedules           ||--o{ shift_covers         : "covered_by"
+    employees           ||--o{ shift_covers         : "originally_on"
+    employees           ||--o{ shift_covers         : "covering"
+
+    %% ── Delivery zones ───────────────────────────────────────────
+    users               ||--o{ delivery_zones       : "last_updated_by"
+    delivery_zones      ||--o{ delivery_zone_audit  : "audited_in"
+    users               ||--o{ delivery_zone_audit  : "changed_by"
+
+    %% ── Sales ────────────────────────────────────────────────────
+    inventory           ||--o{ promotions           : "promoted_by"
+    customers           ||--o{ purchases            : "makes"
+    employees           ||--o{ purchases            : "processes"
+    delivery_zones      ||--o{ purchases            : "zone_applied"
+    purchases           ||--o{ purchase_items       : "contains"
+    inventory           ||--o{ purchase_items       : "sold_in"
+    promotions          ||--o{ purchase_items       : "discounts"
+
+    %% ── Returns ──────────────────────────────────────────────────
+    purchases           ||--o{ purchase_returns     : "returned_from"
+    employees           ||--o{ purchase_returns     : "handled_by"
+    purchase_returns    ||--o{ purchase_return_items: "contains"
+    purchase_items      ||--o{ purchase_return_items: "original_item"
+    inventory           ||--o{ purchase_return_items: "restocked_to"
+
+    %% ── Expenses & till ──────────────────────────────────────────
+    expense_categories  ||--o{ expenses             : "categorizes"
+    employees           ||--o{ expenses             : "incurred_by"
+    employees           ||--o{ till_movements       : "recorded_by"
+    employees           ||--o{ cash_audit           : "audited_by"
+
+    %% ── Notifications ────────────────────────────────────────────
+    users               ||--o{ notifications        : "seen_by"
