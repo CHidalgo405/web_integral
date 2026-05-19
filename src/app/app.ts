@@ -2,14 +2,16 @@ import { Component, inject } from '@angular/core';
 import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
 import { BottomNav } from './shared/components/bottom-nav/bottom-nav';
 import { OfflineBanner } from './shared/components/offline-banner/offline-banner';
+import { AlertsComponent } from './shared/components/alerts/alerts.component';
 import { filter } from 'rxjs';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, BottomNav, OfflineBanner],
+  imports: [RouterOutlet, BottomNav, OfflineBanner, AlertsComponent],
   template: `
     <app-offline-banner></app-offline-banner>
+    <app-alerts></app-alerts>
     <router-outlet></router-outlet>
     @if (showBottomNav) {
       <app-bottom-nav></app-bottom-nav>

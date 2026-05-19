@@ -1,17 +1,29 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CartService } from '../../../core/services/cart.service';
 import { MxnCurrencyPipe } from '../../../shared/pipes/currency.pipe';
-import { Header } from '../../../shared/components/header/header';
 
 @Component({
   selector: 'app-cart',
   standalone: true,
-  imports: [RouterLink, FormsModule, MxnCurrencyPipe, Header],
+  imports: [RouterLink, FormsModule, MxnCurrencyPipe],
   template: `
-    <app-header title="Carrito" [showBack]="true"></app-header>
     <div class="cart-page" id="cart-page">
+      
+      <!-- Custom Header matching mockup -->
+      <div class="cart-header">
+        <div class="header-title">
+          <h1>Mi Carrito<br>La Familia</h1>
+        </div>
+        <button class="search-icon-btn">
+          <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+        </button>
+      </div>
+
       @if (cartService.items().length === 0) {
         <div class="empty-state" id="cart-empty">
           <span class="empty-icon">🛒</span>
@@ -22,53 +34,43 @@ import { Header } from '../../../shared/components/header/header';
       } @else {
         <div class="cart-items">
           @for (item of cartService.items(); track item.id) {
-            <div class="cart-item" [id]="'cart-item-' + item.id">
-              <div class="item-info">
-                <h3>{{ item.product.name }}</h3>
-                @if (item.selectedVariant) {
-                  <span class="variant-label">{{ item.selectedVariant.value }}</span>
-                }
-                <span class="item-price">{{ item.product.price | mxnCurrency }}</span>
-              </div>
-              <div class="item-actions">
-                <div class="qty-control">
-                  <button (click)="cartService.updateQuantity(item.id, item.quantity - 1)">−</button>
-                  <span>{{ item.quantity }}</span>
-                  <button (click)="cartService.updateQuantity(item.id, item.quantity + 1)">+</button>
+            <div class="cart-item-wrapper">
+              <div class="cart-item" [id]="'cart-item-' + item.id">
+                
+                <img [src]="item.product.images?.[0] || 'https://media.istockphoto.com/id/185284489/photo/orange.jpg?s=612x612&w=0&k=20&c=m4EXniUNMHTOUDOZfm2h-dD01M8l3Q00r6T8j7Bf3G0='" alt="Product" class="item-img" />
+                
+                <div class="item-info">
+                  <h3>{{ item.product.name }}</h3>
+                  <span class="item-subtitle">{{ item.selectedVariant ? item.selectedVariant.value : 'Fresco' }}</span>
+                  <span class="item-price">{{ item.product.price | mxnCurrency }}<small>/{{ item.selectedVariant?.value || 'kg' }}</small></span>
                 </div>
-                <button class="remove-btn" (click)="cartService.removeItem(item.id)">🗑️</button>
+                
+                <div class="item-qty-vertical">
+                  <button (click)="cartService.updateQuantity(item.id, item.quantity + 1)">+</button>
+                  <div class="qty-badge">{{ item.quantity < 10 ? '0' + item.quantity : item.quantity }}</div>
+                  <button (click)="cartService.updateQuantity(item.id, item.quantity - 1)" [disabled]="item.quantity <= 1">−</button>
+                </div>
+
+                <button class="delete-btn" (click)="cartService.removeItem(item.id)">
+                  <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  </svg>
+                </button>
+
               </div>
             </div>
           }
         </div>
 
-        <div class="coupon-section">
-          <div class="coupon-input-row">
-            <input type="text" [(ngModel)]="couponCode" placeholder="Código de cupón" id="coupon-input" />
-            <button (click)="applyCoupon()" class="apply-btn" id="apply-coupon-btn">Aplicar</button>
+        <div class="cart-bottom-area">
+          <div class="total-text">
+            Total a pagar <span>{{ cartService.cart().total | mxnCurrency }}</span>
           </div>
-          @if (cartService.coupon()) {
-            <div class="coupon-msg" [class.valid]="cartService.coupon()!.valid" [class.invalid]="!cartService.coupon()!.valid">
-              {{ cartService.coupon()!.message }}
-              @if (cartService.coupon()!.valid) {
-                <button class="remove-coupon" (click)="cartService.removeCoupon()">✕</button>
-              }
-            </div>
-          }
+          <a routerLink="/checkout/identify" class="checkout-btn" id="checkout-btn">
+            Proceder al pago
+          </a>
         </div>
-
-        <div class="cart-summary">
-          <div class="summary-row"><span>Subtotal</span><span>{{ cartService.cart().subtotal | mxnCurrency }}</span></div>
-          @if (cartService.cart().discount > 0) {
-            <div class="summary-row discount"><span>Descuento</span><span>-{{ cartService.cart().discount | mxnCurrency }}</span></div>
-          }
-          <div class="summary-row"><span>Envío</span><span>{{ cartService.cart().shipping === 0 ? 'Gratis' : (cartService.cart().shipping | mxnCurrency) }}</span></div>
-          <div class="summary-row total"><span>Total</span><span>{{ cartService.cart().total | mxnCurrency }}</span></div>
-        </div>
-
-        <a routerLink="/checkout/identify" class="checkout-btn" id="checkout-btn">
-          Proceder al pago · {{ cartService.cart().total | mxnCurrency }}
-        </a>
       }
     </div>
   `,
@@ -76,11 +78,4 @@ import { Header } from '../../../shared/components/header/header';
 })
 export class Cart {
   protected cartService = inject(CartService);
-  couponCode = '';
-
-  applyCoupon(): void {
-    if (this.couponCode.trim()) {
-      this.cartService.applyCoupon(this.couponCode.trim());
-    }
-  }
 }
