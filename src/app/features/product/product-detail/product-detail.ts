@@ -1,80 +1,80 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { Location } from '@angular/common';
 import { ProductService } from '../../../core/services/product.service';
 import { CartService } from '../../../core/services/cart.service';
 import { MxnCurrencyPipe } from '../../../shared/pipes/currency.pipe';
-import { Header } from '../../../shared/components/header/header';
 import { Product, ProductVariant } from '../../../core/models/product.model';
 
 @Component({
   selector: 'app-product-detail',
   standalone: true,
-  imports: [RouterLink, MxnCurrencyPipe, Header],
+  imports: [RouterLink, MxnCurrencyPipe],
   template: `
     @if (product) {
-      <app-header [title]="product.name" [showBack]="true">
-        <button class="fav-btn" (click)="toggleFav()" [id]="'fav-toggle'">{{ productService.isFavorite(product.id) ? '❤️' : '🤍' }}</button>
-      </app-header>
-      <div class="product-detail" id="product-detail-page">
-        <a [routerLink]="['/product', product.id, 'gallery']" class="product-hero">
-          <span class="hero-emoji">{{ getCategoryEmoji() }}</span>
-          @if (!product.inStock) { <div class="out-overlay">Agotado</div> }
-          @if (product.originalPrice) { <span class="discount-tag">-{{ getDiscount() }}%</span> }
-        </a>
+      <div class="product-detail-page">
+        <!-- Hero Section -->
+        <div class="product-hero-section">
+          <button class="back-btn" (click)="goBack()">
+            <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="19" y1="12" x2="5" y2="12"></line>
+              <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+          </button>
+          <img src="https://media.istockphoto.com/id/185284489/photo/orange.jpg?s=612x612&w=0&k=20&c=m4EXniUNMHTOUDOZfm2h-dD01M8l3Q00r6T8j7Bf3G0=" alt="Product" class="hero-image" />
+        </div>
 
-        <div class="detail-body">
-          <h1>{{ product.name }}</h1>
-          <div class="rating-row">
-            <span>⭐ {{ product.rating }}</span>
-            <a [routerLink]="['/product', product.id, 'reviews']" class="reviews-link">({{ product.reviewCount }} reseñas)</a>
-          </div>
-          <div class="price-row">
-            <span class="current-price">{{ getEffectivePrice() | mxnCurrency }}</span>
-            @if (product.originalPrice) {
-              <span class="old-price">{{ product.originalPrice | mxnCurrency }}</span>
+        <!-- Content Area -->
+        <div class="product-content">
+          
+          <div class="title-row">
+            <div class="title-info">
+              <h1>{{ product.name }}</h1>
+              <span class="stock-status">
+                {{ product.inStock ? 'Disponible en inventario' : 'Agotado' }}
+              </span>
+            </div>
+            
+            @if (product.inStock) {
+              <div class="qty-selector">
+                <button (click)="changeQty(-1)" [disabled]="quantity() <= 1">−</button>
+                <span>{{ quantity() }} {{ product.variants?.[0]?.value || 'kg' }}</span>
+                <button (click)="changeQty(1)" [disabled]="quantity() >= product.stockQuantity">+</button>
+              </div>
             }
           </div>
 
-          @if (product.variants && product.variants.length > 0) {
-            <div class="variants-section">
-              <h3>{{ product.variants[0].label }}</h3>
-              <div class="variant-chips">
-                @for (v of product.variants; track v.id) {
-                  <button class="variant-chip"
-                    [class.active]="selectedVariant()?.id === v.id"
-                    [class.disabled]="!v.inStock"
-                    [disabled]="!v.inStock"
-                    (click)="selectVariant(v)">
-                    {{ v.value }}
-                    @if (!v.inStock) { <span class="chip-out">Agotado</span> }
-                  </button>
-                }
-              </div>
-            </div>
-          }
-
-          <div class="description">
-            <h3>Descripción</h3>
-            <p>{{ product.description }}</p>
+          <div class="section-block">
+            <h3>Descripción del Producto</h3>
+            <p>{{ product.description || 'Disfruta de nuestros productos frescos y de alta calidad. Cosechados y seleccionados cuidadosamente para brindarte el mejor sabor y nutrición para ti y tu familia.' }}</p>
           </div>
 
-          @if (product.inStock) {
-            <div class="quantity-section">
-              <div class="qty-control">
-                <button (click)="changeQty(-1)" [disabled]="quantity() <= 1">−</button>
-                <span>{{ quantity() }}</span>
-                <button (click)="changeQty(1)" [disabled]="quantity() >= product.stockQuantity">+</button>
+          <div class="section-block">
+            <h3>Reseñas del Producto</h3>
+            <div class="review-card">
+              <div class="review-header">
+                <img src="https://ui-avatars.com/api/?name=Victor+Flexin&background=random&color=fff" alt="User" class="reviewer-avatar">
+                <div class="reviewer-info">
+                  <h4>Victor Flexin</h4>
+                  <div class="stars">⭐⭐⭐⭐⭐</div>
+                </div>
+                <span class="review-date">18 Sep, 2023</span>
               </div>
-              <button class="add-to-cart-btn" id="add-to-cart-btn" (click)="addToCart()">
-                Agregar al carrito · {{ (getEffectivePrice() * quantity()) | mxnCurrency }}
-              </button>
+              <p class="review-comment">La calidad de este producto es excepcionalmente única. La próxima vez quiero comprarlo de nuevo.</p>
             </div>
-          } @else {
-            <div class="out-of-stock-msg">
-              <p>Este producto no está disponible por el momento</p>
-              <button class="notify-btn">Notificarme cuando esté disponible</button>
-            </div>
-          }
+          </div>
+
+        </div> <!-- end product content -->
+
+        <!-- Bottom Action Bar -->
+        <div class="bottom-action-bar">
+          <div class="price-info">
+            <span class="price-amount">{{ getEffectivePrice() | mxnCurrency }}</span>
+            <span class="price-unit">/ {{ product.variants?.[0]?.value || 'kg' }}</span>
+          </div>
+          <button class="add-to-cart-btn" (click)="addToCart()" [disabled]="!product.inStock">
+            Agregar al carrito
+          </button>
         </div>
       </div>
     }
@@ -85,6 +85,7 @@ export class ProductDetail implements OnInit {
   protected productService = inject(ProductService);
   private cartService = inject(CartService);
   private route = inject(ActivatedRoute);
+  private location = inject(Location);
 
   product: Product | undefined;
   selectedVariant = signal<ProductVariant | undefined>(undefined);
@@ -96,33 +97,20 @@ export class ProductDetail implements OnInit {
     });
   }
 
-  getCategoryEmoji(): string {
-    return this.productService.mockCategories.find(c => c.id === this.product?.categoryId)?.icon ?? '📦';
-  }
-
-  getDiscount(): number {
-    if (!this.product?.originalPrice) return 0;
-    return Math.round((1 - this.product.price / this.product.originalPrice) * 100);
-  }
-
   getEffectivePrice(): number {
     const base = this.product?.price ?? 0;
     return base + (this.selectedVariant()?.priceModifier ?? 0);
-  }
-
-  selectVariant(v: ProductVariant): void {
-    this.selectedVariant.set(v);
   }
 
   changeQty(delta: number): void {
     this.quantity.update(q => Math.max(1, q + delta));
   }
 
-  toggleFav(): void {
-    if (this.product) this.productService.toggleFavorite(this.product.id);
-  }
-
   addToCart(): void {
     if (this.product) this.cartService.addItem(this.product, this.quantity(), this.selectedVariant());
+  }
+
+  goBack(): void {
+    this.location.back();
   }
 }
