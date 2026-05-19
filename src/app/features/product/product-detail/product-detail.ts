@@ -21,7 +21,7 @@ import { Product, ProductVariant } from '../../../core/models/product.model';
               <polyline points="12 19 5 12 12 5"></polyline>
             </svg>
           </button>
-          <img src="https://media.istockphoto.com/id/185284489/photo/orange.jpg?s=612x612&w=0&k=20&c=m4EXniUNMHTOUDOZfm2h-dD01M8l3Q00r6T8j7Bf3G0=" alt="Product" class="hero-image" />
+          <img src="https://media.istockphoto.com/id/185284489/photo/orange.jpg?s=612x612&w=0&k=20&c=m4EXniUNMHTOUDOZfm2h-dD01M8l3Q00r6T8j7Bf3G0=" alt="Product" class="hero-image" referrerpolicy="no-referrer" />
         </div>
 
         <!-- Content Area -->

@@ -1,11 +1,13 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, signal, computed, inject } from '@angular/core';
 import { Cart, CartItem, CouponValidation } from '../models/cart.model';
 import { Product, ProductVariant } from '../models/product.model';
+import { AlertService } from './alert.service';
 
 @Injectable({ providedIn: 'root' })
 export class CartService {
   private cartItems = signal<CartItem[]>([]);
   private appliedCoupon = signal<CouponValidation | null>(null);
+  private alertService = inject(AlertService);
 
   readonly items = computed(() => this.cartItems());
   readonly itemCount = computed(() => this.cartItems().reduce((sum, item) => sum + item.quantity, 0));
@@ -60,10 +62,19 @@ export class CartService {
       };
       this.cartItems.set([...current, newItem]);
     }
+    
+    this.alertService.show('success', 'Producto Agregado', `${product.name} se agregó a tu carrito.`);
   }
 
-  removeItem(itemId: string): void {
-    this.cartItems.set(this.cartItems().filter((item) => item.id !== itemId));
+  removeItem(itemId: string, silent: boolean = false): void {
+    const currentItems = this.cartItems();
+    const itemToRemove = currentItems.find(i => i.id === itemId);
+    
+    this.cartItems.set(currentItems.filter((item) => item.id !== itemId));
+    
+    if (!silent && itemToRemove) {
+      this.alertService.show('info', 'Producto Eliminado', `${itemToRemove.product.name} fue retirado del carrito.`);
+    }
   }
 
   updateQuantity(itemId: string, quantity: number): void {
@@ -89,15 +100,24 @@ export class CartService {
     };
 
     this.appliedCoupon.set(result);
+    
+    if (result.valid) {
+      this.alertService.show('success', 'Cupón Aplicado', result.message!);
+    } else {
+      this.alertService.show('error', 'Error de Cupón', result.message!);
+    }
+    
     return result;
   }
 
   removeCoupon(): void {
     this.appliedCoupon.set(null);
+    this.alertService.show('warning', 'Cupón Removido', 'Se ha eliminado el cupón de tu carrito.');
   }
 
   clearCart(): void {
     this.cartItems.set([]);
     this.appliedCoupon.set(null);
+    this.alertService.show('info', 'Carrito Vaciado', 'Se han eliminado todos los productos.');
   }
 }
