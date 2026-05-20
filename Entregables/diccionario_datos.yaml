@@ -1,0 +1,348 @@
+---
+documento: Diccionario de Datos
+proyecto: Tiendita Maday
+version: "1.0"
+fecha: "2026-05-12"
+motor: PostgreSQL 16
+
+tablas:
+
+  shop_config:
+    descripcion: Configuración global de la tienda (fila única)
+    columnas:
+      id:          { tipo: SERIAL,  pk: true, descripcion: Identificador autoincremental }
+      shop_name:   { tipo: VARCHAR, nulo: false, descripcion: Nombre comercial de la tienda }
+      address:     { tipo: TEXT,    nulo: true,  descripcion: Dirección física }
+      latitude:    { tipo: NUMERIC, nulo: true,  descripcion: Latitud GPS }
+      longitude:   { tipo: NUMERIC, nulo: true,  descripcion: Longitud GPS }
+      currency:    { tipo: CHAR(3), nulo: false, default: PEN, descripcion: Código ISO 4217 de moneda }
+
+  categories:
+    descripcion: Árbol de categorías de productos (auto-referencia)
+    columnas:
+      id:        { tipo: UUID,    pk: true, default: gen_random_uuid(), descripcion: Identificador único }
+      parent_id: { tipo: UUID,    fk: categories.id, nulo: true, descripcion: Categoría padre (null = raíz) }
+      name:      { tipo: VARCHAR, nulo: false, descripcion: Nombre de la categoría }
+      slug:      { tipo: VARCHAR, nulo: false, unico: true, descripcion: Identificador URL amigable }
+
+  units_of_measure:
+    descripcion: Unidades de medida disponibles para productos
+    columnas:
+      id:           { tipo: UUID,    pk: true, descripcion: Identificador único }
+      name:         { tipo: VARCHAR, nulo: false, descripcion: Nombre completo (ej. kilogramo) }
+      abbreviation: { tipo: VARCHAR, nulo: false, unico: true, descripcion: Abreviación (ej. kg) }
+
+  inventory:
+    descripcion: Catálogo de productos con precios, stock y metadatos
+    columnas:
+      id:             { tipo: UUID,    pk: true, descripcion: Identificador único del producto }
+      category_id:    { tipo: UUID,    fk: categories.id, descripcion: Categoría del producto }
+      uom_id:         { tipo: UUID,    fk: units_of_measure.id, descripcion: Unidad de medida }
+      name:           { tipo: VARCHAR, nulo: false, descripcion: Nombre del producto }
+      sku:            { tipo: VARCHAR, nulo: false, unico: true, descripcion: Código interno único }
+      price:          { tipo: NUMERIC(10,2), nulo: false, check: ">= 0", descripcion: Precio de venta al público }
+      cost:           { tipo: NUMERIC(10,2), nulo: false, check: ">= 0", descripcion: Costo de adquisición }
+      stock:          { tipo: INTEGER, nulo: false, default: 0, check: ">= 0", descripcion: Cantidad actual en inventario }
+      min_stock:      { tipo: INTEGER, nulo: false, default: 0, descripcion: Stock mínimo para alerta }
+      has_expiration: { tipo: BOOLEAN, nulo: false, default: false, descripcion: Si el producto maneja lotes con fecha de vencimiento }
+      active:         { tipo: BOOLEAN, nulo: false, default: true, descripcion: Soft delete; false oculta el producto }
+
+  product_barcodes:
+    descripcion: Códigos de barras asociados a productos (varios por producto)
+    columnas:
+      barcode:      { tipo: VARCHAR, pk: true, descripcion: Código de barras (EAN-13, QR, etc.) }
+      inventory_id: { tipo: UUID,    fk: inventory.id, descripcion: Producto al que pertenece }
+      description:  { tipo: VARCHAR, nulo: true, descripcion: Descripción del barcode (ej. presentación) }
+
+  price_history:
+    descripcion: Auditoría automática de cambios de precio (generada por trigger)
+    columnas:
+      id:           { tipo: UUID,        pk: true, descripcion: Identificador único }
+      inventory_id: { tipo: UUID,        fk: inventory.id, descripcion: Producto cuyo precio cambió }
+      changed_by:   { tipo: UUID,        fk: users.id, descripcion: Usuario que realizó el cambio }
+      old_price:    { tipo: NUMERIC(10,2), descripcion: Precio anterior }
+      new_price:    { tipo: NUMERIC(10,2), descripcion: Precio nuevo }
+      changed_at:   { tipo: TIMESTAMPTZ, default: NOW(), descripcion: Fecha y hora del cambio }
+
+  suppliers:
+    descripcion: Proveedores de mercadería
+    columnas:
+      id:           { tipo: UUID,    pk: true, descripcion: Identificador único }
+      name:         { tipo: VARCHAR, nulo: false, descripcion: Razón social del proveedor }
+      contact_name: { tipo: VARCHAR, nulo: true, descripcion: Nombre del contacto principal }
+      phone:        { tipo: VARCHAR, nulo: true, descripcion: Teléfono de contacto }
+      email:        { tipo: VARCHAR, nulo: true, descripcion: Correo electrónico }
+      active:       { tipo: BOOLEAN, nulo: false, default: true, descripcion: Soft delete }
+
+  supplier_items:
+    descripcion: Catálogo de productos por proveedor con precios y SKU del proveedor
+    columnas:
+      supplier_id:    { tipo: UUID,    fk: suppliers.id, pk: true, descripcion: Proveedor }
+      inventory_id:   { tipo: UUID,    fk: inventory.id, pk: true, descripcion: Producto }
+      supplier_sku:   { tipo: VARCHAR, nulo: true, descripcion: Código SKU del proveedor }
+      supplier_price: { tipo: NUMERIC(10,2), nulo: true, descripcion: Precio de venta del proveedor }
+      is_preferred:   { tipo: BOOLEAN, nulo: false, default: false, descripcion: Si es el proveedor preferido para este producto }
+
+  purchase_orders:
+    descripcion: Órdenes de compra enviadas a proveedores
+    columnas:
+      id:            { tipo: UUID,    pk: true, descripcion: Identificador único }
+      supplier_id:   { tipo: UUID,    fk: suppliers.id, descripcion: Proveedor }
+      employee_id:   { tipo: UUID,    fk: employees.id, descripcion: Empleado que gestionó la orden }
+      status:        { tipo: ENUM(purchase_order_status), nulo: false, default: draft, descripcion: Estado de la orden }
+      expected_date: { tipo: DATE,    nulo: true, descripcion: Fecha esperada de entrega }
+
+  purchase_order_items:
+    descripcion: Ítems de una orden de compra
+    columnas:
+      id:                { tipo: UUID,    pk: true }
+      order_id:          { tipo: UUID,    fk: purchase_orders.id }
+      inventory_id:      { tipo: UUID,    fk: inventory.id }
+      quantity_ordered:  { tipo: INTEGER, nulo: false, check: "> 0", descripcion: Cantidad pedida }
+      quantity_received: { tipo: INTEGER, nulo: false, default: 0,   descripcion: Cantidad efectivamente recibida }
+      unit_cost:         { tipo: NUMERIC(10,2), nulo: false, descripcion: Costo unitario pactado }
+
+  stock_receipts:
+    descripcion: Recepciones físicas de mercadería (con o sin orden de compra)
+    columnas:
+      id:                 { tipo: UUID,    pk: true }
+      inventory_id:       { tipo: UUID,    fk: inventory.id }
+      supplier_id:        { tipo: UUID,    fk: suppliers.id, nulo: true }
+      purchase_order_id:  { tipo: UUID,    fk: purchase_orders.id, nulo: true }
+      quantity:           { tipo: INTEGER, nulo: false, check: "> 0", descripcion: Cantidad recibida }
+      cost_per_unit:      { tipo: NUMERIC(10,2), descripcion: Costo por unidad en esta recepción }
+      expiration_date:    { tipo: DATE,    nulo: true, descripcion: Fecha de vencimiento del lote recibido }
+    notas: Trigger suma stock e inserta lote en expiration_batches si has_expiration=TRUE
+
+  expiration_batches:
+    descripcion: Lotes de productos con fecha de vencimiento y cantidad restante
+    columnas:
+      id:              { tipo: UUID,    pk: true }
+      inventory_id:    { tipo: UUID,    fk: inventory.id }
+      receipt_id:      { tipo: UUID,    fk: stock_receipts.id }
+      quantity:        { tipo: INTEGER, nulo: false, check: ">= 0" }
+      expiration_date: { tipo: DATE,    nulo: false }
+      removed:         { tipo: BOOLEAN, nulo: false, default: false, descripcion: true cuando el lote fue retirado por vencimiento }
+
+  expired_log:
+    descripcion: Registro de lotes vencidos retirados del inventario
+    columnas:
+      id:               { tipo: UUID,    pk: true }
+      inventory_id:     { tipo: UUID,    fk: inventory.id }
+      batch_id:         { tipo: UUID,    fk: expiration_batches.id }
+      quantity_removed: { tipo: INTEGER, nulo: false }
+      expiration_date:  { tipo: DATE,    nulo: false }
+
+  employees:
+    descripcion: Empleados de la tienda
+    columnas:
+      id:         { tipo: UUID,    pk: true }
+      first_name: { tipo: VARCHAR, nulo: false }
+      last_name:  { tipo: VARCHAR, nulo: false }
+      phone:      { tipo: VARCHAR, nulo: true }
+      role:       { tipo: ENUM(employee_role), nulo: false, descripcion: "owner | cashier | stockist | delivery" }
+      active:     { tipo: BOOLEAN, nulo: false, default: true, descripcion: Soft delete }
+
+  schedules:
+    descripcion: Asignación de empleados a turnos por fecha
+    columnas:
+      id:          { tipo: UUID, pk: true }
+      employee_id: { tipo: UUID, fk: employees.id }
+      work_date:   { tipo: DATE, nulo: false }
+      shift:       { tipo: ENUM(shift_type), nulo: false }
+
+  shift_covers:
+    descripcion: Coberturas de turno entre empleados
+    columnas:
+      id:                   { tipo: UUID,    pk: true }
+      schedule_id:          { tipo: UUID,    fk: schedules.id }
+      original_employee_id: { tipo: UUID,    fk: employees.id }
+      covering_employee_id: { tipo: UUID,    fk: employees.id }
+      work_date:            { tipo: DATE,    nulo: false }
+      shift:                { tipo: ENUM(shift_type), nulo: false }
+      discount_applied:     { tipo: BOOLEAN, nulo: false, default: false }
+
+  users:
+    descripcion: Cuentas de acceso al sistema (1:1 con employees)
+    columnas:
+      id:                   { tipo: UUID,    pk: true }
+      employee_id:          { tipo: UUID,    fk: employees.id, unico: true }
+      username:             { tipo: VARCHAR, nulo: false, unico: true }
+      password_hash:        { tipo: TEXT,    nulo: false, descripcion: Hash bcrypt; nunca expuesto en API }
+      role:                 { tipo: ENUM(user_role), nulo: false }
+      active:               { tipo: BOOLEAN, nulo: false, default: true }
+      must_change_password: { tipo: BOOLEAN, nulo: false, default: false }
+
+  user_sessions:
+    descripcion: Sesiones JWT activas (hash del token)
+    columnas:
+      id:         { tipo: UUID,        pk: true }
+      user_id:    { tipo: UUID,        fk: users.id }
+      token_hash: { tipo: TEXT,        nulo: false }
+      expires_at: { tipo: TIMESTAMPTZ, nulo: false }
+      revoked:    { tipo: BOOLEAN,     nulo: false, default: false }
+
+  password_reset_tokens:
+    descripcion: Tokens de un solo uso para reset de contraseña
+    columnas:
+      id:         { tipo: UUID,        pk: true }
+      user_id:    { tipo: UUID,        fk: users.id }
+      token_hash: { tipo: TEXT,        nulo: false }
+      used:       { tipo: BOOLEAN,     nulo: false, default: false }
+      expires_at: { tipo: TIMESTAMPTZ, nulo: false }
+
+  login_audit:
+    descripcion: Historial de eventos de autenticación
+    columnas:
+      id:         { tipo: UUID,    pk: true }
+      user_id:    { tipo: UUID,    fk: users.id }
+      username:   { tipo: VARCHAR, nulo: false }
+      event:      { tipo: ENUM(login_event), nulo: false }
+      ip_address: { tipo: INET,    nulo: true }
+
+  customers:
+    descripcion: Clientes registrados (ventas pueden ser anónimas)
+    columnas:
+      id:      { tipo: UUID,    pk: true }
+      name:    { tipo: VARCHAR, nulo: false }
+      phone:   { tipo: VARCHAR, nulo: true }
+      email:   { tipo: VARCHAR, nulo: true }
+      address: { tipo: TEXT,    nulo: true }
+
+  delivery_zones:
+    descripcion: Zonas de delivery con tarifas por distancia
+    columnas:
+      id:          { tipo: UUID,    pk: true }
+      updated_by:  { tipo: UUID,    fk: users.id }
+      name:        { tipo: VARCHAR, nulo: false }
+      min_km:      { tipo: NUMERIC, nulo: false }
+      max_km:      { tipo: NUMERIC, nulo: false }
+      base_fee:    { tipo: NUMERIC(10,2), nulo: false }
+      fee_per_km:  { tipo: NUMERIC(10,2), nulo: false }
+      active:      { tipo: BOOLEAN, nulo: false, default: true }
+
+  delivery_zone_audit:
+    descripcion: Historial de cambios de tarifas de zonas de delivery
+    columnas:
+      id:             { tipo: UUID,        pk: true }
+      zone_id:        { tipo: UUID,        fk: delivery_zones.id }
+      changed_by:     { tipo: UUID,        fk: users.id }
+      old_base_fee:   { tipo: NUMERIC(10,2) }
+      new_base_fee:   { tipo: NUMERIC(10,2) }
+      old_fee_per_km: { tipo: NUMERIC(10,2) }
+      new_fee_per_km: { tipo: NUMERIC(10,2) }
+      old_max_km:     { tipo: NUMERIC }
+      new_max_km:     { tipo: NUMERIC }
+      changed_at:     { tipo: TIMESTAMPTZ, default: NOW() }
+
+  promotions:
+    descripcion: Descuentos por porcentaje o monto fijo con vigencia temporal
+    columnas:
+      id:             { tipo: UUID,    pk: true }
+      inventory_id:   { tipo: UUID,    fk: inventory.id, nulo: true, descripcion: null = promoción global }
+      name:           { tipo: VARCHAR, nulo: false }
+      discount_pct:   { tipo: NUMERIC(5,2), nulo: true, descripcion: Porcentaje de descuento (0-100) }
+      discount_fixed: { tipo: NUMERIC(10,2), nulo: true, descripcion: Monto fijo de descuento }
+      auto_generated: { tipo: BOOLEAN, nulo: false, default: false }
+      active:         { tipo: BOOLEAN, nulo: false, default: true }
+      valid_from:     { tipo: DATE,    nulo: true }
+      valid_until:    { tipo: DATE,    nulo: true }
+
+  purchases:
+    descripcion: Cabecera de venta al cliente
+    columnas:
+      id:               { tipo: UUID,    pk: true }
+      customer_id:      { tipo: UUID,    fk: customers.id, nulo: true }
+      employee_id:      { tipo: UUID,    fk: employees.id }
+      delivery_zone_id: { tipo: UUID,    fk: delivery_zones.id, nulo: true }
+      delivery_method:  { tipo: ENUM(delivery_method_type), nulo: false }
+      payment_method:   { tipo: ENUM(payment_method_type), nulo: false }
+      status:           { tipo: ENUM(purchase_status), nulo: false, default: pending }
+      subtotal:         { tipo: NUMERIC(10,2), descripcion: Suma de line_total sin descuentos globales }
+      discount_total:   { tipo: NUMERIC(10,2), descripcion: Total de descuentos aplicados }
+      delivery_fee:     { tipo: NUMERIC(10,2), default: 0 }
+      total:            { tipo: NUMERIC(10,2), descripcion: Monto final a cobrar }
+      cash_tendered:    { tipo: NUMERIC(10,2), nulo: true, descripcion: Efectivo entregado por el cliente }
+      change_given:     { tipo: NUMERIC(10,2), nulo: true, descripcion: Vuelto entregado }
+
+  purchase_items:
+    descripcion: Líneas de detalle de una venta
+    columnas:
+      id:           { tipo: UUID,    pk: true }
+      purchase_id:  { tipo: UUID,    fk: purchases.id }
+      inventory_id: { tipo: UUID,    fk: inventory.id }
+      promotion_id: { tipo: UUID,    fk: promotions.id, nulo: true }
+      quantity:     { tipo: INTEGER, nulo: false, check: "> 0" }
+      unit_price:   { tipo: NUMERIC(10,2), nulo: false }
+      discount_pct: { tipo: NUMERIC(5,2), nulo: false, default: 0 }
+      line_total:   { tipo: NUMERIC(10,2), nulo: false }
+    notas: Trigger descuenta stock al insertar si purchase.status = completed
+
+  purchase_returns:
+    descripcion: Cabecera de devolución de venta
+    columnas:
+      id:             { tipo: UUID,    pk: true }
+      purchase_id:    { tipo: UUID,    fk: purchases.id }
+      employee_id:    { tipo: UUID,    fk: employees.id }
+      refund_method:  { tipo: ENUM(refund_method_type), nulo: false }
+      reason:         { tipo: TEXT,    nulo: true }
+      total_refunded: { tipo: NUMERIC(10,2), nulo: false }
+
+  purchase_return_items:
+    descripcion: Ítems devueltos de una venta
+    columnas:
+      id:               { tipo: UUID,    pk: true }
+      return_id:        { tipo: UUID,    fk: purchase_returns.id }
+      purchase_item_id: { tipo: UUID,    fk: purchase_items.id }
+      inventory_id:     { tipo: UUID,    fk: inventory.id }
+      quantity:         { tipo: INTEGER, nulo: false, check: "> 0" }
+      unit_price:       { tipo: NUMERIC(10,2) }
+      restock:          { tipo: BOOLEAN, nulo: false, default: true, descripcion: Si se reintegra el producto al inventario }
+
+  expense_categories:
+    descripcion: Categorías de gastos operativos
+    columnas:
+      id:   { tipo: UUID,    pk: true }
+      name: { tipo: VARCHAR, nulo: false, unico: true }
+
+  expenses:
+    descripcion: Gastos operativos de la tienda
+    columnas:
+      id:             { tipo: UUID,    pk: true }
+      category_id:    { tipo: UUID,    fk: expense_categories.id }
+      employee_id:    { tipo: UUID,    fk: employees.id }
+      description:    { tipo: TEXT,    nulo: true }
+      amount:         { tipo: NUMERIC(10,2), nulo: false, check: "> 0" }
+      payment_method: { tipo: VARCHAR, nulo: false }
+      expense_date:   { tipo: DATE,    nulo: false, default: CURRENT_DATE }
+
+  till_movements:
+    descripcion: Movimientos de caja durante un turno
+    columnas:
+      id:            { tipo: UUID,    pk: true }
+      employee_id:   { tipo: UUID,    fk: employees.id }
+      shift:         { tipo: ENUM(shift_type), nulo: false }
+      movement_type: { tipo: ENUM(movement_type), nulo: false }
+      amount:        { tipo: NUMERIC(10,2), nulo: false }
+      reference_id:  { tipo: UUID,    nulo: true, descripcion: ID de la venta, gasto u operación relacionada }
+
+  cash_audit:
+    descripcion: Arqueos de caja con diferencia entre monto esperado y contado
+    columnas:
+      id:              { tipo: UUID,    pk: true }
+      employee_id:     { tipo: UUID,    fk: employees.id }
+      shift:           { tipo: ENUM(shift_type), nulo: false }
+      audit_type:      { tipo: ENUM(audit_type), nulo: false }
+      expected_amount: { tipo: NUMERIC(10,2), nulo: false }
+      counted_amount:  { tipo: NUMERIC(10,2), nulo: false }
+      difference:      { tipo: NUMERIC(10,2), generada: "counted_amount - expected_amount" }
+
+  notifications:
+    descripcion: Alertas del sistema para los usuarios
+    columnas:
+      id:           { tipo: UUID,    pk: true }
+      seen_by:      { tipo: UUID,    fk: users.id }
+      type:         { tipo: ENUM(notification_type), nulo: false }
+      reference_id: { tipo: UUID,    nulo: true, descripcion: ID del objeto relacionado (producto, lote, etc.) }
+      message:      { tipo: TEXT,    nulo: false }
+      seen:         { tipo: BOOLEAN, nulo: false, default: false }
