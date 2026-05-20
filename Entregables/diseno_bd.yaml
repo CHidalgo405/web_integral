@@ -1,0 +1,234 @@
+---
+documento: Diseño de Base de Datos
+proyecto: Tiendita Maday
+version: "1.0"
+fecha: "2026-05-12"
+
+motor:
+  nombre: PostgreSQL
+  version: "16"
+  extension: pgcrypto
+  pk_tipo: UUID v4 (gen_random_uuid()) en entidades de negocio
+  pk_excepcion: shop_config usa SERIAL (tabla singleton)
+  normalizacion: 3FN (Tercera Forma Normal)
+  desnormalizacion_controlada:
+    tabla: purchases
+    campos: [subtotal, discount_total, total]
+    razon: Rendimiento de reportes; mantenidos por trigger/procedimiento
+
+enums:
+  - nombre: delivery_method_type
+    valores: [pickup, delivery]
+  - nombre: payment_method_type
+    valores: [cash, card, transfer, mixed]
+  - nombre: purchase_status
+    valores: [pending, completed, cancelled]
+  - nombre: refund_method_type
+    valores: [cash, card]
+  - nombre: purchase_order_status
+    valores: [draft, sent, partial, received, cancelled]
+  - nombre: employee_role
+    valores: [owner, cashier, stockist, delivery]
+  - nombre: user_role
+    valores: [admin, cashier, viewer]
+  - nombre: shift_type
+    valores: [morning, afternoon, full_day]
+  - nombre: movement_type
+    valores: [opening, closing, sale, expense, refund, adjustment]
+  - nombre: audit_type
+    valores: [opening, closing, spot_check]
+  - nombre: login_event
+    valores: [login_success, login_failed, logout, password_changed, token_refreshed]
+  - nombre: notification_type
+    valores: [low_stock, expiring_soon, expired, new_purchase_order, price_change]
+
+grupos_de_tablas:
+
+  configuracion:
+    tablas:
+      - nombre: shop_config
+        descripcion: Fila única con nombre, dirección y coordenadas de la tienda
+        columnas: [id(SERIAL PK), shop_name, address, latitude, longitude, currency]
+
+  catalogo:
+    tablas:
+      - nombre: categories
+        descripcion: Árbol de categorías con auto-referencia via parent_id
+        columnas: [id(UUID PK), parent_id(FK self), name, slug]
+      - nombre: units_of_measure
+        descripcion: Unidades de medida (kg, litro, unidad, etc.)
+        columnas: [id(UUID PK), name, abbreviation]
+      - nombre: inventory
+        descripcion: Productos con precio, costo, stock, stock mínimo y flag de expiración
+        columnas: [id(UUID PK), category_id(FK), uom_id(FK), name, sku, price, cost, stock, min_stock, has_expiration, active]
+        notas: soft delete via active=FALSE; trigger de historial de precio
+      - nombre: product_barcodes
+        descripcion: Barcodes asociados a productos (uno o más por producto)
+        columnas: [barcode(VARCHAR PK), inventory_id(FK), description]
+      - nombre: price_history
+        descripcion: Auditoría automática de cambios de precio (generado por trigger)
+        columnas: [id(UUID PK), inventory_id(FK), changed_by(FK users), old_price, new_price, changed_at]
+
+  proveedores:
+    tablas:
+      - nombre: suppliers
+        descripcion: Proveedores con contacto y estado activo/inactivo
+        columnas: [id(UUID PK), name, contact_name, phone, email, active]
+      - nombre: supplier_items
+        descripcion: Catálogo proveedor–producto con precio y SKU del proveedor
+        columnas: [supplier_id(FK), inventory_id(FK), supplier_sku, supplier_price, is_preferred]
+        pk: compuesta (supplier_id, inventory_id)
+      - nombre: purchase_orders
+        descripcion: Órdenes de compra con estado y fecha esperada
+        columnas: [id(UUID PK), supplier_id(FK), employee_id(FK), status(ENUM), expected_date]
+      - nombre: purchase_order_items
+        descripcion: Ítems de orden con cantidad pedida vs recibida y costo unitario
+        columnas: [id(UUID PK), order_id(FK), inventory_id(FK), quantity_ordered, quantity_received, unit_cost]
+      - nombre: stock_receipts
+        descripcion: Recepciones físicas de mercadería (con o sin orden de compra)
+        columnas: [id(UUID PK), inventory_id(FK), supplier_id(FK), purchase_order_id(FK nullable), quantity, cost_per_unit, expiration_date]
+        notas: trigger suma stock e inserta lote de expiración
+
+  expiracion:
+    tablas:
+      - nombre: expiration_batches
+        descripcion: Lotes con fecha de vencimiento y cantidad restante
+        columnas: [id(UUID PK), inventory_id(FK), receipt_id(FK), quantity, expiration_date, removed]
+        notas: Solo para has_expiration=TRUE; descuento FIFO via función auxiliar
+      - nombre: expired_log
+        descripcion: Registro de lotes retirados por vencimiento
+        columnas: [id(UUID PK), inventory_id(FK), batch_id(FK), quantity_removed, expiration_date]
+
+  autenticacion:
+    tablas:
+      - nombre: employees
+        descripcion: Datos personales y rol del empleado
+        columnas: [id(UUID PK), first_name, last_name, phone, role(ENUM), active]
+      - nombre: users
+        descripcion: Cuenta de acceso; relación 1:1 con employees; bcrypt para password
+        columnas: [id(UUID PK), employee_id(FK), username, role(ENUM), active, must_change_password]
+        notas: password_hash almacenado; nunca expuesto en respuestas API
+      - nombre: user_sessions
+        descripcion: Tokens JWT activos como hash; soporta revocación individual
+        columnas: [id(UUID PK), user_id(FK), token_hash, expires_at, revoked]
+      - nombre: password_reset_tokens
+        descripcion: Tokens de un solo uso con expiración para reset de contraseña
+        columnas: [id(UUID PK), user_id(FK), token_hash, used, expires_at]
+      - nombre: login_audit
+        descripcion: Historial de eventos de autenticación con IP
+        columnas: [id(UUID PK), user_id(FK), username, event(ENUM), ip_address(inet)]
+      - nombre: schedules
+        descripcion: Asignación de empleados a turnos por fecha
+        columnas: [id(UUID PK), employee_id(FK), work_date, shift(ENUM)]
+      - nombre: shift_covers
+        descripcion: Coberturas de turno entre empleados con flag de descuento
+        columnas: [id(UUID PK), schedule_id(FK), original_employee_id(FK), covering_employee_id(FK), work_date, shift(ENUM), discount_applied]
+
+  ventas:
+    tablas:
+      - nombre: customers
+        descripcion: Clientes opcionales; ventas pueden ser anónimas (customer_id NULL)
+        columnas: [id(UUID PK), name, phone, email, address]
+      - nombre: delivery_zones
+        descripcion: Zonas de delivery con tarifa base y por km
+        columnas: [id(UUID PK), updated_by(FK users), name, min_km, max_km, base_fee, fee_per_km, active]
+      - nombre: delivery_zone_audit
+        descripcion: Historial de cambios de tarifas de zonas
+        columnas: [id(UUID PK), zone_id(FK), changed_by(FK users), old_base_fee, new_base_fee, old_fee_per_km, new_fee_per_km, old_max_km, new_max_km, changed_at]
+      - nombre: promotions
+        descripcion: Descuentos por porcentaje o monto fijo con vigencia por fecha
+        columnas: [id(UUID PK), inventory_id(FK), name, discount_pct, discount_fixed, auto_generated, active, valid_from, valid_until]
+      - nombre: purchases
+        descripcion: Cabecera de venta con método de pago/entrega, estado y totales
+        columnas: [id(UUID PK), customer_id(FK nullable), employee_id(FK), delivery_zone_id(FK nullable), delivery_method(ENUM), payment_method(ENUM), status(ENUM), subtotal, discount_total, delivery_fee, total, cash_tendered, change_given]
+      - nombre: purchase_items
+        descripcion: Líneas de venta con precio, descuento y subtotal
+        columnas: [id(UUID PK), purchase_id(FK), inventory_id(FK), promotion_id(FK nullable), quantity, unit_price, discount_pct, line_total]
+
+  devoluciones:
+    tablas:
+      - nombre: purchase_returns
+        descripcion: Cabecera de devolución con método de reembolso y motivo
+        columnas: [id(UUID PK), purchase_id(FK), employee_id(FK), refund_method(ENUM), reason, total_refunded]
+      - nombre: purchase_return_items
+        descripcion: Ítems devueltos; restock controla si se reintegra al inventario
+        columnas: [id(UUID PK), return_id(FK), purchase_item_id(FK), inventory_id(FK), quantity, unit_price, restock]
+
+  caja_y_gastos:
+    tablas:
+      - nombre: expense_categories
+        descripcion: Categorías de gastos operativos
+        columnas: [id(UUID PK), name]
+      - nombre: expenses
+        descripcion: Gastos operativos con categoría, empleado, monto y método de pago
+        columnas: [id(UUID PK), category_id(FK), employee_id(FK), description, amount, payment_method, expense_date]
+      - nombre: till_movements
+        descripcion: Movimientos de caja (apertura, cierre, venta, gasto, ajuste)
+        columnas: [id(UUID PK), employee_id(FK), shift(ENUM), movement_type(ENUM), amount, reference_id(UUID nullable)]
+      - nombre: cash_audit
+        descripcion: Arqueos de caja con monto esperado vs contado y diferencia
+        columnas: [id(UUID PK), employee_id(FK), shift(ENUM), audit_type(ENUM), expected_amount, counted_amount, difference]
+
+  notificaciones:
+    tablas:
+      - nombre: notifications
+        descripcion: Alertas del sistema vistas por usuario
+        columnas: [id(UUID PK), seen_by(FK users), type(ENUM), reference_id(UUID), message, seen]
+
+indices:
+  - tabla: inventory
+    nombre: idx_inventory_active
+    tipo: Parcial WHERE active = TRUE
+  - tabla: inventory
+    nombre: idx_inventory_sku
+    tipo: Único sobre sku
+  - tabla: expiration_batches
+    nombre: idx_exp_batches_exp_date
+    tipo: "Compuesto (inventory_id, expiration_date) WHERE removed = FALSE"
+  - tabla: user_sessions
+    nombre: idx_sessions_token
+    tipo: Sobre token_hash
+  - tabla: purchases
+    nombre: idx_purchases_status
+    tipo: Sobre status
+  - tabla: notifications
+    nombre: idx_notifications_unseen
+    tipo: Parcial WHERE seen = FALSE
+
+vistas:
+  - nombre: v_inventory_status
+    proposito: Stock actual con alertas de mínimo y vencimiento próximo
+  - nombre: v_daily_sales_summary
+    proposito: Totales de venta agrupados por día y método de pago
+  - nombre: v_pending_purchase_orders
+    proposito: Órdenes en estado draft o sent
+  - nombre: v_employee_schedule_current_week
+    proposito: Horarios de la semana en curso
+  - nombre: v_expiring_soon
+    proposito: Lotes que vencen en los próximos 7 días
+  - nombre: v_active_promotions
+    proposito: Promociones vigentes según fecha actual
+  - nombre: v_cash_position
+    proposito: Balance neto de caja del turno actual
+  - nombre: v_supplier_preferred_items
+    proposito: Ítem de inventario con proveedor preferido y precio
+  - nombre: v_low_stock_alerts
+    proposito: Productos con stock ≤ min_stock y activos
+  - nombre: v_return_summary
+    proposito: Devoluciones con totales y motivos agrupados
+
+decisiones_de_diseno:
+  - decision: UUID como PK en entidades de negocio
+    justificacion: Evita colisiones en sincronización/migración; compatible con generación en cliente
+  - decision: Lógica de stock en triggers PostgreSQL
+    justificacion: Garantiza integridad transaccional sin depender de la capa de aplicación
+  - decision: FIFO con FOR UPDATE en expiration_batches
+    justificacion: Previene condiciones de carrera en entornos multiusuario
+  - decision: Separación employees/users
+    justificacion: Un empleado puede existir sin cuenta; facilita onboarding gradual
+  - decision: password_hash excluido de SELECT con SAFE_COLS
+    justificacion: Seguridad por diseño; campo sensible nunca expuesto en respuestas API
+  - decision: Soft delete via active=FALSE
+    justificacion: Preserva integridad referencial e historial sin DELETE físico
+  - decision: Sin store credit
+    justificacion: Funcionalidad descartada; refund_method_type solo incluye cash y card
