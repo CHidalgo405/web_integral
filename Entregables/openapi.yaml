@@ -1,0 +1,1250 @@
+openapi: "3.0.3"
+info:
+  title: Tiendita Maday API
+  description: API REST para el sistema de gestión de verdulería/tienda de barrio Tiendita Maday
+  version: "1.0.0"
+  contact:
+    name: Tiendita Maday Dev
+
+servers:
+  - url: http://localhost:3000/api
+    description: Servidor de desarrollo local
+
+tags:
+  - name: Shop Config
+  - name: Categories
+  - name: Units
+  - name: Inventory
+  - name: Barcodes
+  - name: Price History
+  - name: Suppliers
+  - name: Purchase Orders
+  - name: Stock Receipts
+  - name: Employees
+  - name: Schedules
+  - name: Users
+  - name: Customers
+  - name: Delivery Zones
+  - name: Promotions
+  - name: Purchases
+  - name: Purchase Returns
+  - name: Expenses
+  - name: Till Movements
+  - name: Cash Audit
+  - name: Notifications
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:   { type: string }
+        detail:  { type: string }
+
+    ShopConfig:
+      type: object
+      properties:
+        id:        { type: integer }
+        shop_name: { type: string }
+        address:   { type: string, nullable: true }
+        latitude:  { type: number, nullable: true }
+        longitude: { type: number, nullable: true }
+        currency:  { type: string, example: PEN }
+
+    Category:
+      type: object
+      properties:
+        id:        { type: string, format: uuid }
+        parent_id: { type: string, format: uuid, nullable: true }
+        name:      { type: string }
+        slug:      { type: string }
+
+    UnitOfMeasure:
+      type: object
+      properties:
+        id:           { type: string, format: uuid }
+        name:         { type: string }
+        abbreviation: { type: string }
+
+    InventoryItem:
+      type: object
+      properties:
+        id:             { type: string, format: uuid }
+        category_id:    { type: string, format: uuid }
+        uom_id:         { type: string, format: uuid }
+        name:           { type: string }
+        sku:            { type: string }
+        price:          { type: number, format: double }
+        cost:           { type: number, format: double }
+        stock:          { type: integer }
+        min_stock:      { type: integer }
+        has_expiration: { type: boolean }
+        active:         { type: boolean }
+
+    Barcode:
+      type: object
+      properties:
+        barcode:      { type: string }
+        inventory_id: { type: string, format: uuid }
+        description:  { type: string, nullable: true }
+
+    Supplier:
+      type: object
+      properties:
+        id:           { type: string, format: uuid }
+        name:         { type: string }
+        contact_name: { type: string, nullable: true }
+        phone:        { type: string, nullable: true }
+        email:        { type: string, nullable: true }
+        active:       { type: boolean }
+
+    Employee:
+      type: object
+      properties:
+        id:         { type: string, format: uuid }
+        first_name: { type: string }
+        last_name:  { type: string }
+        phone:      { type: string, nullable: true }
+        role:       { type: string, enum: [owner, cashier, stockist, delivery] }
+        active:     { type: boolean }
+
+    User:
+      type: object
+      properties:
+        id:                   { type: string, format: uuid }
+        employee_id:          { type: string, format: uuid }
+        username:             { type: string }
+        role:                 { type: string, enum: [admin, cashier, viewer] }
+        active:               { type: boolean }
+        must_change_password: { type: boolean }
+
+    Customer:
+      type: object
+      properties:
+        id:      { type: string, format: uuid }
+        name:    { type: string }
+        phone:   { type: string, nullable: true }
+        email:   { type: string, nullable: true }
+        address: { type: string, nullable: true }
+
+    DeliveryZone:
+      type: object
+      properties:
+        id:         { type: string, format: uuid }
+        updated_by: { type: string, format: uuid }
+        name:       { type: string }
+        min_km:     { type: number }
+        max_km:     { type: number }
+        base_fee:   { type: number }
+        fee_per_km: { type: number }
+        active:     { type: boolean }
+
+    Promotion:
+      type: object
+      properties:
+        id:             { type: string, format: uuid }
+        inventory_id:   { type: string, format: uuid, nullable: true }
+        name:           { type: string }
+        discount_pct:   { type: number, nullable: true }
+        discount_fixed: { type: number, nullable: true }
+        auto_generated: { type: boolean }
+        active:         { type: boolean }
+        valid_from:     { type: string, format: date, nullable: true }
+        valid_until:    { type: string, format: date, nullable: true }
+
+    Purchase:
+      type: object
+      properties:
+        id:               { type: string, format: uuid }
+        customer_id:      { type: string, format: uuid, nullable: true }
+        employee_id:      { type: string, format: uuid }
+        delivery_zone_id: { type: string, format: uuid, nullable: true }
+        delivery_method:  { type: string, enum: [pickup, delivery] }
+        payment_method:   { type: string, enum: [cash, card, transfer, mixed] }
+        status:           { type: string, enum: [pending, completed, cancelled] }
+        subtotal:         { type: number }
+        discount_total:   { type: number }
+        delivery_fee:     { type: number }
+        total:            { type: number }
+        cash_tendered:    { type: number, nullable: true }
+        change_given:     { type: number, nullable: true }
+
+    PurchaseItem:
+      type: object
+      properties:
+        id:           { type: string, format: uuid }
+        purchase_id:  { type: string, format: uuid }
+        inventory_id: { type: string, format: uuid }
+        promotion_id: { type: string, format: uuid, nullable: true }
+        quantity:     { type: integer }
+        unit_price:   { type: number }
+        discount_pct: { type: number }
+        line_total:   { type: number }
+
+    PurchaseReturn:
+      type: object
+      properties:
+        id:             { type: string, format: uuid }
+        purchase_id:    { type: string, format: uuid }
+        employee_id:    { type: string, format: uuid }
+        refund_method:  { type: string, enum: [cash, card] }
+        reason:         { type: string, nullable: true }
+        total_refunded: { type: number }
+
+    Expense:
+      type: object
+      properties:
+        id:             { type: string, format: uuid }
+        category_id:    { type: string, format: uuid }
+        employee_id:    { type: string, format: uuid }
+        description:    { type: string, nullable: true }
+        amount:         { type: number }
+        payment_method: { type: string }
+        expense_date:   { type: string, format: date }
+
+    TillMovement:
+      type: object
+      properties:
+        id:            { type: string, format: uuid }
+        employee_id:   { type: string, format: uuid }
+        shift:         { type: string, enum: [morning, afternoon, full_day] }
+        movement_type: { type: string, enum: [opening, closing, sale, expense, refund, adjustment] }
+        amount:        { type: number }
+        reference_id:  { type: string, format: uuid, nullable: true }
+
+    CashAudit:
+      type: object
+      properties:
+        id:              { type: string, format: uuid }
+        employee_id:     { type: string, format: uuid }
+        shift:           { type: string, enum: [morning, afternoon, full_day] }
+        audit_type:      { type: string, enum: [opening, closing, spot_check] }
+        expected_amount: { type: number }
+        counted_amount:  { type: number }
+        difference:      { type: number }
+
+    Notification:
+      type: object
+      properties:
+        id:           { type: string, format: uuid }
+        seen_by:      { type: string, format: uuid }
+        type:         { type: string, enum: [low_stock, expiring_soon, expired, new_purchase_order, price_change] }
+        reference_id: { type: string, format: uuid, nullable: true }
+        message:      { type: string }
+        seen:         { type: boolean }
+
+paths:
+
+  /shop-config:
+    get:
+      tags: [Shop Config]
+      summary: Obtiene la configuración de la tienda
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/ShopConfig' } } } }
+    put:
+      tags: [Shop Config]
+      summary: Actualiza la configuración de la tienda
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                shop_name: { type: string }
+                address:   { type: string }
+                latitude:  { type: number }
+                longitude: { type: number }
+                currency:  { type: string }
+      responses:
+        "200": { description: OK }
+
+  /categories:
+    get:
+      tags: [Categories]
+      summary: Lista categorías
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Category' } } } } }
+    post:
+      tags: [Categories]
+      summary: Crea una categoría
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, slug]
+              properties:
+                parent_id: { type: string, format: uuid }
+                name:      { type: string }
+                slug:      { type: string }
+      responses:
+        "201": { description: Created }
+        "409": { description: Duplicate slug }
+
+  /categories/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [Categories]
+      summary: Obtiene una categoría
+      responses:
+        "200": { description: OK }
+        "404": { description: Not found }
+    put:
+      tags: [Categories]
+      summary: Actualiza una categoría
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Category' }
+      responses:
+        "200": { description: OK }
+    delete:
+      tags: [Categories]
+      summary: Elimina una categoría
+      responses:
+        "204": { description: Deleted }
+        "409": { description: Has children or products }
+
+  /units:
+    get:
+      tags: [Units]
+      summary: Lista unidades de medida
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/UnitOfMeasure' } } } } }
+    post:
+      tags: [Units]
+      summary: Crea una unidad de medida
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, abbreviation]
+              properties:
+                name:         { type: string }
+                abbreviation: { type: string }
+      responses:
+        "201": { description: Created }
+
+  /units/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [Units]
+      summary: Obtiene una unidad
+      responses:
+        "200": { description: OK }
+    put:
+      tags: [Units]
+      summary: Actualiza una unidad
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UnitOfMeasure' }
+      responses:
+        "200": { description: OK }
+    delete:
+      tags: [Units]
+      summary: Elimina una unidad
+      responses:
+        "204": { description: Deleted }
+
+  /inventory:
+    get:
+      tags: [Inventory]
+      summary: Lista productos
+      parameters:
+        - { name: active, in: query, schema: { type: boolean } }
+        - { name: category_id, in: query, schema: { type: string, format: uuid } }
+        - { name: low_stock, in: query, schema: { type: boolean } }
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/InventoryItem' } } } } }
+    post:
+      tags: [Inventory]
+      summary: Crea un producto
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/InventoryItem' }
+      responses:
+        "201": { description: Created }
+        "409": { description: Duplicate SKU }
+
+  /inventory/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [Inventory]
+      summary: Obtiene un producto
+      responses:
+        "200": { description: OK }
+        "404": { description: Not found }
+    put:
+      tags: [Inventory]
+      summary: Actualiza un producto (cambio de price dispara historial)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/InventoryItem' }
+      responses:
+        "200": { description: OK }
+    delete:
+      tags: [Inventory]
+      summary: Soft delete del producto
+      responses:
+        "200": { description: Deactivated }
+
+  /product-barcodes:
+    get:
+      tags: [Barcodes]
+      summary: Lista todos los barcodes
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Barcode' } } } } }
+    post:
+      tags: [Barcodes]
+      summary: Asocia barcode a producto
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Barcode' }
+      responses:
+        "201": { description: Created }
+
+  /product-barcodes/{barcode}:
+    parameters:
+      - { name: barcode, in: path, required: true, schema: { type: string } }
+    get:
+      tags: [Barcodes]
+      summary: Busca producto por barcode
+      responses:
+        "200": { description: OK }
+        "404": { description: Not found }
+    delete:
+      tags: [Barcodes]
+      summary: Elimina barcode
+      responses:
+        "204": { description: Deleted }
+
+  /price-history:
+    get:
+      tags: [Price History]
+      summary: Lista historial de precios
+      parameters:
+        - { name: inventory_id, in: query, schema: { type: string, format: uuid } }
+      responses:
+        "200": { description: OK }
+
+  /suppliers:
+    get:
+      tags: [Suppliers]
+      summary: Lista proveedores
+      parameters:
+        - { name: active, in: query, schema: { type: boolean } }
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Supplier' } } } } }
+    post:
+      tags: [Suppliers]
+      summary: Crea proveedor
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Supplier' }
+      responses:
+        "201": { description: Created }
+
+  /suppliers/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [Suppliers]
+      summary: Proveedor con sus ítems
+      responses:
+        "200": { description: OK }
+    put:
+      tags: [Suppliers]
+      summary: Actualiza proveedor
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Supplier' }
+      responses:
+        "200": { description: OK }
+    delete:
+      tags: [Suppliers]
+      summary: Soft delete del proveedor
+      responses:
+        "200": { description: Deactivated }
+
+  /suppliers/{id}/items:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [Suppliers]
+      summary: Ítems del proveedor
+      responses:
+        "200": { description: OK }
+    post:
+      tags: [Suppliers]
+      summary: Agrega ítem al proveedor
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                inventory_id:   { type: string, format: uuid }
+                supplier_sku:   { type: string }
+                supplier_price: { type: number }
+                is_preferred:   { type: boolean }
+      responses:
+        "201": { description: Created }
+
+  /suppliers/{id}/items/{inventoryId}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      - { name: inventoryId, in: path, required: true, schema: { type: string, format: uuid } }
+    put:
+      tags: [Suppliers]
+      summary: Actualiza ítem del proveedor
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                supplier_sku:   { type: string }
+                supplier_price: { type: number }
+                is_preferred:   { type: boolean }
+      responses:
+        "200": { description: OK }
+    delete:
+      tags: [Suppliers]
+      summary: Elimina ítem del proveedor
+      responses:
+        "204": { description: Deleted }
+
+  /purchase-orders:
+    get:
+      tags: [Purchase Orders]
+      summary: Lista órdenes de compra
+      parameters:
+        - { name: status, in: query, schema: { type: string } }
+        - { name: supplier_id, in: query, schema: { type: string, format: uuid } }
+      responses:
+        "200": { description: OK }
+    post:
+      tags: [Purchase Orders]
+      summary: Crea orden con ítems en una transacción
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [supplier_id, employee_id, items]
+              properties:
+                supplier_id:   { type: string, format: uuid }
+                employee_id:   { type: string, format: uuid }
+                expected_date: { type: string, format: date }
+                items:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      inventory_id:     { type: string, format: uuid }
+                      quantity_ordered: { type: integer }
+                      unit_cost:        { type: number }
+      responses:
+        "201": { description: Created }
+
+  /purchase-orders/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [Purchase Orders]
+      summary: Orden con sus ítems
+      responses:
+        "200": { description: OK }
+    put:
+      tags: [Purchase Orders]
+      summary: Actualiza estado o fecha esperada
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:        { type: string, enum: [draft, sent, partial, received, cancelled] }
+                expected_date: { type: string, format: date }
+      responses:
+        "200": { description: OK }
+
+  /stock-receipts:
+    get:
+      tags: [Stock Receipts]
+      summary: Lista recepciones de stock
+      responses:
+        "200": { description: OK }
+    post:
+      tags: [Stock Receipts]
+      summary: Registra recepción (trigger suma stock y crea lote)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [inventory_id, quantity, cost_per_unit]
+              properties:
+                inventory_id:      { type: string, format: uuid }
+                supplier_id:       { type: string, format: uuid }
+                purchase_order_id: { type: string, format: uuid }
+                quantity:          { type: integer }
+                cost_per_unit:     { type: number }
+                expiration_date:   { type: string, format: date }
+      responses:
+        "201": { description: Created }
+
+  /stock-receipts/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [Stock Receipts]
+      summary: Detalle de recepción
+      responses:
+        "200": { description: OK }
+
+  /employees:
+    get:
+      tags: [Employees]
+      summary: Lista empleados
+      parameters:
+        - { name: active, in: query, schema: { type: boolean } }
+        - { name: role, in: query, schema: { type: string } }
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Employee' } } } } }
+    post:
+      tags: [Employees]
+      summary: Crea empleado
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Employee' }
+      responses:
+        "201": { description: Created }
+
+  /employees/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [Employees]
+      summary: Datos del empleado
+      responses:
+        "200": { description: OK }
+    put:
+      tags: [Employees]
+      summary: Actualiza datos del empleado
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Employee' }
+      responses:
+        "200": { description: OK }
+    delete:
+      tags: [Employees]
+      summary: Soft delete del empleado
+      responses:
+        "200": { description: Deactivated }
+
+  /schedules:
+    get:
+      tags: [Schedules]
+      summary: Lista horarios
+      parameters:
+        - { name: employee_id, in: query, schema: { type: string, format: uuid } }
+        - { name: work_date, in: query, schema: { type: string, format: date } }
+      responses:
+        "200": { description: OK }
+    post:
+      tags: [Schedules]
+      summary: Asigna turno a empleado
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [employee_id, work_date, shift]
+              properties:
+                employee_id: { type: string, format: uuid }
+                work_date:   { type: string, format: date }
+                shift:       { type: string, enum: [morning, afternoon, full_day] }
+      responses:
+        "201": { description: Created }
+
+  /schedules/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+    put:
+      tags: [Schedules]
+      summary: Modifica fecha o turno
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                work_date: { type: string, format: date }
+                shift:     { type: string, enum: [morning, afternoon, full_day] }
+      responses:
+        "200": { description: OK }
+    delete:
+      tags: [Schedules]
+      summary: Elimina asignación de turno
+      responses:
+        "204": { description: Deleted }
+
+  /shift-covers:
+    get:
+      tags: [Schedules]
+      summary: Lista coberturas de turno
+      responses:
+        "200": { description: OK }
+    post:
+      tags: [Schedules]
+      summary: Registra cobertura de turno
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [schedule_id, original_employee_id, covering_employee_id, work_date, shift]
+              properties:
+                schedule_id:          { type: string, format: uuid }
+                original_employee_id: { type: string, format: uuid }
+                covering_employee_id: { type: string, format: uuid }
+                work_date:            { type: string, format: date }
+                shift:                { type: string, enum: [morning, afternoon, full_day] }
+                discount_applied:     { type: boolean }
+      responses:
+        "201": { description: Created }
+
+  /shift-covers/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+    put:
+      tags: [Schedules]
+      summary: Actualiza cobertura
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                discount_applied: { type: boolean }
+      responses:
+        "200": { description: OK }
+
+  /users:
+    get:
+      tags: [Users]
+      summary: Lista usuarios (sin password_hash)
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/User' } } } } }
+    post:
+      tags: [Users]
+      summary: Crea cuenta de acceso
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [employee_id, username, password, role]
+              properties:
+                employee_id: { type: string, format: uuid }
+                username:    { type: string }
+                password:    { type: string, format: password }
+                role:        { type: string, enum: [admin, cashier, viewer] }
+      responses:
+        "201": { description: Created }
+
+  /users/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [Users]
+      summary: Usuario por ID
+      responses:
+        "200": { description: OK }
+    put:
+      tags: [Users]
+      summary: Actualiza rol, activo o contraseña
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                role:                 { type: string }
+                active:               { type: boolean }
+                password:             { type: string }
+                must_change_password: { type: boolean }
+      responses:
+        "200": { description: OK }
+    delete:
+      tags: [Users]
+      summary: Soft delete del usuario
+      responses:
+        "200": { description: Deactivated }
+
+  /customers:
+    get:
+      tags: [Customers]
+      summary: Lista clientes
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Customer' } } } } }
+    post:
+      tags: [Customers]
+      summary: Crea cliente
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Customer' }
+      responses:
+        "201": { description: Created }
+
+  /customers/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [Customers]
+      summary: Cliente por ID
+      responses:
+        "200": { description: OK }
+    put:
+      tags: [Customers]
+      summary: Actualiza datos del cliente
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Customer' }
+      responses:
+        "200": { description: OK }
+    delete:
+      tags: [Customers]
+      summary: Elimina cliente
+      responses:
+        "204": { description: Deleted }
+
+  /delivery-zones:
+    get:
+      tags: [Delivery Zones]
+      summary: Lista zonas de delivery
+      parameters:
+        - { name: active, in: query, schema: { type: boolean } }
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/DeliveryZone' } } } } }
+    post:
+      tags: [Delivery Zones]
+      summary: Crea zona de delivery
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DeliveryZone' }
+      responses:
+        "201": { description: Created }
+
+  /delivery-zones/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [Delivery Zones]
+      summary: Zona con historial de cambios
+      responses:
+        "200": { description: OK }
+    put:
+      tags: [Delivery Zones]
+      summary: Actualiza tarifas (registra auditoría)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DeliveryZone' }
+      responses:
+        "200": { description: OK }
+    delete:
+      tags: [Delivery Zones]
+      summary: Soft delete de la zona
+      responses:
+        "200": { description: Deactivated }
+
+  /promotions:
+    get:
+      tags: [Promotions]
+      summary: Lista promociones
+      parameters:
+        - { name: active, in: query, schema: { type: boolean } }
+        - { name: inventory_id, in: query, schema: { type: string, format: uuid } }
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Promotion' } } } } }
+    post:
+      tags: [Promotions]
+      summary: Crea promoción
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Promotion' }
+      responses:
+        "201": { description: Created }
+
+  /promotions/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [Promotions]
+      summary: Promoción por ID
+      responses:
+        "200": { description: OK }
+    put:
+      tags: [Promotions]
+      summary: Actualiza descuento o vigencia
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Promotion' }
+      responses:
+        "200": { description: OK }
+    delete:
+      tags: [Promotions]
+      summary: Elimina promoción
+      responses:
+        "204": { description: Deleted }
+
+  /purchases:
+    get:
+      tags: [Purchases]
+      summary: Lista ventas
+      parameters:
+        - { name: status, in: query, schema: { type: string } }
+        - { name: employee_id, in: query, schema: { type: string, format: uuid } }
+        - { name: from, in: query, schema: { type: string, format: date } }
+        - { name: to, in: query, schema: { type: string, format: date } }
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Purchase' } } } } }
+    post:
+      tags: [Purchases]
+      summary: Crea venta con ítems en transacción
+      description: Si status=completed el trigger descuenta stock automáticamente
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [employee_id, delivery_method, payment_method, items]
+              properties:
+                customer_id:      { type: string, format: uuid }
+                employee_id:      { type: string, format: uuid }
+                delivery_zone_id: { type: string, format: uuid }
+                delivery_method:  { type: string, enum: [pickup, delivery] }
+                payment_method:   { type: string, enum: [cash, card, transfer, mixed] }
+                status:           { type: string, enum: [pending, completed] }
+                cash_tendered:    { type: number }
+                items:
+                  type: array
+                  items:
+                    type: object
+                    required: [inventory_id, quantity, unit_price]
+                    properties:
+                      inventory_id: { type: string, format: uuid }
+                      promotion_id: { type: string, format: uuid }
+                      quantity:     { type: integer }
+                      unit_price:   { type: number }
+                      discount_pct: { type: number }
+      responses:
+        "201": { description: Created }
+        "409": { description: Insufficient stock }
+
+  /purchases/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [Purchases]
+      summary: Venta con ítems y devoluciones
+      responses:
+        "200": { description: OK }
+    put:
+      tags: [Purchases]
+      summary: Actualiza estado (pending→completed dispara deducción de stock)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status: { type: string, enum: [pending, completed, cancelled] }
+      responses:
+        "200": { description: OK }
+        "409": { description: Insufficient stock }
+
+  /purchase-returns:
+    get:
+      tags: [Purchase Returns]
+      summary: Lista devoluciones
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/PurchaseReturn' } } } } }
+    post:
+      tags: [Purchase Returns]
+      summary: Registra devolución con ítems en transacción
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [purchase_id, employee_id, refund_method, items]
+              properties:
+                purchase_id:   { type: string, format: uuid }
+                employee_id:   { type: string, format: uuid }
+                refund_method: { type: string, enum: [cash, card] }
+                reason:        { type: string }
+                items:
+                  type: array
+                  items:
+                    type: object
+                    required: [purchase_item_id, inventory_id, quantity, unit_price]
+                    properties:
+                      purchase_item_id: { type: string, format: uuid }
+                      inventory_id:     { type: string, format: uuid }
+                      quantity:         { type: integer }
+                      unit_price:       { type: number }
+                      restock:          { type: boolean }
+      responses:
+        "201": { description: Created }
+
+  /purchase-returns/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [Purchase Returns]
+      summary: Devolución con ítems
+      responses:
+        "200": { description: OK }
+
+  /expense-categories:
+    get:
+      tags: [Expenses]
+      summary: Lista categorías de gastos
+      responses:
+        "200": { description: OK }
+    post:
+      tags: [Expenses]
+      summary: Crea categoría de gasto
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string }
+      responses:
+        "201": { description: Created }
+
+  /expense-categories/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+    put:
+      tags: [Expenses]
+      summary: Renombra categoría
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+      responses:
+        "200": { description: OK }
+    delete:
+      tags: [Expenses]
+      summary: Elimina categoría (solo si no tiene gastos)
+      responses:
+        "204": { description: Deleted }
+        "409": { description: Has expenses }
+
+  /expenses:
+    get:
+      tags: [Expenses]
+      summary: Lista gastos
+      parameters:
+        - { name: category_id, in: query, schema: { type: string, format: uuid } }
+        - { name: from, in: query, schema: { type: string, format: date } }
+        - { name: to, in: query, schema: { type: string, format: date } }
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Expense' } } } } }
+    post:
+      tags: [Expenses]
+      summary: Registra gasto operativo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Expense' }
+      responses:
+        "201": { description: Created }
+
+  /expenses/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [Expenses]
+      summary: Gasto por ID
+      responses:
+        "200": { description: OK }
+    put:
+      tags: [Expenses]
+      summary: Actualiza gasto
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Expense' }
+      responses:
+        "200": { description: OK }
+    delete:
+      tags: [Expenses]
+      summary: Elimina gasto
+      responses:
+        "204": { description: Deleted }
+
+  /till-movements:
+    get:
+      tags: [Till Movements]
+      summary: Lista movimientos de caja
+      parameters:
+        - { name: shift, in: query, schema: { type: string } }
+        - { name: employee_id, in: query, schema: { type: string, format: uuid } }
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/TillMovement' } } } } }
+    post:
+      tags: [Till Movements]
+      summary: Registra movimiento de caja
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TillMovement' }
+      responses:
+        "201": { description: Created }
+
+  /till-movements/balance:
+    get:
+      tags: [Till Movements]
+      summary: Balance neto del turno actual
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  balance: { type: number }
+                  shift:   { type: string }
+
+  /till-movements/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [Till Movements]
+      summary: Movimiento por ID
+      responses:
+        "200": { description: OK }
+
+  /cash-audit:
+    get:
+      tags: [Cash Audit]
+      summary: Lista arqueos de caja
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/CashAudit' } } } } }
+    post:
+      tags: [Cash Audit]
+      summary: Registra arqueo de caja
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [employee_id, shift, audit_type, expected_amount, counted_amount]
+              properties:
+                employee_id:     { type: string, format: uuid }
+                shift:           { type: string, enum: [morning, afternoon, full_day] }
+                audit_type:      { type: string, enum: [opening, closing, spot_check] }
+                expected_amount: { type: number }
+                counted_amount:  { type: number }
+      responses:
+        "201": { description: Created }
+
+  /cash-audit/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [Cash Audit]
+      summary: Arqueo por ID
+      responses:
+        "200": { description: OK }
+
+  /notifications:
+    get:
+      tags: [Notifications]
+      summary: Lista notificaciones del usuario
+      parameters:
+        - { name: seen, in: query, schema: { type: boolean } }
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Notification' } } } } }
+
+  /notifications/{id}/seen:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+    patch:
+      tags: [Notifications]
+      summary: Marca notificación como vista
+      responses:
+        "200": { description: OK }
