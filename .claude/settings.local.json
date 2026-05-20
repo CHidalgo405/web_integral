@@ -3,7 +3,9 @@
     "allow": [
       "Bash(Get-ChildItem -Path \"E:\\\\Documentos\\\\GitHub\\\\Tiendita-Maday\\\\Backend\" -Recurse -Force)",
       "Bash(Select-Object FullName, PSIsContainer)",
-      "Bash(Sort-Object FullName)"
+      "Bash(Sort-Object FullName)",
+      "Bash(Start-Sleep -Seconds 30)",
+      "PowerShell(Get-Process *)"
     ]
   }
 }
