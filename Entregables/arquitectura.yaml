@@ -1,0 +1,151 @@
+---
+documento: Arquitectura del Sistema
+proyecto: Tiendita Maday
+version: "1.0"
+fecha: "2026-05-12"
+autor: Sistema de Gestión Tiendita Maday
+
+vision_general:
+  descripcion: >
+    Sistema de gestión integral para verdulería/tienda de barrio.
+    Aplicación web de tres capas: Angular SPA, API REST Node.js y PostgreSQL.
+  principios:
+    - Separación de responsabilidades (SoC)
+    - API RESTful sin estado
+    - Lógica de negocio crítica en triggers y procedimientos PostgreSQL
+    - Despliegue contenerizado con Docker Compose
+
+estilo_arquitectonico: Cliente-Servidor 3 capas
+
+capas:
+  presentacion:
+    tecnologia: Angular 17 (TypeScript)
+    version: "17"
+    puerto: 4200
+    responsabilidad: Interfaz de usuario, formularios reactivos, enrutamiento SPA
+    modulos:
+      - Autenticación
+      - Inventario
+      - Ventas
+      - Compras
+      - Empleados
+      - Caja
+      - Reportes
+      - Configuración
+
+  logica_negocio:
+    tecnologia: Node.js + Express
+    version_node: "20"
+    version_express: "4"
+    puerto: 3000
+    estructura:
+      routes: Definición de endpoints por recurso
+      controllers: Manejadores HTTP, delegan a modelos
+      models: Funciones SQL por tabla (sin ORM)
+      middleware: errorHandler, autenticación JWT
+    middleware_activo:
+      - CORS
+      - express.json (body parser)
+      - errorHandler (mapeo de errores PG a HTTP)
+
+  persistencia:
+    tecnologia: PostgreSQL
+    version: "16"
+    puerto: 5432
+    objetos_db:
+      tablas: 34
+      enums: 12
+      triggers: 11
+      funciones_trigger: 9
+      procedimientos: 4
+      vistas: 10
+      indices_parciales: 4
+
+flujo_solicitud:
+  pasos:
+    1: "Angular HTTP client → GET /api/inventory"
+    2: Express Router despacha a inventory.routes.js
+    3: "Controlador invoca modelo: Inventory.findAll()"
+    4: Modelo ejecuta consulta parametrizada contra pool pg
+    5: PostgreSQL evalúa query; triggers actúan si aplica
+    6: "Resultado sube: rows → controller → res.json() → Angular"
+
+seguridad:
+  autenticacion: JWT firmado HS256; sesiones como hash en user_sessions
+  contrasenas: bcrypt 10 rounds; excluidas de todas las respuestas API
+  reset_password: Token de un solo uso con expiración almacenado como hash
+  auditoria_acceso: login_audit registra IP y evento por cada login/logout
+  cors: Configurado en Express; restringir a origen Angular en producción
+  sql_injection: Consultas parametrizadas ($1, $2...) en todos los modelos
+
+transacciones:
+  patron: "pool.connect() → BEGIN → operaciones → COMMIT / ROLLBACK → release()"
+  casos_de_uso:
+    - Creación de venta con ítems (purchases + purchase_items)
+    - Creación de devolución con ítems (purchase_returns + purchase_return_items)
+    - Creación de orden de compra con ítems (purchase_orders + purchase_order_items)
+
+logica_en_base_datos:
+  triggers:
+    - nombre: trg_sale_reduce_stock
+      evento: AFTER INSERT ON purchase_items
+      accion: Descuenta stock si la venta está en estado completed
+    - nombre: trg_purchase_complete_stock_adjust
+      evento: AFTER UPDATE OF status ON purchases
+      accion: Descuenta stock al confirmar venta (pending → completed)
+    - nombre: trg_stock_receipt_restock
+      evento: AFTER INSERT ON stock_receipts
+      accion: Incrementa stock e inserta lote de expiración
+    - nombre: trg_return_restock
+      evento: AFTER INSERT ON purchase_return_items
+      accion: Reintegra stock si restock = TRUE
+    - nombre: trg_price_history
+      evento: AFTER UPDATE OF price ON inventory
+      accion: Inserta registro en price_history
+  funciones:
+    - nombre: reduce_expiration_batches(inventory_id, qty)
+      proposito: Deducción FIFO de lotes por fecha de vencimiento (con FOR UPDATE)
+    - nombre: mark_expired_batches()
+      proposito: Mueve lotes vencidos a expired_log
+    - nombre: recalculate_purchase_totals(purchase_id)
+      proposito: Recalcula subtotal, discount_total y total de una venta
+    - nombre: generate_low_stock_notifications()
+      proposito: Inserta notificaciones para productos bajo stock mínimo
+
+infraestructura:
+  orquestacion: Docker Compose
+  servicios:
+    - nombre: db
+      imagen: postgres:16-alpine
+      puerto: 5432
+      notas: Monta Database/init.sql como volumen de inicialización
+    - nombre: backend
+      imagen: node:20-alpine
+      puerto: 3000
+      notas: Depende de db; variables de entorno desde .env
+    - nombre: frontend
+      imagen: node:20-alpine
+      puerto: 4200
+      notas: "ng serve (dev); en producción: nginx con build estático"
+  variables_entorno:
+    archivo_config: .env (no versionado)
+    ejemplo: .env.example (versionado)
+    variables:
+      - DB_HOST
+      - DB_PORT
+      - DB_NAME
+      - DB_USER
+      - DB_PASSWORD
+      - JWT_SECRET
+      - PORT
+
+limitaciones_y_escalabilidad:
+  uso_objetivo: Instalación local/LAN para tienda de barrio
+  pool_conexiones: max 10 (ajustable)
+  sin_cache: No implementado Redis/Memcached
+  sin_colas: Notificaciones manejadas síncronamente via triggers
+  extensiones_futuras:
+    - Middleware de autorización por roles
+    - Integración pasarela de pago
+    - Reportes con filtros avanzados y exportación
+    - Modo offline con sincronización
