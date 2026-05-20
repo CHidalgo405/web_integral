@@ -28,3 +28,6 @@ Thumbs.db
 .idea/
 *.suo
 *.user
+
+# Claude Code
+.claude/
