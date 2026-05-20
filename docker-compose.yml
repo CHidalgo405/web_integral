@@ -1,0 +1,40 @@
+services:
+  frontend:
+    build: ./FrontEnd
+    ports:
+      - "4200:4200"
+    volumes:
+      - ./FrontEnd:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    environment:
+      - NODE_ENV=development
+
+  backend:
+    build: ./Backend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./Backend:/app
+      - /app/node_modules
+    depends_on:
+      - database
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@database:5432/${POSTGRES_DB}
+      - PORT=3000
+
+  database:
+    image: postgres:latest
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql
+      - ./Database/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+volumes:
+  postgres_data:
