@@ -1,3 +1,52 @@
 import { Routes } from '@angular/router';
+import { authGuard } from './core/guards/auth.guard';
+import { guestGuard } from './core/guards/guest.guard';
+import { adminGuard } from './core/guards/admin.guard';
 
-export const routes: Routes = [];
+export const routes: Routes = [
+  { path: '', redirectTo: 'auth', pathMatch: 'full' },
+  {
+    path: 'auth',
+    canActivate: [guestGuard],
+    loadChildren: () => import('./features/auth/auth.routes').then(m => m.AUTH_ROUTES),
+  },
+  {
+    path: 'home',
+    canActivate: [authGuard],
+    loadChildren: () => import('./features/home/home.routes').then(m => m.HOME_ROUTES),
+  },
+  {
+    path: 'product',
+    canActivate: [authGuard],
+    loadChildren: () => import('./features/product/product.routes').then(m => m.PRODUCT_ROUTES),
+  },
+  {
+    path: 'cart',
+    canActivate: [authGuard],
+    loadChildren: () => import('./features/cart/cart.routes').then(m => m.CART_ROUTES),
+  },
+  {
+    path: 'checkout',
+    canActivate: [authGuard],
+    loadChildren: () => import('./features/checkout/checkout.routes').then(m => m.CHECKOUT_ROUTES),
+  },
+  {
+    path: 'orders',
+    canActivate: [authGuard],
+    loadChildren: () => import('./features/orders/orders.routes').then(m => m.ORDERS_ROUTES),
+  },
+  {
+    path: 'profile',
+    canActivate: [authGuard],
+    loadChildren: () => import('./features/profile/profile.routes').then(m => m.PROFILE_ROUTES),
+  },
+  {
+    path: 'admin',
+    canActivate: [authGuard, adminGuard],
+    loadChildren: () => import('./features/admin/admin.routes').then(m => m.ADMIN_ROUTES),
+  },
+  {
+    path: '**',
+    loadComponent: () => import('./features/system/not-found/not-found').then(m => m.NotFound),
+  },
+];

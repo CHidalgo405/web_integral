@@ -1,0 +1,1012 @@
+@import url("https://fonts.googleapis.com/css?family=Source+Code+Pro:400,500,600,700&display=swap");
+
+/* ==========================================================================
+   1. CONTENEDOR GENERAL Y TIPOGRAFÍA
+   ========================================================================== */
+.checkout-page {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px 16px;
+    padding-bottom: 120px;
+    /* Evita que el botón flotante tape contenido */
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    box-sizing: border-box;
+}
+
+.checkout-page h2 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary, #1b3d32);
+    margin: 0 0 20px;
+    text-align: center;
+}
+
+/* ==========================================================================
+   2. INDICADOR DE PASOS (STEP INDICATOR)
+   ========================================================================== */
+.step-indicator {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin-bottom: 28px;
+}
+
+.step {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    font-weight: 700;
+    background: var(--surface-raised, #f5f5f0);
+    color: var(--text-muted, #8a8a80);
+    border: 2px solid var(--border, #e0e0d5);
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+    /* Evita que el círculo se deforme en pantallas chicas */
+}
+
+.step.active {
+    background: var(--primary, #1b3d32);
+    color: #fff;
+    border-color: var(--primary, #1b3d32);
+    box-shadow: 0 4px 10px rgba(27, 61, 50, 0.2);
+}
+
+.step.done {
+    background: var(--success, #2e7d32);
+    color: #fff;
+    border-color: var(--success, #2e7d32);
+    box-shadow: 0 4px 10px rgba(46, 125, 50, 0.2);
+}
+
+/* ==========================================================================
+   3. TARJETA DE USUARIO / SESIÓN (USER CARD)
+   ========================================================================== */
+.user-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px;
+    background: #ffffff;
+    border-radius: 20px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+    margin-bottom: 20px;
+    border: 1px solid rgba(0, 0, 0, 0.01);
+}
+
+.user-icon {
+    font-size: 1.75rem;
+    background: var(--primary-alpha, rgba(27, 61, 50, 0.08));
+    padding: 8px;
+    border-radius: 12px;
+    flex-shrink: 0;
+}
+
+.user-name {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-primary, #111111);
+    margin: 0;
+}
+
+.user-email {
+    font-size: 0.8rem;
+    color: var(--text-secondary, #666666);
+    margin: 2px 0 0;
+    word-break: break-all;
+    /* Evita que correos largos rompan el diseño */
+}
+
+/* ==========================================================================
+   4. SECCIONES DE RESUMEN (SUMMARY SECTIONS)
+   ========================================================================== */
+.summary-section {
+    margin-bottom: 24px;
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+    border: 1px solid rgba(0, 0, 0, 0.02);
+}
+
+.summary-section h3 {
+    font-size: 0.95rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-secondary, #556b62);
+    margin: 0 0 16px 0;
+    border-bottom: 1px dashed var(--border, #e0e0d5);
+    padding-bottom: 10px;
+}
+
+.summary-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    font-size: 0.95rem;
+    color: var(--text-primary, #111111);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.03);
+    gap: 12px;
+}
+
+.summary-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.summary-item span:first-child {
+    font-weight: 500;
+}
+
+.summary-item span:last-child {
+    font-weight: 600;
+    font-family: 'Source Code Pro', monospace;
+    text-align: right;
+    flex-shrink: 0;
+}
+
+.addr-text {
+    font-size: 0.95rem;
+    color: var(--text-primary, #2c3e35);
+    line-height: 1.5;
+    padding: 4px 0;
+}
+
+/* ==========================================================================
+   5. DIRECCIONES Y TARJETAS SELECCIONABLES (ADDRESS & OPTIONS)
+   ========================================================================== */
+.address-list,
+.options-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.address-card,
+.option-card {
+    display: flex;
+    padding: 16px;
+    background: #ffffff;
+    border-radius: 18px;
+    border: 2px solid transparent;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.03);
+    transition: all 0.25s ease;
+    box-sizing: border-box;
+}
+
+.address-card {
+    flex-direction: column;
+}
+
+.option-card {
+    align-items: center;
+    gap: 14px;
+}
+
+.address-card.selected,
+.option-card.selected {
+    border-color: var(--primary, #1b3d32);
+    background: rgba(27, 61, 50, 0.01);
+    box-shadow: 0 6px 16px rgba(27, 61, 50, 0.06);
+}
+
+.addr-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+    /* Por si el texto de la etiqueta es largo */
+}
+
+.addr-label {
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: var(--text-primary, #1b3d32);
+}
+
+.default-badge {
+    font-size: 0.7rem;
+    background: var(--primary-alpha, rgba(27, 61, 50, 0.1));
+    color: var(--primary, #1b3d32);
+    padding: 2px 10px;
+    border-radius: 6px;
+    font-weight: 600;
+}
+
+.addr-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary, #111111);
+    margin: 0;
+}
+
+.addr-detail {
+    font-size: 0.85rem;
+    color: var(--text-secondary, #666666);
+    margin: 4px 0 0;
+    line-height: 1.4;
+}
+
+/* Detalles específicos de Option Card */
+.opt-icon {
+    font-size: 1.75rem;
+    background: rgba(0, 0, 0, 0.03);
+    padding: 6px;
+    border-radius: 12px;
+    flex-shrink: 0;
+}
+
+.opt-info h3 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary, #111111);
+    margin: 0;
+}
+
+.opt-info p {
+    font-size: 0.8rem;
+    color: var(--text-secondary, #666666);
+    margin: 4px 0 0;
+}
+
+.opt-price {
+    margin-left: auto;
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--primary, #1b3d32);
+    font-family: 'Source Code Pro', monospace;
+    flex-shrink: 0;
+}
+
+/* ==========================================================================
+   6. BLOQUE DE TOTALES (SUMMARY TOTALS)
+   ========================================================================== */
+.summary-totals {
+    padding: 20px;
+    background: #ffffff;
+    border-radius: 20px;
+    margin-bottom: 24px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.04);
+    border: 1px solid rgba(0, 0, 0, 0.01);
+    box-sizing: border-box;
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    font-size: 0.95rem;
+    color: var(--text-secondary, #666666);
+}
+
+.summary-row span:last-child {
+    font-family: 'Source Code Pro', monospace;
+    font-weight: 500;
+}
+
+.summary-row.discount {
+    color: var(--success, #2e7d32);
+    font-weight: 600;
+}
+
+.summary-row.total {
+    border-top: 2px dashed var(--border, #e0e0d5);
+    padding-top: 14px;
+    margin-top: 10px;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-primary, #1b3d32);
+}
+
+.summary-row.total span:last-child {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #111111;
+}
+
+/* ==========================================================================
+   7. FORMULARIOS (FORM LAYOUT & INPUTS)
+   ========================================================================== */
+.form-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 20px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+    box-sizing: border-box;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-group label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-secondary, #556b62);
+}
+
+.form-group input {
+    padding: 14px 16px;
+    border: 1.5px solid var(--border, #e0e0d5);
+    border-radius: 14px;
+    font-size: 0.95rem;
+    background: var(--surface, #fafaf7);
+    color: var(--text-primary, #111111);
+    outline: none;
+    transition: all 0.2s ease;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.form-group input:focus {
+    border-color: var(--primary, #1b3d32);
+    background: #ffffff;
+    box-shadow: 0 0 0 4px var(--primary-alpha, rgba(27, 61, 50, 0.1));
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+}
+
+.checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.9rem;
+    color: var(--text-secondary, #556b62);
+    cursor: pointer;
+    padding: 4px 0;
+}
+
+.checkbox-row input {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--primary, #1b3d32);
+    flex-shrink: 0;
+}
+
+.validating-msg {
+    text-align: center;
+    padding: 12px;
+    color: var(--primary, #1b3d32);
+    font-size: 0.9rem;
+    font-weight: 600;
+    animation: pulse 1.5s infinite ease-in-out;
+}
+
+/* ==========================================================================
+   8. BOTONES DE ACCIÓN (BUTTONS)
+   ========================================================================== */
+.btn-continue,
+.btn-pay {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    padding: 18px;
+    color: #ffffff;
+    border: none;
+    border-radius: 16px;
+    font-size: 1.05rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+    box-sizing: border-box;
+}
+
+.btn-continue {
+    background: var(--secondary, #1b3d32);
+    margin-top: 16px;
+    box-shadow: 0 4px 14px rgba(27, 61, 50, 0.25);
+}
+
+.btn-continue:hover:not(:disabled) {
+    background: var(--secondary-dark, #132c24);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(27, 61, 50, 0.35);
+}
+
+.btn-pay {
+    background: var(--secondary, #e0533c);
+    box-shadow: 0 6px 20px rgba(224, 83, 60, 0.3);
+}
+
+.btn-pay:hover:not(:disabled) {
+    background: var(--secondary-dark, #c8412b);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(224, 83, 60, 0.4);
+}
+
+.btn-continue:active:not(:disabled),
+.btn-pay:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.btn-continue:disabled,
+.btn-pay:disabled {
+    opacity: 0.6;
+    background: #bdc3c7 !important;
+    box-shadow: none !important;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+.btn-guest {
+    display: block;
+    width: 100%;
+    padding: 16px;
+    background: transparent;
+    color: var(--text-secondary, #556b62);
+    border: 2px solid var(--border, #e0e0d5);
+    border-radius: 16px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 12px;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+}
+
+.btn-guest:hover {
+    background: var(--surface-raised, #f5f5f0);
+    color: var(--text-primary, #1b3d32);
+    border-color: var(--text-secondary, #556b62);
+}
+
+.btn-add-address {
+    display: inline-block;
+    text-align: center;
+    padding: 12px;
+    color: var(--primary, #1b3d32);
+    font-weight: 700;
+    text-decoration: none;
+    font-size: 0.95rem;
+    transition: opacity 0.2s;
+}
+
+.btn-add-address:hover {
+    opacity: 0.8;
+    text-decoration: underline;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 0.6;
+    }
+
+    50% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0.6;
+    }
+}
+
+/* ==========================================================================
+   9. SECCIÓN RESPONSIVA (MEDIA QUERIES PARA CELULARES Y TABLETS)
+   ========================================================================== */
+@media (max-width: 480px) {
+    .checkout-page {
+        padding: 12px 10px;
+        padding-bottom: 100px;
+    }
+
+    .checkout-page h2 {
+        font-size: 1.15rem;
+        margin-bottom: 16px;
+    }
+
+    /* Reducimos el tamaño de los pasos para que quepan seguidos */
+    .step-indicator {
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+
+    .step {
+        width: 30px;
+        height: 30px;
+        font-size: 0.75rem;
+    }
+
+    /* Ajustamos el padding de las tarjetas contenedoras */
+    .summary-section,
+    .summary-totals,
+    .form-layout {
+        padding: 16px 14px;
+        border-radius: 16px;
+        margin-bottom: 16px;
+    }
+
+    /* Si el nombre del producto es muy largo, baja el precio de renglón ordenadamente */
+    .summary-item {
+        font-size: 0.88rem;
+        padding: 10px 0;
+    }
+
+    /* Los campos del formulario que estaban en dos columnas pasan a una sola columna */
+    .form-row {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    /* Se ajustan los textos de totales */
+    .summary-row {
+        font-size: 0.88rem;
+    }
+
+    .summary-row.total {
+        font-size: 1.05rem;
+    }
+
+    .summary-row.total span:last-child {
+        font-size: 1.15rem;
+    }
+
+    /* Ajuste en tarjetas de opciones de pago/envío para pantallas delgadas */
+    .option-card {
+        padding: 12px;
+        gap: 10px;
+    }
+
+    .opt-icon {
+        font-size: 1.5rem;
+        padding: 4px;
+    }
+
+    .opt-info h3 {
+        font-size: 0.85rem;
+    }
+
+    .opt-price {
+        font-size: 0.88rem;
+    }
+
+    /* Botones más cómodos para el dedo en móviles */
+    .btn-continue,
+    .btn-pay,
+    .btn-guest {
+        padding: 15px;
+        font-size: 0.95rem;
+        border-radius: 14px;
+    }
+}
+
+/* ========================================================================== INTEGRACIÓN TARJETA INTERACTIVA 3D MEJORADA Y RESPONSIVA (LÍNEA ÚNICA) ========================================================================== */
+
+
+.card-list {
+    margin-bottom: -100px;
+    position: relative;
+    z-index: 10;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+.card-item {
+    max-width: 430px;
+    height: 270px;
+    position: relative;
+    width: 100%;
+    perspective: 2000px;
+}
+
+@media screen and (max-width: 480px) {
+    .card-item {
+        max-width: 310px;
+        height: 195px;
+    }
+
+    .card-list {
+        margin-bottom: -85px;
+    }
+}
+
+.card-item.-active .card-item__side.-front {
+    transform: rotateY(180deg);
+}
+
+.card-item.-active .card-item__side.-back {
+    transform: rotateY(0deg);
+}
+
+.card-item__side {
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px 0 rgba(14, 42, 90, 0.4);
+    transform-style: preserve-3d;
+    transition: all 0.8s cubic-bezier(0.71, 0.03, 0.56, 0.85);
+    backface-visibility: hidden;
+    height: 100%;
+    width: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.card-item__side.-back {
+    transform: rotateY(-180deg);
+}
+
+.card-item__bg {
+    max-width: 100%;
+    display: block;
+    max-height: 100%;
+    height: 100%;
+    width: 100%;
+    object-fit: cover;
+}
+
+.card-item__cover {
+    height: 100%;
+    background-color: #1c1d27;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+.card-item__cover:after {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(6, 2, 29, 0.45);
+}
+
+.card-item__wrapper {
+    font-family: "Source Code Pro", monospace;
+    padding: 25px 20px;
+    position: relative;
+    z-index: 4;
+    height: 100%;
+    text-shadow: 7px 6px 10px rgba(14, 42, 90, 0.8);
+    user-select: none;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-sizing: border-box;
+}
+
+@media screen and (max-width: 480px) {
+    .card-item__wrapper {
+        padding: 12px 15px;
+    }
+}
+
+.card-item__top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+}
+
+.card-item__chip {
+    width: 50px;
+}
+
+@media screen and (max-width: 480px) {
+    .card-item__chip {
+        width: 35px;
+    }
+}
+
+.card-item__type {
+    height: 40px;
+    display: flex;
+    justify-content: flex-end;
+    max-width: 90px;
+    width: 100%;
+}
+
+@media screen and (max-width: 480px) {
+    .card-item__type {
+        height: 30px;
+        max-width: 70px;
+    }
+}
+
+.card-item__typeImg {
+    max-width: 100%;
+    object-fit: contain;
+    max-height: 100%;
+}
+
+.card-item__number {
+    font-weight: 500;
+    line-height: 1;
+    color: #fff;
+    font-size: 24px;
+    display: flex;
+    justify-content: center;
+    gap: 1.5px;
+    padding: 8px;
+    cursor: pointer;
+    width: 100%;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 4px;
+    letter-spacing: 1px;
+    box-sizing: border-box;
+}
+
+@media screen and (max-width: 480px) {
+    .card-item__number {
+        font-size: 15px;
+        padding: 6px 4px;
+        margin-bottom: 2px;
+        gap: 0.5px;
+        letter-spacing: 0.5px;
+    }
+}
+
+.card-item__numberItem {
+    min-width: 11px;
+    text-align: center;
+}
+
+@media screen and (max-width: 480px) {
+    .card-item__numberItem {
+        min-width: 7.5px;
+    }
+}
+
+.card-item__numberItem.-active {
+    width: 14px;
+}
+
+@media screen and (max-width: 480px) {
+    .card-item__numberItem.-active {
+        width: 8px;
+    }
+}
+
+.card-item__content {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+}
+
+.card-item__info {
+    max-width: calc(100% - 85px);
+    padding: 5px;
+    cursor: pointer;
+}
+
+@media screen and (max-width: 480px) {
+    .card-item__info {
+        max-width: calc(100% - 65px);
+        padding: 2px;
+    }
+}
+
+.card-item__holder {
+    opacity: 0.8;
+    font-size: 11px;
+    margin-bottom: 4px;
+    font-weight: bold;
+}
+
+@media screen and (max-width: 480px) {
+    .card-item__holder {
+        font-size: 9px;
+        margin-bottom: 2px;
+    }
+}
+
+.card-item__name {
+    font-size: 15px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-transform: uppercase;
+}
+
+@media screen and (max-width: 480px) {
+    .card-item__name {
+        font-size: 11px;
+    }
+}
+
+.card-item__date {
+    font-size: 15px;
+    padding: 5px;
+    text-align: right;
+}
+
+@media screen and (max-width: 480px) {
+    .card-item__date {
+        font-size: 11px;
+        padding: 2px;
+    }
+}
+
+.card-item__dateTitle {
+    opacity: 0.8;
+    font-size: 11px;
+    display: block;
+    font-weight: bold;
+}
+
+@media screen and (max-width: 480px) {
+    .card-item__dateTitle {
+        font-size: 9px;
+    }
+}
+
+.card-item__band {
+    background: #000;
+    width: 100%;
+    height: 45px;
+    position: absolute;
+    top: 20px;
+    left: 0;
+    z-index: 5;
+}
+
+@media screen and (max-width: 480px) {
+    .card-item__band {
+        height: 35px;
+        top: 15px;
+    }
+}
+
+.card-item__cvv {
+    padding: 0 20px;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    z-index: 6;
+    box-sizing: border-box;
+}
+
+@media screen and (max-width: 480px) {
+    .card-item__cvv {
+        padding: 0 15px;
+    }
+}
+
+.card-item__cvvTitle {
+    font-size: 13px;
+    color: #fff;
+    font-weight: bold;
+    text-align: right;
+    margin-bottom: 5px;
+    padding-right: 15px;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+@media screen and (max-width: 480px) {
+    .card-item__cvvTitle {
+        font-size: 10px;
+        margin-bottom: 2px;
+        padding-right: 10px;
+    }
+}
+
+.card-item__cvvBand {
+    height: 45px;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 15px;
+    color: #1a3b5d;
+    font-size: 22px;
+    border-radius: 6px;
+    width: calc(100% - 40px);
+    margin: 0 auto;
+    box-shadow: 0px 3px 8px rgba(0, 0, 0, 0.3);
+    letter-spacing: 3px;
+    font-family: "Source Code Pro", monospace;
+    font-weight: bold;
+    box-sizing: border-box;
+}
+
+@media screen and (max-width: 480px) {
+    .card-item__cvvBand {
+        height: 35px;
+        font-size: 16px;
+        padding-right: 10px;
+        width: calc(100% - 30px);
+        letter-spacing: 2px;
+    }
+}
+
+.card-item__type.-back-logo {
+    position: absolute;
+    right: 25px;
+    bottom: 20px;
+    height: 45px;
+    width: 90px;
+}
+
+@media screen and (max-width: 480px) {
+    .card-item__type.-back-logo {
+        right: 20px;
+        bottom: 12px;
+        height: 30px;
+        width: 70px;
+    }
+}
+
+.card-item__focus {
+    position: absolute;
+    z-index: 3;
+    border-radius: 5px;
+    left: 0;
+    top: 0;
+    transition: all 0.35s cubic-bezier(0.71, 0.03, 0.56, 0.85);
+    opacity: 0;
+    pointer-events: none;
+    border: 2px solid rgba(255, 255, 255, 0.6);
+    background: rgba(8, 20, 47, 0.15);
+}
+
+.card-item__focus.-active {
+    opacity: 1;
+}
+
+.card-form__inner {
+    background: var(--surface);
+    border-radius: 16px;
+    padding: 120px 20px 25px 20px !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+}
+
+.form-row {
+    display: flex;
+    gap: 15px;
+    width: 100%;
+}
+
+.form-row .form-group {
+    flex: 1;
+    min-width: 0;
+}
+
+@media screen and (max-width: 480px) {
+    .card-form__inner {
+        padding-top: 100px !important;
+        padding-bottom: 25px !important;
+    }
+
+    .form-row {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .form-row .form-group {
+        width: 100%;
+    }
+
+    .btn-continue {
+        width: 100%;
+        margin-top: 15px;
+    }
+}

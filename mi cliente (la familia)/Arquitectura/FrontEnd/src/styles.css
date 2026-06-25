@@ -1,0 +1,70 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Playfair+Display:wght@500;600;700&display=swap');
+
+:root {
+  /* Brand Colors */
+  --primary: #1C5442;
+  --primary-dark: #0F2A20;
+  --primary-alpha: rgba(28, 84, 66, 0.12);
+  
+  --secondary: #E14B32;
+  --secondary-dark: #B83A24;
+  --secondary-alpha: rgba(225, 75, 50, 0.12);
+
+  --accent: #7DAF32;
+  --support: #327D32;
+
+  /* Semantic */
+  --success: #7DAF32;
+  --success-alpha: rgba(125, 175, 50, 0.12);
+  --danger: #E14B32;
+  --danger-alpha: rgba(225, 75, 50, 0.12);
+  --warning: #F59E0B;
+
+  /* Surfaces */
+  --bg: #F5F0E8;
+  --surface: #FFFFFF;
+  --surface-raised: #FFFFFF;
+  --hover: #EBE5DB;
+  --border: #E2DACB;
+
+  /* Text */
+  --text-primary: #0F2A20;
+  --text-secondary: #4A6357;
+  --text-muted: #8E9F97;
+
+  /* Typography */
+  --font-heading: 'Playfair Display', serif;
+  --font-body: 'Nunito', sans-serif;
+
+  /* Skeleton */
+  --skeleton-base: #E2DACB;
+  --skeleton-shine: #F5F0E8;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html {
+  font-family: var(--font-body);
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: var(--bg);
+  color: var(--text-primary);
+}
+
+body {
+  min-height: 100dvh;
+  background: var(--bg);
+}
+
+h1, h2, h3, h4, h5, h6, .splash-title, .store-name, .header-title {
+  font-family: var(--font-heading);
+  font-weight: 700;
+}
+
+input, button, select, textarea {
+  font-family: inherit;
+}
+
+::-webkit-scrollbar { width: 0; height: 0; }
+
