@@ -277,3 +277,155 @@
   align-items: center;
   justify-content: center;
 }
+
+/* ---- Botón de galería ---- */
+.gallery-link-btn {
+  position: absolute;
+  bottom: 16px;
+  right: 20px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  z-index: 10;
+  color: var(--text-primary);
+  transition: transform 0.2s;
+}
+.gallery-link-btn:hover { transform: scale(1.05); }
+
+/* ---- Indicadores de imagen (dots) ---- */
+.gallery-dots {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 6px;
+  z-index: 10;
+}
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--border);
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.25s;
+}
+.dot.active {
+  background: var(--primary);
+  width: 20px;
+  border-radius: 4px;
+}
+
+/* ---- Section block header con link ---- */
+.section-block-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.section-block-header h3 {
+  margin: 0;
+}
+.see-all-link {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--primary);
+  text-decoration: none;
+  transition: opacity 0.2s;
+}
+.see-all-link:hover { opacity: 0.7; }
+
+/* ---- Variantes ---- */
+.variants-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.variant-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 9999px;
+  border: 2px solid var(--border);
+  background: var(--surface-raised);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.variant-chip:hover:not(:disabled) {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+.variant-chip.selected {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(27, 61, 50, 0.2);
+}
+.variant-chip.out-of-stock {
+  opacity: 0.4;
+  cursor: not-allowed;
+  text-decoration: line-through;
+}
+.variant-price-hint {
+  font-size: 0.75rem;
+  opacity: 0.85;
+  font-weight: 600;
+}
+
+/* ---- Rating summary ---- */
+.rating-summary-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  background: var(--bg);
+  border-radius: 16px;
+  margin-bottom: 16px;
+}
+.rating-avg {
+  font-size: 2.2rem;
+  font-weight: 900;
+  color: var(--text-primary);
+  line-height: 1;
+}
+.rating-right {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.rating-stars-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.rating-count {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+/* ---- Avatar inicial en reseña ---- */
+.reviewer-avatar-initial {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
