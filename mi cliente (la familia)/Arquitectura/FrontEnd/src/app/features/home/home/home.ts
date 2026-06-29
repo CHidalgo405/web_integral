@@ -26,7 +26,7 @@ import { IconComponent } from '../../../shared/components/icon/icon';
             </div>
           </div>
           <div class="header-actions">
-            <a routerLink="/home" class="action-btn">
+            <a routerLink="/home/notifications" class="action-btn">
               <span class="bell-icon"><app-icon name="bell" size="20" /></span>
               <span class="badge"></span>
             </a>
@@ -45,7 +45,7 @@ import { IconComponent } from '../../../shared/components/icon/icon';
           <div class="hero-content">
             <h2>¡TU SOLUCIÓN,<br>A UN TOQUE!</h2>
             <p>Servicio rápido, fresco and confiable en la puerta de tu hogar.</p>
-            <button class="hero-btn">Explorar</button>
+            <a routerLink="/home/categories" class="hero-btn">Explorar</a>
           </div>
           <div class="hero-image">
             <div class="hero-emoji"><app-icon name="store" size="48" color="var(--primary)" /></div>
