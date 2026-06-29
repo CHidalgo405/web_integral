@@ -1,6 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { UserService } from '../../../core/services/user.service';
+import { CheckoutStateService } from '../../../core/services/checkout-state.service';
 import { Header } from '../../../shared/components/header/header';
 import { Address } from '../../../core/models/address.model';
 
@@ -45,9 +46,22 @@ import { Address } from '../../../core/models/address.model';
 })
 export class CheckoutAddress {
   protected userService = inject(UserService);
+  protected checkoutState = inject(CheckoutStateService);
   private router = inject(Router);
-  selectedAddress = signal<Address | undefined>(this.userService.defaultAddress());
 
-  selectAddress(addr: Address): void { this.selectedAddress.set(addr); }
-  next(): void { this.router.navigate(['/checkout/shipping']); }
+  selectedAddress = signal<Address | undefined>(
+    this.checkoutState.selectedAddress() ?? this.userService.defaultAddress()
+  );
+
+  selectAddress(addr: Address): void {
+    this.selectedAddress.set(addr);
+    this.checkoutState.selectedAddress.set(addr);
+  }
+
+  next(): void {
+    if (this.selectedAddress()) {
+      this.checkoutState.selectedAddress.set(this.selectedAddress());
+    }
+    this.router.navigate(['/checkout/shipping']);
+  }
 }

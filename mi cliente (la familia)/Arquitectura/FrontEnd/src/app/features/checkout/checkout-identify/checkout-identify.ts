@@ -1,6 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { CheckoutStateService } from '../../../core/services/checkout-state.service';
 import { Header } from '../../../shared/components/header/header';
 import { IconComponent } from '../../../shared/components/icon/icon';
 
@@ -38,13 +39,15 @@ import { IconComponent } from '../../../shared/components/icon/icon';
 export class CheckoutIdentify {
   protected authService = inject(AuthService);
   private router = inject(Router);
+  private checkoutState = inject(CheckoutStateService);
 
-  continueAsUser(): void { this.router.navigate(['/checkout/address']); }
-  continueAsGuest(email: string): void { 
-    if (email) {
-      // Guarda email en algún lado (ej. sessionStorage o servicio) para el checkout
-      sessionStorage.setItem('guestEmail', email);
-    }
-    this.router.navigate(['/checkout/address']); 
+  continueAsUser(): void {
+    this.checkoutState.guestEmail.set('');
+    this.router.navigate(['/checkout/address']);
+  }
+
+  continueAsGuest(email: string): void {
+    this.checkoutState.guestEmail.set(email ?? '');
+    this.router.navigate(['/checkout/address']);
   }
 }
