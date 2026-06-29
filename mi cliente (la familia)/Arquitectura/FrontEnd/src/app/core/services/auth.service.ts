@@ -77,6 +77,14 @@ export class AuthService {
     return false;
   }
 
+  updateProfile(data: Partial<User>): void {
+    const user = this.currentUser();
+    if (!user) return;
+    const updated = { ...user, ...data };
+    this.currentUser.set(updated);
+    localStorage.setItem('auth_user', JSON.stringify(updated));
+  }
+
   logout(): void {
     this.currentUser.set(null);
     this.token.set(null);

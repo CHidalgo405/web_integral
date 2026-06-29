@@ -4,6 +4,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { OrderService } from '../../../core/services/order.service';
 import { UserService } from '../../../core/services/user.service';
 import { IconComponent } from '../../../shared/components/icon/icon';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-profile',
@@ -22,6 +23,9 @@ import { IconComponent } from '../../../shared/components/icon/icon';
             <div class="avatar-initials">
               {{ authService.user()?.firstName?.charAt(0) }}{{ authService.user()?.lastName?.charAt(0) }}
             </div>
+            <button class="avatar-edit-overlay" (click)="router.navigate(['/profile/edit'])" aria-label="Editar perfil" type="button">
+              <app-icon name="pencil" size="13" color="#fff" />
+            </button>
             <div class="vip-badge">
               <app-icon name="gem" size="12" fill="currentColor" color="#FFFFFF" />
               <span>VIP Familia</span>
@@ -241,6 +245,25 @@ import { IconComponent } from '../../../shared/components/icon/icon';
       border: 3px solid rgba(255,255,255,0.8);
       z-index: 2;
     }
+
+    /* Pencil edit button on avatar */
+    .avatar-edit-overlay {
+      position: absolute;
+      top: 0;
+      right: -4px;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--secondary);
+      border: 2px solid #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 4;
+      transition: transform 0.2s;
+    }
+    .avatar-edit-overlay:hover { transform: scale(1.12); }
 
     /* Gold/Lime VIP badge */
     .vip-badge {
@@ -501,4 +524,5 @@ export class Profile {
   protected authService = inject(AuthService);
   protected orderService = inject(OrderService);
   protected userService = inject(UserService);
+  protected router = inject(Router);
 }
