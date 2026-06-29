@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { CartService } from '../../../core/services/cart.service';
 import { OrderService } from '../../../core/services/order.service';
@@ -6,10 +6,12 @@ import { UserService } from '../../../core/services/user.service';
 import { MxnCurrencyPipe } from '../../../shared/pipes/currency.pipe';
 import { Header } from '../../../shared/components/header/header';
 
+import { IconComponent } from '../../../shared/components/icon/icon';
+
 @Component({
   selector: 'app-checkout-summary',
   standalone: true,
-  imports: [MxnCurrencyPipe, Header],
+  imports: [MxnCurrencyPipe, Header, IconComponent],
   template: `
     <app-header title="Resumen del Pedido" [showBack]="true"></app-header>
     <div class="checkout-page" id="checkout-summary-page">
@@ -17,7 +19,13 @@ import { Header } from '../../../shared/components/header/header';
         <h3>Productos ({{ cartService.itemCount() }})</h3>
         @for (item of cartService.items(); track item.id) {
           <div class="summary-item">
-            <span>{{ item.product.name }} x{{ item.quantity }}</span>
+            <div class="summary-item-content">
+              <img [src]="item.product.images[0]" [alt]="item.product.name" class="item-image" onerror="this.src='https://placehold.co/48x48/f5f5f0/a0a0a0?text=Img'" />
+              <div class="summary-item-title">
+                <span>{{ item.product.name }}</span>
+                <span class="summary-item-qty">Cant: {{ item.quantity }}</span>
+              </div>
+            </div>
             <span>{{ (item.product.price * item.quantity) | mxnCurrency }}</span>
           </div>
         }
@@ -36,7 +44,14 @@ import { Header } from '../../../shared/components/header/header';
         <div class="summary-row"><span>Envío</span><span>{{ cartService.cart().shipping === 0 ? 'Gratis' : (cartService.cart().shipping | mxnCurrency) }}</span></div>
         <div class="summary-row total"><span>Total</span><span>{{ cartService.cart().total | mxnCurrency }}</span></div>
       </div>
-      <button class="btn-pay" (click)="placeOrder()" id="place-order-btn">Pagar · {{ cartService.cart().total | mxnCurrency }}</button>
+      <button class="btn-pay" [disabled]="isPlacingOrder()" (click)="placeOrder()" id="place-order-btn">
+        @if (isPlacingOrder()) {
+          <app-icon name="loader" size="18" className="app-icon-spin" style="margin-right: 8px;" />
+          Procesando...
+        } @else {
+          Pagar · {{ cartService.cart().total | mxnCurrency }}
+        }
+      </button>
     </div>
   `,
   styleUrl: '../checkout-shared.css',
@@ -47,13 +62,23 @@ export class CheckoutSummary {
   private orderService = inject(OrderService);
   private router = inject(Router);
 
+  isPlacingOrder = signal(false);
+
   placeOrder(): void {
+    if (this.isPlacingOrder()) return;
+    this.isPlacingOrder.set(true);
+    
     const cart = this.cartService.cart();
     const addr = this.userService.defaultAddress();
-    if (addr) {
-      this.orderService.createOrder(cart.items, addr, 'standard', 'card', cart.subtotal, cart.discount, cart.shipping, cart.total);
-      this.cartService.clearCart();
-      this.router.navigate(['/orders/confirmation']);
-    }
+    
+    // Simular retardo de API
+    setTimeout(() => {
+      if (addr) {
+        this.orderService.createOrder(cart.items, addr, 'standard', 'card', cart.subtotal, cart.discount, cart.shipping, cart.total);
+        this.cartService.clearCart();
+        this.router.navigate(['/orders/confirmation']);
+      }
+      this.isPlacingOrder.set(false);
+    }, 1500);
   }
 }

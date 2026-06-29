@@ -12,9 +12,15 @@ import { IconComponent } from '../../../shared/components/icon/icon';
     <app-header title="Método de Pago" [showBack]="true"></app-header>
     <div class="checkout-page" id="checkout-payment-page">
       <div class="step-indicator"><span class="step done">✓</span><span class="step done">✓</span><span class="step done">✓</span><span class="step active">4</span></div>
-      <div class="options-list">
+      <div class="options-list" role="radiogroup">
         @for (opt of paymentOptions; track opt.key) {
-          <div class="option-card" [class.selected]="selected() === opt.key" (click)="select(opt.key)">
+          <div class="option-card" 
+               role="radio" 
+               [attr.aria-checked]="selected() === opt.key" 
+               tabindex="0" 
+               [class.selected]="selected() === opt.key" 
+               (click)="select(opt.key)" 
+               (keydown.enter)="select(opt.key)">
             <span class="opt-icon" style="display: flex; align-items: center;"><app-icon [name]="opt.icon" size="24" /></span>
             <div class="opt-info"><h3>{{ opt.label }}</h3><p>{{ opt.description }}</p></div>
           </div>

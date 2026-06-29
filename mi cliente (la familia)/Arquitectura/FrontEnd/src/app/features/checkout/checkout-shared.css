@@ -1010,3 +1010,105 @@
         margin-top: 15px;
     }
 }
+/* --- ESTADOS Y VALIDACIONES --- */
+.input-error {
+    border-color: var(--secondary, #e0533c) !important;
+    background: #fffafa !important;
+    box-shadow: 0 0 0 4px rgba(224, 83, 60, 0.1) !important;
+}
+
+.error-text {
+    color: var(--secondary, #e0533c);
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-top: -4px;
+    margin-bottom: 8px;
+    display: block;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- EMPTY STATES --- */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    text-align: center;
+    background: #ffffff;
+    border-radius: 20px;
+    border: 2px dashed var(--border, #e0e0d5);
+    margin-bottom: 20px;
+}
+
+.empty-state-icon {
+    font-size: 3rem;
+    color: var(--text-muted, #8a8a80);
+    margin-bottom: 16px;
+    opacity: 0.5;
+}
+
+.empty-state h4 {
+    margin: 0 0 8px;
+    font-size: 1.1rem;
+    color: var(--text-primary, #1b3d32);
+}
+
+.empty-state p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--text-secondary, #666666);
+}
+
+/* --- LOADING SPINNER --- */
+.app-icon-spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    100% { transform: rotate(360deg); }
+}
+
+/* --- STEP INDICATOR CONNECTOR --- */
+.step-indicator {
+    position: relative;
+    z-index: 1;
+}
+.step-indicator::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 20%;
+    right: 20%;
+    height: 2px;
+    background: var(--border, #e0e0d5);
+    z-index: -1;
+    transform: translateY(-50%);
+}
+
+.item-image {
+    width: 48px;
+    height: 48px;
+    border-radius: 8px;
+    object-fit: cover;
+    background: var(--surface-raised, #f5f5f0);
+}
+.summary-item-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.summary-item-title {
+    display: flex;
+    flex-direction: column;
+}
+.summary-item-qty {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+

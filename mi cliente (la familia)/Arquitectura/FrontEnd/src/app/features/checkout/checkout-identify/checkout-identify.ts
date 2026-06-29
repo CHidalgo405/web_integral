@@ -24,8 +24,13 @@ import { IconComponent } from '../../../shared/components/icon/icon';
         <button class="btn-continue" (click)="continueAsUser()" id="continue-user-btn">Continuar como {{ authService.user()?.firstName }}</button>
       } @else {
         <a routerLink="/auth/login" class="btn-continue">Iniciar sesión</a>
+        <div style="text-align: center; margin: 24px 0; color: #8a8a80; font-size: 0.9rem;">— o —</div>
+        <div class="form-group">
+          <label>Continuar como invitado</label>
+          <input #guestEmail type="email" placeholder="Ingresa tu correo electrónico" (keydown.enter)="continueAsGuest(guestEmail.value)" />
+        </div>
+        <button class="btn-guest" (click)="continueAsGuest(guestEmail.value)" id="continue-guest-btn">Continuar</button>
       }
-      <button class="btn-guest" (click)="continueAsGuest()" id="continue-guest-btn">Continuar como invitado</button>
     </div>
   `,
   styleUrl: '../checkout-shared.css',
@@ -35,5 +40,11 @@ export class CheckoutIdentify {
   private router = inject(Router);
 
   continueAsUser(): void { this.router.navigate(['/checkout/address']); }
-  continueAsGuest(): void { this.router.navigate(['/checkout/address']); }
+  continueAsGuest(email: string): void { 
+    if (email) {
+      // Guarda email en algún lado (ej. sessionStorage o servicio) para el checkout
+      sessionStorage.setItem('guestEmail', email);
+    }
+    this.router.navigate(['/checkout/address']); 
+  }
 }

@@ -79,53 +79,65 @@ import { IconComponent } from '../../../shared/components/icon/icon';
 
       <form [formGroup]="form" (ngSubmit)="onSubmit()" class="form-layout card-form__inner">
         <div class="form-group">
-          <label>Número de tarjeta</label>
+          <label for="cardNumber">Número de tarjeta</label>
           <input 
+             id="cardNumber"
              formControlName="number" 
              placeholder="1234 5678 9012 3456" 
              maxlength="19" 
+             [class.input-error]="form.get('number')?.invalid && form.get('number')?.touched"
              (input)="onNumberInput($event)" 
              (focus)="focusInput(cardNumberRef)" 
              (blur)="blurInput()" 
           />
+          @if (form.get('number')?.invalid && form.get('number')?.touched) { <span class="error-text">Número inválido</span> }
         </div>
         
         <div class="form-group">
-          <label>Titular</label>
+          <label for="cardHolder">Titular</label>
           <input 
+             id="cardHolder"
              formControlName="holderName" 
              maxlength="30"
              placeholder="Nombre en la tarjeta" 
+             [class.input-error]="form.get('holderName')?.invalid && form.get('holderName')?.touched"
              (focus)="focusInput(cardNameRef)" 
              (blur)="blurInput()" 
           />
+          @if (form.get('holderName')?.invalid && form.get('holderName')?.touched) { <span class="error-text">El titular es requerido</span> }
         </div>
         
         <div class="form-row">
           <div class="form-group">
-            <label>Vencimiento</label>
+            <label for="cardExpiry">Vencimiento</label>
             <input 
+               id="cardExpiry"
                formControlName="expiry" 
                placeholder="MM/AA" 
                maxlength="5" 
+               [class.input-error]="form.get('expiry')?.invalid && form.get('expiry')?.touched"
                (input)="onExpiryInput($event)" 
                (focus)="focusInput(cardDateRef)" 
                (blur)="blurInput()" 
             />
+            @if (form.get('expiry')?.invalid && form.get('expiry')?.touched) { <span class="error-text">Fecha inválida</span> }
           </div>
           <div class="form-group">
-            <label>CVV</label>
+            <label for="cardCvv">CVV</label>
             <input 
+               id="cardCvv"
                formControlName="cvv" 
                type="password" 
                placeholder="•••" 
                maxlength="4" 
+               [class.input-error]="form.get('cvv')?.invalid && form.get('cvv')?.touched"
                (focus)="flipCard(true)" 
                (blur)="flipCard(false)" 
             />
+            @if (form.get('cvv')?.invalid && form.get('cvv')?.touched) { <span class="error-text">CVV inválido</span> }
           </div>
         </div>
-        
+
         @if (validating()) {
           <div class="validating-msg" style="display: flex; align-items: center; justify-content: center; gap: 8px;">
             <app-icon name="loader" size="18" className="app-icon-spin" />

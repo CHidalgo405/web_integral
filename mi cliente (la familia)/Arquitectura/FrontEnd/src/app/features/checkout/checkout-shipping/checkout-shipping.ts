@@ -12,9 +12,15 @@ import { IconComponent } from '../../../shared/components/icon/icon';
     <app-header title="Método de Envío" [showBack]="true"></app-header>
     <div class="checkout-page" id="checkout-shipping-page">
       <div class="step-indicator"><span class="step done">✓</span><span class="step done">✓</span><span class="step active">3</span><span class="step">4</span></div>
-      <div class="options-list">
+      <div class="options-list" role="radiogroup">
         @for (opt of shippingOptions; track opt.key) {
-          <div class="option-card" [class.selected]="selected() === opt.key" (click)="selected.set(opt.key)">
+          <div class="option-card" 
+               role="radio" 
+               [attr.aria-checked]="selected() === opt.key" 
+               tabindex="0" 
+               [class.selected]="selected() === opt.key" 
+               (click)="selected.set(opt.key)" 
+               (keydown.enter)="selected.set(opt.key)">
             <span class="opt-icon" style="display: flex; align-items: center;"><app-icon [name]="opt.icon" size="24" /></span>
             <div class="opt-info"><h3>{{ opt.label }}</h3><p>{{ opt.description }}</p></div>
             <span class="opt-price">{{ opt.price }}</span>
