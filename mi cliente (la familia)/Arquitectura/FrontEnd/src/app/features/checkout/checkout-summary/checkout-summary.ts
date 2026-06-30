@@ -142,6 +142,10 @@ import { ShippingMethod, PaymentMethod } from '../../../core/models/order.model'
         <div class="summary-row total"><span>Total</span><span>{{ cartService.cart().total | mxnCurrency }}</span></div>
       </div>
 
+      @if (orderError()) {
+        <p class="coupon-msg error">{{ orderError() }}</p>
+      }
+
       <button class="btn-pay" [disabled]="isPlacingOrder() || !canPlaceOrder()" (click)="placeOrder()" id="place-order-btn">
         @if (isPlacingOrder()) {
           <app-icon name="loader" size="18" className="app-icon-spin" style="margin-right: 8px;" />

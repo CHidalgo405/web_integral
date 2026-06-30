@@ -229,41 +229,11 @@ import { IconComponent } from '../../../shared/components/icon/icon';
                   </div>
                 </div>
               } @empty {
-                <!-- Mock details where items array is empty -->
-                <div class="order-item-row">
-                  <span class="order-item-emoji"><app-icon name="package" size="18" /></span>
-                  <div class="order-item-info">
-                    <h4>Manzana Roja y Aguacate (Caja Surtida)</h4>
-                    <p>Detalle predefinido de la plataforma</p>
-                  </div>
-                  <div class="order-item-totals">
-                    <span class="order-item-qty">x1</span>
-                    <span class="order-item-sum">{{ selectedOrder()?.subtotal | mxnCurrency }}</span>
-                  </div>
+                <div class="empty-purchases">
+                  <span class="empty-emoji"><app-icon name="package" size="32" /></span>
+                  <p>Sin productos cargados para este pedido.</p>
                 </div>
               }
-            </div>
-
-            <!-- Totals Breakdown -->
-            <div class="totals-breakdown">
-              <div class="breakdown-row">
-                <span>Subtotal:</span>
-                <span>{{ selectedOrder()?.subtotal | mxnCurrency }}</span>
-              </div>
-              @if (selectedOrder()?.discount) {
-                <div class="breakdown-row discount-row">
-                  <span>Descuento aplicado:</span>
-                  <span>&minus;{{ selectedOrder()?.discount | mxnCurrency }}</span>
-                </div>
-              }
-              <div class="breakdown-row">
-                <span>Costo Envío:</span>
-                <span>{{ selectedOrder()?.shippingCost | mxnCurrency }}</span>
-              </div>
-              <div class="breakdown-row total-row">
-                <span>TOTAL:</span>
-                <span>{{ selectedOrder()?.total | mxnCurrency }}</span>
-              </div>
             </div>
           </div>
         </div>
@@ -360,7 +330,7 @@ export class OrderTracker {
       const names = order.items.map((it) => it.product.name).join(', ');
       return names.length > 30 ? `${names.slice(0, 30)}...` : names;
     }
-    return 'Caja Surtida de Alimentos';
+    return 'Sin productos cargados';
   }
 
   // --- Detail Drawer Managers ---

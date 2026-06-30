@@ -1,145 +1,65 @@
-import { Injectable, signal, computed } from '@angular/core';
-import { Order, OrderStatus, PaymentMethod, ShippingMethod, SavedPaymentMethod } from '../models/order.model';
+import { HttpClient } from '@angular/common/http';
+import { Injectable, computed, inject, signal } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
+import { API_BASE_URL } from '../api.config';
+import { Order, OrderStatus, PaymentMethod, ShippingMethod } from '../models/order.model';
 import { CartItem } from '../models/cart.model';
 import { Address } from '../models/address.model';
+import { Product } from '../models/product.model';
 
-const MOCK_PRODUCTS = {
-  manzana: {
-    id: 'prod-1', name: 'Manzana Roja (kg)', description: 'Manzanas rojas frescas de temporada, ideales para toda la familia.',
-    price: 45.90, originalPrice: 54.90, images: [], category: 'Frutas y Verduras', categoryId: 'cat-1',
-    rating: 4.5, reviewCount: 28, inStock: true, stockQuantity: 50, tags: ['oferta', 'fresco']
-  },
-  leche: {
-    id: 'prod-2', name: 'Leche Entera 1L', description: 'Leche fresca pasteurizada, rica en calcio y vitaminas.',
-    price: 28.50, images: [], category: 'Lácteos', categoryId: 'cat-2',
-    rating: 4.8, reviewCount: 45, inStock: true, stockQuantity: 100
-  },
-  pollo: {
-    id: 'prod-3', name: 'Pechuga de Pollo (kg)', description: 'Pechuga de pollo sin hueso, fresca y de la mejor calidad.',
-    price: 129.90, images: [], category: 'Carnes', categoryId: 'cat-3',
-    rating: 4.3, reviewCount: 19, inStock: true, stockQuantity: 30
-  },
-  pan: {
-    id: 'prod-4', name: 'Pan Bimbo Grande', description: 'Pan de caja blanco, suave y fresco para toda la familia.',
-    price: 62.00, images: [], category: 'Panadería', categoryId: 'cat-4',
-    rating: 4.1, reviewCount: 33, inStock: true, stockQuantity: 40
-  },
-  coca: {
-    id: 'prod-5', name: 'Coca-Cola 2L', description: 'Refresco de cola, perfecto para acompañar tus comidas.',
-    price: 35.00, originalPrice: 39.00, images: [], category: 'Bebidas', categoryId: 'cat-5',
-    rating: 4.7, reviewCount: 67, inStock: true, stockQuantity: 200
-  },
-  platano: {
-    id: 'prod-8', name: 'Plátano (kg)', description: 'Plátanos maduros, ricos en potasio y fibra natural.',
-    price: 22.90, images: [], category: 'Frutas y Verduras', categoryId: 'cat-1',
-    rating: 4.2, reviewCount: 31, inStock: true, stockQuantity: 80
-  }
-};
+interface ApiPurchase {
+  id: string;
+  customer_name?: string | null;
+  delivery_method: 'on_spot' | 'home_delivery' | 'pickup';
+  delivery_address?: string | null;
+  payment_method: 'cash' | 'card';
+  status: 'pending' | 'completed' | 'cancelled';
+  subtotal: string | number;
+  discount_total: string | number;
+  delivery_fee: string | number;
+  total: string | number;
+  created_at: string;
+}
 
-const INITIAL_ORDERS: Order[] = [
-  {
-    id: 'ORD-001',
-    items: [
-      { id: 'ci1', product: MOCK_PRODUCTS.leche, quantity: 1 },
-      { id: 'ci2', product: MOCK_PRODUCTS.pan, quantity: 2 },
-      { id: 'ci3', product: MOCK_PRODUCTS.pollo, quantity: 1 }
-    ],
-    status: 'delivered',
-    shippingAddress: { 
-      id: 'a1', 
-      label: 'Casa', 
-      fullName: 'Carlos Hernández', 
-      street: 'Calle Guillermo Prieto', 
-      exteriorNumber: '7', 
-      neighborhood: 'San Jose', 
-      city: 'CDMX', 
-      state: 'CDMX', 
-      zipCode: '06000', 
-      phone: '+52 555 123 4567', 
-      isDefault: true,
-      notes: 'Casa verde turquesa con enrejado blanco, de un piso.'
-    },
-    shippingMethod: 'standard',
-    paymentMethod: 'card',
-    subtotal: 282.40,
-    discount: 28.24,
-    shippingCost: 0,
-    total: 254.16,
-    trackingNumber: 'TRK-ABC123',
-    createdAt: new Date('2026-05-10T12:00:00Z'),
-    updatedAt: new Date('2026-05-12T14:30:00Z'),
-  },
-  {
-    id: 'ORD-002',
-    items: [
-      { id: 'ci4', product: MOCK_PRODUCTS.manzana, quantity: 2 },
-      { id: 'ci5', product: MOCK_PRODUCTS.platano, quantity: 3 },
-      { id: 'ci6', product: MOCK_PRODUCTS.coca, quantity: 1 }
-    ],
-    status: 'shipped',
-    shippingAddress: { 
-      id: 'a1', 
-      label: 'Casa', 
-      fullName: 'Carlos Hernández', 
-      street: 'Calle Guillermo Prieto', 
-      exteriorNumber: '7', 
-      neighborhood: 'San Jose', 
-      city: 'CDMX', 
-      state: 'CDMX', 
-      zipCode: '06000', 
-      phone: '+52 555 123 4567', 
-      isDefault: true,
-      notes: 'Casa verde turquesa con enrejado blanco, de un piso.'
-    },
-    shippingMethod: 'express',
-    paymentMethod: 'transfer',
-    subtotal: 175.50,
-    discount: 0,
-    shippingCost: 35.00,
-    total: 210.50,
-    trackingNumber: 'TRK-DEF456',
-    estimatedDelivery: new Date('2026-06-10T18:00:00Z'),
-    createdAt: new Date('2026-06-09T09:15:00Z'),
-    updatedAt: new Date('2026-06-09T11:00:00Z'),
-  },
-];
+interface ApiPurchaseItem {
+  id: string;
+  inventory_id: string;
+  inventory_name: string;
+  sku?: string | null;
+  quantity: number;
+  unit_price: string | number;
+  line_total: string | number;
+}
 
 @Injectable({ providedIn: 'root' })
 export class OrderService {
+  private http = inject(HttpClient);
   private ordersSignal = signal<Order[]>([]);
 
   readonly allOrders = computed(() => this.ordersSignal());
+  readonly lastError = signal<string | null>(null);
+  readonly isLoading = signal(false);
 
   constructor() {
-    this.loadFromStorage();
+    this.refresh();
   }
 
-  private loadFromStorage(): void {
-    const storedOrders = localStorage.getItem('admin_orders');
-    if (storedOrders) {
-      // Parse dates properly
-      const parsed: Order[] = JSON.parse(storedOrders).map((o: any) => ({
-        ...o,
-        createdAt: new Date(o.createdAt),
-        updatedAt: new Date(o.updatedAt),
-        estimatedDelivery: o.estimatedDelivery ? new Date(o.estimatedDelivery) : undefined,
-      }));
-      // Reset to initial if they don't have items (older format)
-      const hasEmptyItems = parsed.some((o: any) => !o.items || o.items.length === 0);
-      if (hasEmptyItems) {
-        this.ordersSignal.set(INITIAL_ORDERS);
-        this.saveToStorage();
-      } else {
-        this.ordersSignal.set(parsed);
-      }
-    } else {
-      this.ordersSignal.set(INITIAL_ORDERS);
-      this.saveToStorage();
-    }
-  }
-
-  private saveToStorage(): void {
-    localStorage.setItem('admin_orders', JSON.stringify(this.ordersSignal()));
+  refresh(): void {
+    this.isLoading.set(true);
+    this.http.get<ApiPurchase[]>(`${API_BASE_URL}/purchases`).subscribe({
+      next: (rows) => {
+        const orders = rows.map((row) => this.mapPurchase(row));
+        this.ordersSignal.set(orders);
+        this.isLoading.set(false);
+        this.lastError.set(null);
+        orders.forEach((order) => this.loadItems(order.id));
+      },
+      error: () => {
+        this.lastError.set('No se pudo cargar el historial de pedidos.');
+        this.ordersSignal.set([]);
+        this.isLoading.set(false);
+      },
+    });
   }
 
   getOrders(): Order[] {
@@ -150,32 +70,67 @@ export class OrderService {
     return this.ordersSignal().find((o) => o.id === id);
   }
 
-  createOrder(items: CartItem[], address: Address, shippingMethod: ShippingMethod, paymentMethod: PaymentMethod, subtotal: number, discount: number, shippingCost: number, total: number): Order {
+  loadItems(orderId: string): void {
+    this.http.get<ApiPurchaseItem[]>(`${API_BASE_URL}/purchases/${orderId}/items`).subscribe({
+      next: (items) => {
+        this.ordersSignal.set(
+          this.ordersSignal().map((order) =>
+            order.id === orderId ? { ...order, items: items.map((item) => this.mapPurchaseItem(item)) } : order,
+          ),
+        );
+      },
+      error: () => this.lastError.set('No se pudieron cargar los productos del pedido.'),
+    });
+  }
+
+  async createOrder(
+    items: CartItem[],
+    address: Address,
+    shippingMethod: ShippingMethod,
+    paymentMethod: PaymentMethod,
+    subtotal: number,
+    discount: number,
+    shippingCost: number,
+    total: number,
+  ): Promise<Order> {
+    if (paymentMethod === 'transfer') {
+      throw new Error('La transferencia bancaria aun no esta disponible para pedidos conectados al servidor.');
+    }
+
+    const payload = {
+      delivery_method: this.toApiShippingMethod(shippingMethod),
+      delivery_address: this.formatAddress(address),
+      delivery_fee: shippingCost,
+      payment_method: paymentMethod,
+      status: 'completed',
+      subtotal,
+      discount_total: discount,
+      total,
+      notes: `Cliente: ${address.fullName}. Telefono: ${address.phone}`,
+      items: items.map((item) => ({
+        inventory_id: item.product.id,
+        quantity: item.quantity,
+        unit_price: item.product.price,
+        discount_pct: 0,
+        line_total: item.product.price * item.quantity,
+      })),
+    };
+
+    const created = await firstValueFrom(this.http.post<ApiPurchase>(`${API_BASE_URL}/purchases`, payload));
     const order: Order = {
-      id: `ORD-${String(this.ordersSignal().length + 1).padStart(3, '0')}`,
+      ...this.mapPurchase(created),
       items,
-      status: 'pending',
       shippingAddress: address,
       shippingMethod,
       paymentMethod,
-      subtotal,
-      discount,
-      shippingCost,
-      total,
-      createdAt: new Date(),
-      updatedAt: new Date(),
     };
     this.ordersSignal.set([order, ...this.ordersSignal()]);
-    this.saveToStorage();
+    this.lastError.set(null);
     return order;
   }
 
   cancelOrder(orderId: string): boolean {
-    const updated = this.ordersSignal().map((o) =>
-      o.id === orderId ? { ...o, status: 'cancelled' as OrderStatus, updatedAt: new Date() } : o
-    );
-    this.ordersSignal.set(updated);
-    this.saveToStorage();
+    this.updateOrderStatus(orderId, 'cancelled');
     return true;
   }
 
@@ -200,27 +155,102 @@ export class OrderService {
     ];
   }
 
-  // --- Admin Methods ---
-
   updateOrderStatus(orderId: string, status: OrderStatus, trackingNumber?: string, estimatedDelivery?: Date): void {
-    const updated = this.ordersSignal().map((o) => {
-      if (o.id === orderId) {
-        return {
-          ...o,
-          status,
-          trackingNumber: trackingNumber !== undefined ? trackingNumber : o.trackingNumber,
-          estimatedDelivery: estimatedDelivery !== undefined ? estimatedDelivery : o.estimatedDelivery,
-          updatedAt: new Date(),
-        };
-      }
-      return o;
+    const apiStatus = this.toApiStatus(status);
+    this.http.patch<ApiPurchase>(`${API_BASE_URL}/purchases/${orderId}/status`, { status: apiStatus }).subscribe({
+      next: () => {
+        const updated = this.ordersSignal().map((o) =>
+          o.id === orderId
+            ? { ...o, status, trackingNumber: trackingNumber ?? o.trackingNumber, estimatedDelivery: estimatedDelivery ?? o.estimatedDelivery, updatedAt: new Date() }
+            : o,
+        );
+        this.ordersSignal.set(updated);
+      },
+      error: () => this.lastError.set('No se pudo actualizar el estado del pedido.'),
     });
-    this.ordersSignal.set(updated);
-    this.saveToStorage();
   }
 
   updateOrder(order: Order): void {
     this.ordersSignal.set(this.ordersSignal().map((o) => (o.id === order.id ? order : o)));
-    this.saveToStorage();
+  }
+
+  private mapPurchase(row: ApiPurchase): Order {
+    const createdAt = new Date(row.created_at);
+    return {
+      id: row.id,
+      items: [],
+      status: this.fromApiStatus(row.status),
+      shippingAddress: this.addressFromPurchase(row),
+      shippingMethod: this.fromApiShippingMethod(row.delivery_method),
+      paymentMethod: row.payment_method,
+      subtotal: Number(row.subtotal),
+      discount: Number(row.discount_total),
+      shippingCost: Number(row.delivery_fee),
+      total: Number(row.total),
+      createdAt,
+      updatedAt: createdAt,
+    };
+  }
+
+  private mapPurchaseItem(item: ApiPurchaseItem): CartItem {
+    const product: Product = {
+      id: item.inventory_id,
+      name: item.inventory_name,
+      description: item.sku ? `SKU ${item.sku}` : 'Producto del pedido',
+      price: Number(item.unit_price),
+      images: ['assets/images/productos/placeholder.png'],
+      category: 'Pedido',
+      categoryId: '',
+      rating: 0,
+      reviewCount: 0,
+      inStock: true,
+      stockQuantity: 0,
+    };
+
+    return {
+      id: item.id,
+      product,
+      quantity: Number(item.quantity),
+    };
+  }
+
+  private addressFromPurchase(row: ApiPurchase): Address {
+    return {
+      id: row.id,
+      label: row.delivery_method === 'pickup' || row.delivery_method === 'on_spot' ? 'Tienda' : 'Entrega',
+      fullName: row.customer_name ?? 'Cliente',
+      street: row.delivery_address ?? '',
+      exteriorNumber: '',
+      neighborhood: '',
+      city: '',
+      state: '',
+      zipCode: '',
+      phone: '',
+      isDefault: false,
+    };
+  }
+
+  private toApiShippingMethod(method: ShippingMethod): 'home_delivery' | 'pickup' {
+    return method === 'pickup' ? 'pickup' : 'home_delivery';
+  }
+
+  private fromApiShippingMethod(method: ApiPurchase['delivery_method']): ShippingMethod {
+    return method === 'pickup' || method === 'on_spot' ? 'pickup' : 'standard';
+  }
+
+  private toApiStatus(status: OrderStatus): 'pending' | 'completed' | 'cancelled' {
+    if (status === 'cancelled' || status === 'refunded') return 'cancelled';
+    if (status === 'pending' || status === 'preparing' || status === 'shipped') return 'pending';
+    return 'completed';
+  }
+
+  private fromApiStatus(status: ApiPurchase['status']): OrderStatus {
+    if (status === 'cancelled') return 'cancelled';
+    if (status === 'pending') return 'pending';
+    return 'delivered';
+  }
+
+  private formatAddress(address: Address): string {
+    return `${address.street} ${address.exteriorNumber}${address.interiorNumber ? ', ' + address.interiorNumber : ''}, ${address.neighborhood}, ${address.city}, ${address.state} ${address.zipCode}`;
   }
 }
