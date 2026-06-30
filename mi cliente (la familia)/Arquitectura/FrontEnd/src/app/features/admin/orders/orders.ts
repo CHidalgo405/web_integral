@@ -1,5 +1,5 @@
+// orders.component.ts
 import { Component, inject, signal, computed } from '@angular/core';
-
 import { FormsModule } from '@angular/forms';
 import { OrderService } from '../../../core/services/order.service';
 import { Order, OrderStatus } from '../../../core/models/order.model';
@@ -12,9 +12,12 @@ import { IconComponent } from '../../../shared/components/icon/icon';
   imports: [FormsModule, MxnCurrencyPipe, IconComponent],
   template: `
     <div class="order-tracker">
+      <!-- Header -->
       <div class="manager-header">
-        <div>
-          <h1 class="page-title">Flujo de Pedidos</h1>
+        <div class="header-content">
+          <h1 class="page-title">
+            Flujo de Pedidos
+          </h1>
           <p class="page-subtitle">Monitorea compras, gestiona envíos, actualiza estados y realiza devoluciones</p>
         </div>
       </div>
@@ -26,6 +29,7 @@ import { IconComponent } from '../../../shared/components/icon/icon';
           [class.active]="selectedTab() === 'all'" 
           class="tab-btn"
         >
+          <app-icon name="package" size="14" color="currentColor" />
           Todos <span class="tab-count">{{ countAll() }}</span>
         </button>
         <button 
@@ -33,6 +37,7 @@ import { IconComponent } from '../../../shared/components/icon/icon';
           [class.active]="selectedTab() === 'pending'" 
           class="tab-btn pending-tab"
         >
+          <app-icon name="clock" size="14" color="currentColor" />
           Pendientes <span class="tab-count count-pending">{{ countPending() }}</span>
         </button>
         <button 
@@ -40,6 +45,7 @@ import { IconComponent } from '../../../shared/components/icon/icon';
           [class.active]="selectedTab() === 'preparing'" 
           class="tab-btn preparing-tab"
         >
+          <app-icon name="egg" size="14" color="currentColor" />
           Preparando <span class="tab-count count-preparing">{{ countPreparing() }}</span>
         </button>
         <button 
@@ -47,6 +53,7 @@ import { IconComponent } from '../../../shared/components/icon/icon';
           [class.active]="selectedTab() === 'shipped'" 
           class="tab-btn shipped-tab"
         >
+          <app-icon name="truck" size="14" color="currentColor" />
           En Camino <span class="tab-count count-shipped">{{ countShipped() }}</span>
         </button>
         <button 
@@ -54,14 +61,15 @@ import { IconComponent } from '../../../shared/components/icon/icon';
           [class.active]="selectedTab() === 'completed'" 
           class="tab-btn completed-tab"
         >
+          <app-icon name="check" size="14" color="currentColor" />
           Entregados <span class="tab-count count-completed">{{ countCompleted() }}</span>
         </button>
       </div>
 
-      <!-- Filters & Search Bar -->
+      <!-- Search Bar -->
       <div class="filters-bar">
         <div class="search-input-wrapper">
-          <span class="search-icon"><app-icon name="search" size="18" /></span>
+          <span class="search-icon"><app-icon name="search" size="18" color="var(--text-muted)" /></span>
           <input 
             type="text" 
             [ngModel]="searchQuery()" 
@@ -70,9 +78,13 @@ import { IconComponent } from '../../../shared/components/icon/icon';
             class="form-control"
           />
         </div>
+        <div class="stats-badge">
+          <app-icon name="package" size="16" color="white" />
+          <span>{{ filteredOrders().length }} pedidos</span>
+        </div>
       </div>
 
-      <!-- Orders List / Grid -->
+      <!-- Orders Grid -->
       <div class="orders-grid">
         @for (order of filteredOrders(); track order.id) {
           <div class="order-card" (click)="openDetailDrawer(order)">
@@ -82,27 +94,38 @@ import { IconComponent } from '../../../shared/components/icon/icon';
                 <span class="order-date">{{ formatDate(order.createdAt) }}</span>
               </div>
               <span class="status-badge" [class]="'badge-' + order.status">
+                <app-icon [name]="getStatusIcon(order.status)" size="10" color="currentColor" />
                 {{ orderService.getStatusLabel(order.status) }}
               </span>
             </div>
 
             <div class="order-card-body">
               <div class="info-row">
-                <span class="info-label">Cliente:</span>
+                <span class="info-label">
+                  <app-icon name="user" size="12" color="var(--text-muted)" />
+                  Cliente:
+                </span>
                 <span class="info-value font-bold">{{ order.shippingAddress.fullName }}</span>
               </div>
               <div class="info-row">
-                <span class="info-label">Ubicación:</span>
+                <span class="info-label">
+                  <app-icon name="map-pin" size="12" color="var(--text-muted)" />
+                  Ubicación:
+                </span>
                 <span class="info-value">{{ order.shippingAddress.neighborhood }}, {{ order.shippingAddress.city }}</span>
               </div>
               <div class="info-row">
-                <span class="info-label">Método Pago:</span>
+                <span class="info-label">
+                  <app-icon name="credit-card" size="12" color="var(--text-muted)" />
+                  Método Pago:
+                </span>
                 <span class="info-value text-uppercase">{{ order.paymentMethod }}</span>
               </div>
             </div>
 
             <div class="order-card-footer">
               <span class="items-summary">
+                <app-icon name="shopping-cart" size="12" color="var(--text-muted)" />
                 {{ getItemsSummary(order) }}
               </span>
               <span class="order-total-price">
@@ -112,7 +135,7 @@ import { IconComponent } from '../../../shared/components/icon/icon';
           </div>
         } @empty {
           <div class="card empty-orders-card">
-            <span class="empty-emoji"><app-icon name="package" size="48" /></span>
+            <app-icon name="package" size="48" color="var(--text-muted)" />
             <h3>No se encontraron pedidos</h3>
             <p>No existen compras en este estado de procesamiento actualmente.</p>
           </div>
@@ -120,14 +143,18 @@ import { IconComponent } from '../../../shared/components/icon/icon';
       </div>
     </div>
 
-    <!-- Order Detail Slide-Over/Drawer -->
+    <!-- Order Detail Drawer -->
     @if (isDetailDrawerOpen()) {
       <div class="modal-backdrop" (click)="closeDetailDrawer()"></div>
       <div class="modal-drawer order-detail-drawer">
         <div class="modal-header">
           <div class="drawer-header-title">
-            <h2>Pedido {{ selectedOrder()?.id }}</h2>
+            <h2>
+              <app-icon name="package" size="20" color="var(--primary)" />
+              Pedido {{ selectedOrder()?.id }}
+            </h2>
             <span class="status-badge" [class]="'badge-' + selectedOrder()?.status">
+              <app-icon [name]="getStatusIcon(selectedOrder()?.status || 'pending')" size="10" color="currentColor" />
               {{ orderService.getStatusLabel(selectedOrder()?.status || 'pending') }}
             </span>
           </div>
@@ -137,7 +164,10 @@ import { IconComponent } from '../../../shared/components/icon/icon';
         <div class="drawer-content-scroll">
           <!-- Timeline Tracker -->
           <div class="detail-section">
-            <h3 class="section-title">Progreso del Pedido</h3>
+            <h3 class="section-title">
+              <app-icon name="activity" size="16" color="var(--primary)" />
+              Progreso del Pedido
+            </h3>
             <div class="order-timeline">
               @for (step of getStatusSteps(); track step.key; let idx = $index) {
                 <div class="timeline-step" [class.completed]="isStepCompleted(step.key)" [class.current]="selectedOrder()?.status === step.key">
@@ -150,10 +180,13 @@ import { IconComponent } from '../../../shared/components/icon/icon';
 
           <!-- Customer Address Info -->
           <div class="detail-section">
-            <h3 class="section-title">Dirección de Entrega</h3>
+            <h3 class="section-title">
+              <app-icon name="map-pin" size="16" color="var(--primary)" />
+              Dirección de Entrega
+            </h3>
             <div class="address-box">
-              <span class="address-icon-badge" style="display: inline-flex; align-items: center; gap: 4px;">
-                <app-icon name="map-pin" size="14" />
+              <span class="address-icon-badge">
+                <app-icon name="home" size="14" color="var(--primary)" />
                 <span>{{ selectedOrder()?.shippingAddress?.label }}</span>
               </span>
               <h4 class="addr-name">{{ selectedOrder()?.shippingAddress?.fullName }}</h4>
@@ -165,38 +198,44 @@ import { IconComponent } from '../../../shared/components/icon/icon';
               </p>
               <p class="addr-text">Col. {{ selectedOrder()?.shippingAddress?.neighborhood }}, {{ selectedOrder()?.shippingAddress?.zipCode }}</p>
               <p class="addr-text">{{ selectedOrder()?.shippingAddress?.city }}, {{ selectedOrder()?.shippingAddress?.state }}</p>
-              <p class="addr-phone" style="display: flex; align-items: center; gap: 4px;">
-                <app-icon name="phone" size="14" />
+              <p class="addr-phone">
+                <app-icon name="phone" size="14" color="var(--primary)" />
                 <span>Teléfono: {{ selectedOrder()?.shippingAddress?.phone }}</span>
               </p>
             </div>
           </div>
 
-          <!-- Shipping Details & Tracking -->
+          <!-- Shipping Details -->
           <div class="detail-section">
-            <h3 class="section-title">Información de Envío</h3>
+            <h3 class="section-title">
+              <app-icon name="truck" size="16" color="var(--primary)" />
+              Información de Envío
+            </h3>
             <div class="form-row-2">
               <div class="form-group">
                 <label class="label-control">Método de Envío</label>
-                <span class="form-value-tag" style="display: inline-flex; align-items: center; gap: 4px;">
-                  <app-icon [name]="selectedOrder()?.shippingMethod === 'express' ? 'bolt' : 'truck'" size="14" />
+                <span class="form-value-tag">
+                  <app-icon [name]="selectedOrder()?.shippingMethod === 'express' ? 'bolt' : 'truck'" size="14" color="var(--primary)" />
                   <span>{{ selectedOrder()?.shippingMethod === 'express' ? 'Express' : 'Estándar' }}</span>
                 </span>
               </div>
               <div class="form-group">
                 <label class="label-control">Método de Pago</label>
-                <span class="form-value-tag text-uppercase" style="display: inline-flex; align-items: center; gap: 4px;">
-                  <app-icon name="credit-card" size="14" />
+                <span class="form-value-tag text-uppercase">
+                  <app-icon name="credit-card" size="14" color="var(--primary)" />
                   <span>{{ selectedOrder()?.paymentMethod }}</span>
                 </span>
               </div>
             </div>
 
-            <!-- Tracking number configurator -->
+            <!-- Tracking number -->
             @if (selectedOrder()?.status === 'shipped' || selectedOrder()?.status === 'delivered' || selectedOrder()?.status === 'preparing') {
               <div class="tracking-manager">
                 <div class="form-group">
-                  <label for="tracking-num" class="label-control">Código de Rastreo / Guía</label>
+                  <label for="tracking-num" class="label-control">
+                    <app-icon name="hash" size="14" color="var(--text-muted)" />
+                    Código de Rastreo / Guía
+                  </label>
                   <div class="input-with-button">
                     <input 
                       type="text" 
@@ -205,7 +244,10 @@ import { IconComponent } from '../../../shared/components/icon/icon';
                       placeholder="Ej. TRK-MX98765"
                       class="form-control"
                     />
-                    <button (click)="saveTracking()" class="btn btn-primary btn-sm-save">Guardar</button>
+                    <button (click)="saveTracking()" class="btn btn-primary btn-sm-save">
+                      <app-icon name="check" size="14" color="white" />
+                      Guardar
+                    </button>
                   </div>
                 </div>
               </div>
@@ -214,11 +256,16 @@ import { IconComponent } from '../../../shared/components/icon/icon';
 
           <!-- Items Table -->
           <div class="detail-section">
-            <h3 class="section-title">Productos del Pedido</h3>
+            <h3 class="section-title">
+              <app-icon name="shopping-cart" size="16" color="var(--primary)" />
+              Productos del Pedido
+            </h3>
             <div class="items-list">
               @for (item of selectedOrder()?.items; track item.product.id) {
                 <div class="order-item-row">
-                  <span class="order-item-emoji"><app-icon name="package" size="18" /></span>
+                  <div class="order-item-emoji">
+                    <app-icon name="package" size="18" color="var(--primary)" />
+                  </div>
                   <div class="order-item-info">
                     <h4>{{ item.product.name }}</h4>
                     <p>{{ item.product.price | mxnCurrency }} c/u</p>
@@ -230,7 +277,7 @@ import { IconComponent } from '../../../shared/components/icon/icon';
                 </div>
               } @empty {
                 <div class="empty-purchases">
-                  <span class="empty-emoji"><app-icon name="package" size="32" /></span>
+                  <app-icon name="package" size="32" color="var(--text-muted)" />
                   <p>Sin productos cargados para este pedido.</p>
                 </div>
               }
@@ -238,25 +285,47 @@ import { IconComponent } from '../../../shared/components/icon/icon';
           </div>
         </div>
 
-        <!-- Order Workflow Transition Actions Footer -->
+        <!-- Order Workflow Actions Footer -->
         <div class="modal-footer workflow-actions">
           @if (selectedOrder()?.status === 'pending') {
-            <button (click)="cancelOrder()" class="btn btn-secondary flex-grow-1">Cancelar Compra</button>
-            <button (click)="advanceStatus('preparing')" class="btn btn-primary flex-grow-1" style="display: inline-flex; align-items: center; justify-content: center; gap: 8px;">Preparar Pedido <app-icon name="egg" size="18" /></button>
+            <button (click)="cancelOrder()" class="btn btn-secondary flex-grow-1">
+              <app-icon name="x" size="16" />
+              Cancelar Compra
+            </button>
+            <button (click)="advanceStatus('preparing')" class="btn btn-primary flex-grow-1">
+              <app-icon name="egg" size="16" color="white" />
+              Preparar Pedido
+            </button>
           }
           @if (selectedOrder()?.status === 'preparing') {
-            <button (click)="cancelOrder()" class="btn btn-secondary flex-grow-1">Cancelar Compra</button>
-            <button (click)="advanceStatus('shipped')" class="btn btn-primary flex-grow-1" style="display: inline-flex; align-items: center; justify-content: center; gap: 8px;">Marcar En Camino <app-icon name="truck" size="18" /></button>
+            <button (click)="cancelOrder()" class="btn btn-secondary flex-grow-1">
+              <app-icon name="x" size="16" />
+              Cancelar Compra
+            </button>
+            <button (click)="advanceStatus('shipped')" class="btn btn-primary flex-grow-1">
+              <app-icon name="truck" size="16" color="white" />
+              Marcar En Camino
+            </button>
           }
           @if (selectedOrder()?.status === 'shipped') {
-            <button (click)="advanceStatus('preparing')" class="btn btn-secondary flex-grow-1">Regresar a Cocina</button>
-            <button (click)="advanceStatus('delivered')" class="btn btn-primary flex-grow-1" style="display: inline-flex; align-items: center; justify-content: center; gap: 8px;">Entregado con Éxito <app-icon name="check" size="18" /></button>
+            <button (click)="advanceStatus('preparing')" class="btn btn-secondary flex-grow-1">
+              <app-icon name="arrow-left" size="16" />
+              Regresar a Cocina
+            </button>
+            <button (click)="advanceStatus('delivered')" class="btn btn-primary flex-grow-1">
+              <app-icon name="check" size="16" color="white" />
+              Entregado con Éxito
+            </button>
           }
           @if (selectedOrder()?.status === 'delivered') {
-            <button (click)="advanceStatus('refunded')" class="btn btn-secondary btn-full" style="display: inline-flex; align-items: center; justify-content: center; gap: 8px;">Realizar Reembolso <app-icon name="arrow-left" size="18" /></button>
+            <button (click)="advanceStatus('refunded')" class="btn btn-secondary btn-full">
+              <app-icon name="arrow-left" size="16" />
+              Realizar Reembolso
+            </button>
           }
           @if (selectedOrder()?.status === 'cancelled' || selectedOrder()?.status === 'refunded') {
             <div class="closed-flow-msg">
+              <app-icon name="lock" size="16" color="var(--text-muted)" />
               Este flujo de pedido se encuentra cerrado. No se requieren más acciones.
             </div>
           }
@@ -269,29 +338,21 @@ import { IconComponent } from '../../../shared/components/icon/icon';
 export class OrderTracker {
   protected orderService = inject(OrderService);
 
-  // Filters State Signals
   selectedTab = signal<string>('all');
   searchQuery = signal('');
-
-  // Detail Modal Overlay Signals
   isDetailDrawerOpen = signal<boolean>(false);
   selectedOrder = signal<Order | null>(null);
-
-  // Temporary courier tracking fields
   tempTrackingNumber = '';
 
-  // Pipeline counters
   readonly countAll = computed(() => this.orderService.getOrders().length);
   readonly countPending = computed(() => this.orderService.getOrders().filter(o => o.status === 'pending').length);
   readonly countPreparing = computed(() => this.orderService.getOrders().filter(o => o.status === 'preparing').length);
   readonly countShipped = computed(() => this.orderService.getOrders().filter(o => o.status === 'shipped').length);
   readonly countCompleted = computed(() => this.orderService.getOrders().filter(o => o.status === 'delivered' || o.status === 'cancelled').length);
 
-  // Filtered Orders Pipeline
   readonly filteredOrders = computed(() => {
     let list = this.orderService.getOrders();
 
-    // Tab filter
     const tab = this.selectedTab();
     if (tab === 'pending') {
       list = list.filter((o) => o.status === 'pending');
@@ -303,7 +364,6 @@ export class OrderTracker {
       list = list.filter((o) => o.status === 'delivered' || o.status === 'cancelled' || o.status === 'refunded');
     }
 
-    // Text search
     if (this.searchQuery()) {
       const q = this.searchQuery().toLowerCase();
       list = list.filter(
@@ -315,6 +375,18 @@ export class OrderTracker {
 
     return list;
   });
+
+  getStatusIcon(status: string): string {
+    const icons: Record<string, string> = {
+      'pending': 'clock',
+      'preparing': 'egg',
+      'shipped': 'truck',
+      'delivered': 'check',
+      'cancelled': 'x',
+      'refunded': 'arrow-left'
+    };
+    return icons[status] || 'package';
+  }
 
   formatDate(date: Date): string {
     return date.toLocaleString('es-MX', {
@@ -333,8 +405,6 @@ export class OrderTracker {
     return 'Sin productos cargados';
   }
 
-  // --- Detail Drawer Managers ---
-
   openDetailDrawer(order: Order): void {
     this.selectedOrder.set(order);
     this.tempTrackingNumber = order.trackingNumber || '';
@@ -345,8 +415,6 @@ export class OrderTracker {
     this.isDetailDrawerOpen.set(false);
     this.selectedOrder.set(null);
   }
-
-  // --- Timeline computations ---
 
   getStatusSteps() {
     return this.orderService.getStatusSteps();
@@ -360,11 +428,9 @@ export class OrderTracker {
     const currentIdx = sequence.indexOf(order.status);
     const stepIdx = sequence.indexOf(stepKey);
 
-    if (currentIdx === -1) return false; // for cancelled/refunded
+    if (currentIdx === -1) return false;
     return stepIdx <= currentIdx;
   }
-
-  // --- Actions ---
 
   advanceStatus(nextStatus: string): void {
     const order = this.selectedOrder();
@@ -372,7 +438,6 @@ export class OrderTracker {
 
     this.orderService.updateOrderStatus(order.id, nextStatus as OrderStatus);
 
-    // Refresh selected order reactively
     const updated = this.orderService.getOrderById(order.id);
     if (updated) {
       this.selectedOrder.set(updated);
@@ -406,6 +471,3 @@ export class OrderTracker {
     }
   }
 }
-
-
-
