@@ -1,5 +1,5 @@
+// products.component.ts
 import { Component, inject, signal, computed } from '@angular/core';
-
 import { FormsModule } from '@angular/forms';
 import { SlicePipe } from '@angular/common';
 import { ProductService } from '../../../core/services/product.service';
@@ -13,25 +13,30 @@ import { IconComponent } from '../../../shared/components/icon/icon';
   imports: [FormsModule, MxnCurrencyPipe, SlicePipe, IconComponent],
   template: `
     <div class="product-manager">
+      <!-- Header -->
       <div class="manager-header">
-        <div>
-          <h1 class="page-title">Administración de Productos</h1>
+        <div class="header-content">
+          <h1 class="page-title">
+            Administración de Productos
+          </h1>
           <p class="page-subtitle">Gestiona tu catálogo, precios, existencias y categorías</p>
         </div>
         <div class="header-actions">
-          <button (click)="openCategoryModal()" class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: 8px;">
-            <app-icon name="tag" size="18" /> Categorías
+          <button (click)="openCategoryModal()" class="btn btn-secondary">
+            <app-icon name="tag" size="16" color="var(--primary)" />
+            Categorías
           </button>
-          <button (click)="openAddModal()" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 8px;">
-            <app-icon name="plus" size="18" /> Nuevo Producto
+          <button (click)="openAddModal()" class="btn btn-primary">
+            <app-icon name="plus" size="16" color="white" />
+            Nuevo Producto
           </button>
         </div>
       </div>
 
-      <!-- Filters & Search bar -->
+      <!-- Filters Bar -->
       <div class="filters-bar">
         <div class="search-input-wrapper">
-          <span class="search-icon"><app-icon name="search" size="18" /></span>
+          <span class="search-icon"><app-icon name="search" size="18" color="var(--text-muted)" /></span>
           <input 
             type="text" 
             [ngModel]="searchQuery()" 
@@ -51,22 +56,38 @@ import { IconComponent } from '../../../shared/components/icon/icon';
           <select [ngModel]="selectedStockFilter()" (ngModelChange)="selectedStockFilter.set($event)" class="form-control select-control">
             <option value="all">Todos los Inventarios</option>
             <option value="instock">En Stock</option>
-            <option value="lowstock">Stock Bajo (<=10)</option>
+            <option value="lowstock">Stock Bajo (&lt;=10)</option>
             <option value="out">Agotados</option>
           </select>
         </div>
+        <div class="stats-badge">
+          <app-icon name="package" size="16" color="white" />
+          <span>{{ filteredProducts().length }} productos</span>
+        </div>
       </div>
 
-      <!-- Products List / Table -->
+      <!-- Products Table -->
       <div class="card table-card">
         <div class="table-responsive">
           <table class="products-table">
             <thead>
               <tr>
-                <th class="col-product">Producto</th>
-                <th>Categoría</th>
-                <th>Precio</th>
-                <th class="col-stock">Existencias</th>
+                <th class="col-product">
+                  <app-icon name="shopping-cart" size="14" color="var(--text-muted)" />
+                  Producto
+                </th>
+                <th>
+                  <app-icon name="tag" size="14" color="var(--text-muted)" />
+                  Categoría
+                </th>
+                <th>
+                  <app-icon name="dollar-sign" size="14" color="var(--text-muted)" />
+                  Precio
+                </th>
+                <th class="col-stock">
+                  <app-icon name="package" size="14" color="var(--text-muted)" />
+                  Existencias
+                </th>
                 <th>Estado</th>
                 <th class="col-actions">Acciones</th>
               </tr>
@@ -76,20 +97,26 @@ import { IconComponent } from '../../../shared/components/icon/icon';
                 <tr>
                   <td>
                     <div class="product-info-cell">
-                      <div class="product-cell-emoji" style="overflow: hidden; padding: 0;">
-                        <img [src]="prod.images[0] || 'assets/images/productos/placeholder.png'" [alt]="prod.name" style="width:100%;height:100%;object-fit:cover;" />
+                      <div class="product-cell-emoji">
+                        <img [src]="prod.images[0] || 'assets/images/productos/placeholder.png'" [alt]="prod.name" />
                       </div>
                       <div>
                         <h4 class="product-cell-name">{{ prod.name }}</h4>
                         <p class="product-cell-desc">{{ prod.description | slice:0:60 }}{{ prod.description.length > 60 ? '...' : '' }}</p>
                         @if (prod.originalPrice) {
-                          <span class="cell-promo-tag">Oferta</span>
+                          <span class="cell-promo-tag">
+                            <app-icon name="star" size="10" color="#FFD700" fill="currentColor" />
+                            Oferta
+                          </span>
                         }
                       </div>
                     </div>
                   </td>
                   <td>
-                    <span class="category-tag">{{ prod.category }}</span>
+                    <span class="category-tag">
+                      <app-icon [name]="getCategoryIcon(prod.categoryId)" size="12" color="var(--primary)" />
+                      {{ prod.category }}
+                    </span>
                   </td>
                   <td>
                     <div class="price-cell">
@@ -101,11 +128,15 @@ import { IconComponent } from '../../../shared/components/icon/icon';
                   </td>
                   <td>
                     <div class="stock-adjuster">
-                      <button (click)="adjustStock(prod, -1)" class="btn-stock-adjust" [disabled]="prod.stockQuantity <= 0">&minus;</button>
-                      <span class="stock-qty-text" [class.low-stock]="prod.stockQuantity <= 10" [class.out-stock]="prod.stockQuantity === 0">
+                      <button (click)="adjustStock(prod, -1)" class="btn-stock-adjust" [disabled]="prod.stockQuantity <= 0">
+                        <app-icon name="minus" size="12" />
+                      </button>
+                      <span class="stock-qty-text" [class.low-stock]="prod.stockQuantity <= 10 && prod.stockQuantity > 0" [class.out-stock]="prod.stockQuantity === 0">
                         {{ prod.stockQuantity }}
                       </span>
-                      <button (click)="adjustStock(prod, 1)" class="btn-stock-adjust">&plus;</button>
+                      <button (click)="adjustStock(prod, 1)" class="btn-stock-adjust">
+                        <app-icon name="plus" size="12" />
+                      </button>
                     </div>
                   </td>
                   <td>
@@ -118,21 +149,26 @@ import { IconComponent } from '../../../shared/components/icon/icon';
                       />
                       <span class="switch-slider"></span>
                       <span class="status-text" [class.active-status]="prod.inStock">
+                        <app-icon [name]="prod.inStock ? 'check' : 'clock'" size="12" color="currentColor" />
                         {{ prod.inStock ? 'Activo' : 'Pausado' }}
                       </span>
                     </label>
                   </td>
                   <td>
                     <div class="action-buttons">
-                      <button (click)="openEditModal(prod)" class="action-btn btn-edit" title="Editar" style="display: inline-flex; align-items: center; justify-content: center;"><app-icon name="pencil" size="16" /></button>
-                      <button (click)="deleteProduct(prod)" class="action-btn btn-delete" title="Eliminar" style="display: inline-flex; align-items: center; justify-content: center;"><app-icon name="trash" size="16" /></button>
+                      <button (click)="openEditModal(prod)" class="action-btn btn-edit" title="Editar">
+                        <app-icon name="pencil" size="14" color="var(--primary)" />
+                      </button>
+                      <button (click)="deleteProduct(prod)" class="action-btn btn-delete" title="Eliminar">
+                        <app-icon name="trash" size="14" color="var(--danger)" />
+                      </button>
                     </div>
                   </td>
                 </tr>
               } @empty {
                 <tr>
                   <td colspan="6" class="table-empty">
-                    <span class="empty-emoji"><app-icon name="leaf" size="48" /></span>
+                    <app-icon name="package" size="48" color="var(--text-muted)" />
                     <p>No se encontraron productos con los filtros seleccionados.</p>
                   </td>
                 </tr>
@@ -143,17 +179,23 @@ import { IconComponent } from '../../../shared/components/icon/icon';
       </div>
     </div>
 
-    <!-- Product Slide-Over/Modal -->
+    <!-- Product Modal -->
     @if (isProductModalOpen()) {
       <div class="modal-backdrop" (click)="closeProductModal()"></div>
       <div class="modal-drawer">
         <div class="modal-header">
-          <h2>{{ modalTitle() }}</h2>
+          <div class="drawer-header-title">
+            <app-icon name="package" size="20" color="var(--primary)" />
+            <h2>{{ modalTitle() }}</h2>
+          </div>
           <button (click)="closeProductModal()" class="modal-close-btn">&times;</button>
         </div>
         <form (ngSubmit)="saveProductForm()" class="modal-form">
           <div class="form-group">
-            <label for="p-name" class="label-control">Nombre del Producto *</label>
+            <label for="p-name" class="label-control">
+              <app-icon name="pencil" size="12" color="var(--text-muted)" />
+              Nombre del Producto *
+            </label>
             <input 
               type="text" 
               id="p-name" 
@@ -167,7 +209,10 @@ import { IconComponent } from '../../../shared/components/icon/icon';
 
           <div class="form-row-2">
             <div class="form-group">
-              <label for="p-price" class="label-control">Precio al Público *</label>
+              <label for="p-price" class="label-control">
+                <app-icon name="dollar-sign" size="12" color="var(--text-muted)" />
+                Precio al Público *
+              </label>
               <input 
                 type="number" 
                 id="p-price" 
@@ -180,7 +225,10 @@ import { IconComponent } from '../../../shared/components/icon/icon';
               />
             </div>
             <div class="form-group">
-              <label for="p-origPrice" class="label-control">Precio Original (Opcional)</label>
+              <label for="p-origPrice" class="label-control">
+                <app-icon name="tag" size="12" color="var(--text-muted)" />
+                Precio Original (Opcional)
+              </label>
               <input 
                 type="number" 
                 id="p-origPrice" 
@@ -195,7 +243,10 @@ import { IconComponent } from '../../../shared/components/icon/icon';
 
           <div class="form-row-2">
             <div class="form-group">
-              <label for="p-category" class="label-control">Categoría *</label>
+              <label for="p-category" class="label-control">
+                <app-icon name="tag" size="12" color="var(--text-muted)" />
+                Categoría *
+              </label>
               <select 
                 id="p-category" 
                 name="categoryId" 
@@ -210,7 +261,10 @@ import { IconComponent } from '../../../shared/components/icon/icon';
               </select>
             </div>
             <div class="form-group">
-              <label for="p-stock" class="label-control">Existencias Iniciales *</label>
+              <label for="p-stock" class="label-control">
+                <app-icon name="package" size="12" color="var(--text-muted)" />
+                Existencias Iniciales *
+              </label>
               <input 
                 type="number" 
                 id="p-stock" 
@@ -224,7 +278,10 @@ import { IconComponent } from '../../../shared/components/icon/icon';
           </div>
 
           <div class="form-group">
-            <label for="p-desc" class="label-control">Descripción *</label>
+            <label for="p-desc" class="label-control">
+              <app-icon name="file-text" size="12" color="var(--text-muted)" />
+              Descripción *
+            </label>
             <textarea 
               id="p-desc" 
               name="description" 
@@ -245,31 +302,46 @@ import { IconComponent } from '../../../shared/components/icon/icon';
                 class="switch-input"
               />
               <span class="switch-slider"></span>
-              <span class="status-text font-bold">Disponible para Venta Directa</span>
+              <span class="status-text font-bold">
+                <app-icon [name]="productForm.inStock ? 'check' : 'clock'" size="14" color="var(--primary)" />
+                Disponible para Venta Directa
+              </span>
             </label>
           </div>
 
           <div class="modal-footer">
-            <button type="button" (click)="closeProductModal()" class="btn btn-secondary btn-full">Cancelar</button>
-            <button type="submit" class="btn btn-primary btn-full">Guardar Producto</button>
+            <button type="button" (click)="closeProductModal()" class="btn btn-secondary btn-full">
+              <app-icon name="x" size="16" />
+              Cancelar
+            </button>
+            <button type="submit" class="btn btn-primary btn-full">
+              <app-icon name="check" size="16" color="white" />
+              Guardar Producto
+            </button>
           </div>
         </form>
       </div>
     }
 
-    <!-- Category Manager Modal -->
+    <!-- Category Modal -->
     @if (isCategoryModalOpen()) {
       <div class="modal-backdrop" (click)="closeCategoryModal()"></div>
       <div class="modal-drawer mini-drawer">
         <div class="modal-header">
-          <h2>Gestión de Categorías</h2>
+          <div class="drawer-header-title">
+            <app-icon name="tag" size="20" color="var(--primary)" />
+            <h2>Gestión de Categorías</h2>
+          </div>
           <button (click)="closeCategoryModal()" class="modal-close-btn">&times;</button>
         </div>
         <div class="modal-content-scroll">
           
           <!-- Add Category form -->
           <form (ngSubmit)="saveCategoryForm()" class="category-add-form">
-            <h3>Nueva Categoría</h3>
+            <h3>
+              <app-icon name="plus" size="14" color="var(--primary)" />
+              Nueva Categoría
+            </h3>
             <div class="form-row-category">
               <input 
                 type="text" 
@@ -287,25 +359,32 @@ import { IconComponent } from '../../../shared/components/icon/icon';
                 placeholder="Icono (Ej. leaf, bread)"
                 class="form-control icon-input"
               />
-              <button type="submit" class="btn btn-primary btn-icon-only" style="display: inline-flex; align-items: center; justify-content: center;"><app-icon name="plus" size="18" /></button>
+              <button type="submit" class="btn btn-primary btn-icon-only">
+                <app-icon name="plus" size="18" color="white" />
+              </button>
             </div>
           </form>
 
           <!-- Categories List -->
           <div class="category-list-wrapper">
-            <h3>Categorías Existentes</h3>
+            <h3>
+              <app-icon name="list" size="14" color="var(--primary)" />
+              Categorías Existentes
+            </h3>
             <div class="cat-list">
               @for (cat of productService.getCategories(); track cat.id) {
                 <div class="cat-item-row">
                   <div class="cat-item-info">
-                    <span class="cat-item-emoji" style="display: flex; align-items: center;"><app-icon [name]="cat.icon" size="24" /></span>
+                    <span class="cat-item-emoji">
+                      <app-icon [name]="cat.icon" size="24" color="var(--primary)" />
+                    </span>
                     <div>
                       <h4>{{ cat.name }}</h4>
                       <p>{{ cat.productCount }} productos activos</p>
                     </div>
                   </div>
-                  <button (click)="deleteCategory(cat)" class="action-btn btn-delete btn-sm" [disabled]="cat.productCount > 0" title="Eliminar (Debe estar vacía)" style="display: inline-flex; align-items: center; justify-content: center;">
-                    <app-icon name="trash" size="16" />
+                  <button (click)="deleteCategory(cat)" class="action-btn btn-delete btn-sm" [disabled]="cat.productCount > 0" title="Eliminar (Debe estar vacía)">
+                    <app-icon name="trash" size="14" color="var(--danger)" />
                   </button>
                 </div>
               }
@@ -321,17 +400,14 @@ import { IconComponent } from '../../../shared/components/icon/icon';
 export class ProductManager {
   protected productService = inject(ProductService);
 
-  // Filter bindings
   searchQuery = signal('');
   selectedCategoryFilter = signal('');
   selectedStockFilter = signal('all');
 
-  // Modal State Signals
   isProductModalOpen = signal<boolean>(false);
   isCategoryModalOpen = signal<boolean>(false);
   modalTitle = signal<string>('Nuevo Producto');
 
-  // Forms Binding Objects
   productForm = {
     id: '',
     name: '',
@@ -349,7 +425,6 @@ export class ProductManager {
     icon: '',
   };
 
-  // Filtered Products computation
   readonly filteredProducts = computed(() => {
     let list = this.productService.getProducts();
 
@@ -379,7 +454,6 @@ export class ProductManager {
     return this.productService.getCategories().find((c) => c.id === categoryId)?.icon ?? 'package';
   }
 
-  // --- Stock Quick Adjust ---
   adjustStock(product: Product, delta: number): void {
     const newQty = Math.max(0, product.stockQuantity + delta);
     const updated: Product = {
@@ -397,8 +471,6 @@ export class ProductManager {
     };
     this.productService.updateProduct(updated);
   }
-
-  // --- CRUD Modals triggers ---
 
   openAddModal(): void {
     this.modalTitle.set('Nuevo Producto');
@@ -455,16 +527,14 @@ export class ProductManager {
     };
 
     if (this.productForm.id) {
-      // Edit mode
       const fullProduct: Product = {
         ...pData,
         id: this.productForm.id,
-        rating: 4.5, // keep generic
+        rating: 4.5,
         reviewCount: 15,
       };
       this.productService.updateProduct(fullProduct);
     } else {
-      // Create mode
       this.productService.addProduct(pData);
     }
 
@@ -477,8 +547,6 @@ export class ProductManager {
       this.productService.deleteProduct(product.id);
     }
   }
-
-  // --- Category management ---
 
   openCategoryModal(): void {
     this.categoryForm = { name: '', icon: '' };
@@ -502,7 +570,7 @@ export class ProductManager {
   }
 
   deleteCategory(category: ProductCategory): void {
-    if (category.productCount > 0) return; // double safeguard
+    if (category.productCount > 0) return;
     const confirmDelete = confirm(`¿Deseas eliminar la categoría "${category.name}"?`);
     if (confirmDelete) {
       this.productService.deleteCategory(category.id);
