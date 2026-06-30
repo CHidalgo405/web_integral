@@ -1,5 +1,6 @@
 import { Component, inject, signal, ViewChildren, QueryList, ElementRef, AfterViewInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Location } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
 import { IconComponent } from '../../../shared/components/icon/icon';
@@ -7,7 +8,7 @@ import { IconComponent } from '../../../shared/components/icon/icon';
 @Component({
   selector: 'app-verify-otp',
   standalone: true,
-  imports: [FormsModule, IconComponent],
+  imports: [FormsModule, IconComponent, RouterLink],
   template: `
     <div class="verify-page" id="verify-otp-page">
 
@@ -88,11 +89,11 @@ import { IconComponent } from '../../../shared/components/icon/icon';
           </button>
         </div>
 
-        <!-- Enlace para volver al login -->
-        <a routerLink="/auth/login" class="back-link">
-          <app-icon name="arrow-left" size="16" color="var(--text-secondary)" />
-          Volver al inicio de sesión
-        </a>
+        <!-- Botón Volver atrás -->
+        <button class="btn-back" type="button" (click)="goBack()" id="btn-back">
+          <app-icon name="arrow-left" size="16" color="var(--primary)" />
+          Volver atrás
+        </button>
       </div>
     </div>
   `,
@@ -367,24 +368,33 @@ import { IconComponent } from '../../../shared/components/icon/icon';
       transform: none;
     }
 
-    /* ---- Back link ---- */
-    .back-link {
+    /* ---- Back button ---- */
+    .btn-back {
       display: flex;
       align-items: center;
+      justify-content: center;
       gap: 8px;
-      color: var(--text-secondary);
-      text-decoration: none;
-      font-size: 0.85rem;
-      font-weight: 500;
-      padding: 6px 12px;
-      border-radius: 8px;
+      padding: 14px;
+      background: none;
+      border: 1.5px solid var(--border);
+      border-radius: 9999px;
+      color: var(--primary);
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
       transition: all 0.2s ease;
+      width: 100%;
       margin-top: 4px;
     }
 
-    .back-link:hover {
-      color: var(--text-primary);
-      background: rgba(0,0,0,0.04);
+    .btn-back:hover {
+      background: rgba(27,61,50,0.05);
+      border-color: var(--primary);
+      transform: translateY(-1px);
+    }
+
+    .btn-back:active {
+      transform: scale(0.97);
     }
 
     /* ---- Responsive ---- */
@@ -432,6 +442,7 @@ export class VerifyOtp implements AfterViewInit {
 
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private location = inject(Location);
   private authService = inject(AuthService);
 
   email = '';
@@ -501,5 +512,9 @@ export class VerifyOtp implements AfterViewInit {
         return v - 1;
       });
     }, 1000);
+  }
+
+  goBack(): void {
+    this.location.back();
   }
 }
