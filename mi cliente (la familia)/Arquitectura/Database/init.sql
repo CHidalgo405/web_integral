@@ -730,7 +730,7 @@ SELECT
     i.stock <= i.min_stock                                  AS low_stock,
     i.has_expiration,
     eb.expiration_date                                      AS nearest_expiration,
-    DATE_PART('day', eb.expiration_date - CURRENT_DATE)::INT AS days_until_expiry
+    (eb.expiration_date - CURRENT_DATE)::INT                  AS days_until_expiry
 FROM inventory i
 LEFT JOIN categories       c  ON c.id = i.category_id
 LEFT JOIN units_of_measure u  ON u.id = i.uom_id
@@ -1066,3 +1066,4 @@ VALUES (
     (SELECT id FROM employees WHERE first_name='Ana'),
     'morning', 'float_in', 500.00, 'Opening float added to drawer'
 );
+

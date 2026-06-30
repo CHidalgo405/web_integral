@@ -26,36 +26,7 @@ import { IconComponent } from '../../../shared/components/icon/icon';
             <div class="opt-info"><h3>{{ opt.label }}</h3><p>{{ opt.description }}</p></div>
           </div>
         }
-      </div>
-
-      @if (selected() === 'transfer') {
-        <div class="transfer-info-block">
-          <div class="transfer-info-header">
-            <span style="display: flex; align-items: center;"><app-icon name="landmark" size="18" /></span>
-            <span>Datos para transferencia SPEI</span>
-          </div>
-          <div class="transfer-row">
-            <span class="transfer-label">Banco</span>
-            <span class="transfer-value">BBVA México</span>
-          </div>
-          <div class="transfer-row">
-            <span class="transfer-label">CLABE</span>
-            <span class="transfer-value transfer-clabe">0121 0000 1234 5678 90</span>
-          </div>
-          <div class="transfer-row">
-            <span class="transfer-label">Beneficiario</span>
-            <span class="transfer-value">La Familia S.A. de C.V.</span>
-          </div>
-          <div class="transfer-row">
-            <span class="transfer-label">Concepto</span>
-            <span class="transfer-value">Tu número de pedido</span>
-          </div>
-          <p class="transfer-note">
-            Realiza tu transferencia y envía el comprobante por WhatsApp al
-            <strong>+52 55 1234 5678</strong> para confirmar tu pedido.
-          </p>
-        </div>
-      }
+      </div>
 
       @if (selected() === 'card') {
         <a routerLink="/checkout/payment/card" class="btn-continue" id="card-form-btn">Ingresar datos de tarjeta</a>
@@ -75,7 +46,6 @@ export class CheckoutPayment {
   paymentOptions = [
     { key: 'card' as PaymentMethod, icon: 'credit-card', label: 'Tarjeta de crédito/débito', description: 'Visa, Mastercard, AMEX' },
     { key: 'cash' as PaymentMethod, icon: 'dollar-sign', label: 'Efectivo', description: 'Paga al recibir tu pedido' },
-    { key: 'transfer' as PaymentMethod, icon: 'landmark', label: 'Transferencia bancaria', description: 'SPEI / CLABE interbancaria' },
   ];
 
   select(key: PaymentMethod): void {
@@ -85,3 +55,5 @@ export class CheckoutPayment {
 
   next(): void { this.router.navigate(['/checkout/summary']); }
 }
+
+

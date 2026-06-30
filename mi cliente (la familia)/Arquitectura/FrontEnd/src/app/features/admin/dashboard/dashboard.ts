@@ -1,9 +1,15 @@
-import { Component, inject, computed } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Component, inject, computed, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ProductService } from '../../../core/services/product.service';
 import { OrderService } from '../../../core/services/order.service';
 import { MxnCurrencyPipe } from '../../../shared/pipes/currency.pipe';
 import { IconComponent } from '../../../shared/components/icon/icon';
+import { API_BASE_URL } from '../../../core/api.config';
+
+interface ApiCustomer {
+  id: string;
+}
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -56,7 +62,7 @@ import { IconComponent } from '../../../shared/components/icon/icon';
           <div class="kpi-icon users-icon"><app-icon name="users" size="24" /></div>
           <div class="kpi-content">
             <h3>Clientes Activos</h3>
-            <p class="kpi-value">{{ activeUsersCount }}</p>
+            <p class="kpi-value">{{ activeUsersCount() }}</p>
             <span class="kpi-trend positive" style="display: inline-flex; align-items: center; gap: 4px;">
               <app-icon name="star" size="14" fill="currentColor" /> 100% verificados
             </span>
@@ -165,6 +171,7 @@ import { IconComponent } from '../../../shared/components/icon/icon';
 export class Dashboard {
   protected productService = inject(ProductService);
   protected orderService = inject(OrderService);
+  private http = inject(HttpClient);
 
   readonly currentDateLabel = new Date().toLocaleDateString('es-MX', {
     weekday: 'long',
@@ -173,7 +180,12 @@ export class Dashboard {
     day: 'numeric',
   });
 
-  readonly activeUsersCount = 4; // Mock user count
+  readonly customerCount = signal(0);
+  readonly activeUsersCount = computed(() => this.customerCount());
+
+  constructor() {
+    this.loadCustomerCount();
+  }
 
   // Computeds for metrics
   readonly totalSales = computed(() => {
@@ -242,39 +254,37 @@ export class Dashboard {
   });
 
   readonly activityLogs = computed(() => {
-    const orders = this.orderService.getOrders();
-    const logs = [];
+    const logs: { id: string; time: string; color: string; title: string; desc: string }[] = [];
 
-    // Map recent orders as activity logs
-    orders.slice(0, 3).forEach((o, i) => {
+    this.orderService.getOrders().slice(0, 3).forEach((order) => {
       logs.push({
-        id: `order-log-${o.id}`,
-        time: o.createdAt.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }),
-        color: o.status === 'pending' ? 'var(--secondary)' : 'var(--accent)',
-        title: `Pedido ${o.id}`,
-        desc: `Recibido por un total de MXN ${o.total.toFixed(2)} (${this.orderService.getStatusLabel(o.status)})`,
+        id: `order-log-${order.id}`,
+        time: order.createdAt.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }),
+        color: order.status === 'pending' ? 'var(--secondary)' : 'var(--accent)',
+        title: `Pedido ${order.id}`,
+        desc: `Recibido por un total de MXN ${order.total.toFixed(2)} (${this.orderService.getStatusLabel(order.status)})`,
       });
     });
 
-    // Add standard administrative logs
-    logs.push({
-      id: 'log-stock',
-      time: '11:00 AM',
-      color: 'var(--warning)',
-      title: 'Monitoreo de Stock',
-      desc: `${this.lowStockCount()} productos se encuentran con inventario crítico.`,
-    });
-
-    logs.push({
-      id: 'log-pwa',
-      time: '10:00 AM',
-      color: 'var(--success)',
-      title: 'Sistema PWA',
-      desc: 'Base de datos local iniciada correctamente y sincronizada.',
+    this.lowStockProducts().slice(0, 3).forEach((product) => {
+      logs.push({
+        id: `stock-log-${product.id}`,
+        time: this.currentDateLabel,
+        color: 'var(--warning)',
+        title: product.stockQuantity === 0 ? 'Producto agotado' : 'Inventario bajo',
+        desc: `${product.name} tiene ${product.stockQuantity} unidades disponibles.`,
+      });
     });
 
     return logs;
   });
+
+  private loadCustomerCount(): void {
+    this.http.get<ApiCustomer[]>(`${API_BASE_URL}/customers`).subscribe({
+      next: (customers) => this.customerCount.set(customers.length),
+      error: () => this.customerCount.set(0),
+    });
+  }
 
   getCategoryIcon(categoryId: string): string {
     return this.productService.getCategories().find((c) => c.id === categoryId)?.icon ?? 'package';
@@ -285,3 +295,6 @@ export class Dashboard {
     return daysShort[date.getDay()];
   }
 }
+
+
+
