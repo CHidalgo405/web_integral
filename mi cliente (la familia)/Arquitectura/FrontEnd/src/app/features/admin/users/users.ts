@@ -1,17 +1,20 @@
+import { HttpClient } from '@angular/common/http';
 import { Component, inject, signal, computed } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
 import { OrderService } from '../../../core/services/order.service';
+import { API_BASE_URL } from '../../../core/api.config';
 import { User } from '../../../core/models/user.model';
 import { MxnCurrencyPipe } from '../../../shared/pipes/currency.pipe';
 import { IconComponent } from '../../../shared/components/icon/icon';
 
-const INITIAL_USERS: User[] = [
-  { id: '1', firstName: 'Carlos', lastName: 'Hernández', email: 'carlos.hdz@maday.com', phone: '+52 555 123 4567', isVerified: true, createdAt: new Date('2026-01-10'), role: 'admin' },
-  { id: '2', firstName: 'María', lastName: 'López', email: 'maria.lopez@gmail.com', phone: '+52 555 321 7654', isVerified: true, createdAt: new Date('2026-03-05'), role: 'user' },
-  { id: '3', firstName: 'Juan', lastName: 'García', email: 'j.garcia@outlook.com', phone: '+52 555 890 1234', isVerified: true, createdAt: new Date('2026-04-12'), role: 'user' },
-  { id: '4', firstName: 'Ana', lastName: 'Martínez', email: 'ana.mtz@yahoo.com', phone: '+52 555 456 7890', isVerified: false, createdAt: new Date('2026-05-18'), role: 'user' },
-];
+interface ApiCustomer {
+  id: string;
+  name: string;
+  phone?: string | null;
+  email?: string | null;
+  address?: string | null;
+}
 
 @Component({
   selector: 'app-user-directory',
@@ -115,7 +118,7 @@ const INITIAL_USERS: User[] = [
                   type="checkbox" 
                   [checked]="usr.role === 'admin'"
                   (change)="toggleRole(usr)"
-                  [disabled]="usr.id === '1'" 
+                   
                   class="switch-input"
                 />
                 <span class="switch-slider"></span>
@@ -123,9 +126,6 @@ const INITIAL_USERS: User[] = [
                   <span class="status-text font-bold" [class.active-status]="usr.role === 'admin'">
                     {{ usr.role === 'admin' ? 'Permiso Administrador Otorgado' : 'Rol Estándar de Cliente' }}
                   </span>
-                  @if (usr.id === '1') {
-                    <span class="lock-msg">(Tu propia cuenta no se puede modificar)</span>
-                  }
                 </div>
               </label>
             </div>
@@ -170,6 +170,7 @@ const INITIAL_USERS: User[] = [
 })
 export class UserDirectory {
   protected orderService = inject(OrderService);
+  private http = inject(HttpClient);
 
   searchQuery = signal('');
   usersList = signal<User[]>([]);
@@ -180,29 +181,18 @@ export class UserDirectory {
   }
 
   private loadUsers(): void {
-    const stored = localStorage.getItem('admin_users');
-    if (stored) {
-      const parsed = JSON.parse(stored).map((u: any) => ({
-        ...u,
-        createdAt: new Date(u.createdAt),
-      }));
-      this.usersList.set(parsed);
-    } else {
-      this.usersList.set(INITIAL_USERS);
-      this.saveUsers();
-    }
-
-    // Auto-select first user if available
-    const list = this.usersList();
-    if (list.length > 0) {
-      this.selectedUser.set(list[0]);
-    }
+    this.http.get<ApiCustomer[]>(`${API_BASE_URL}/customers`).subscribe({
+      next: (customers) => {
+        const users = customers.map((customer) => this.mapCustomer(customer));
+        this.usersList.set(users);
+        this.selectedUser.set(users[0] ?? null);
+      },
+      error: () => {
+        this.usersList.set([]);
+        this.selectedUser.set(null);
+      },
+    });
   }
-
-  private saveUsers(): void {
-    localStorage.setItem('admin_users', JSON.stringify(this.usersList()));
-  }
-
   readonly filteredUsers = computed(() => {
     const list = this.usersList();
     if (!this.searchQuery()) return list;
@@ -221,27 +211,33 @@ export class UserDirectory {
   }
 
   toggleRole(user: User): void {
-    if (user.id === '1') return; // Cannot modify own account
-
     const newRole: 'admin' | 'user' = user.role === 'admin' ? 'user' : 'admin';
     const updatedList: User[] = this.usersList().map((u) =>
       u.id === user.id ? { ...u, role: newRole } : u
     );
     this.usersList.set(updatedList);
-    this.saveUsers();
-
-    // Update selection ref
-    const updatedUser = updatedList.find((u) => u.id === user.id) || null;
-    this.selectedUser.set(updatedUser);
+    this.selectedUser.set(updatedList.find((u) => u.id === user.id) ?? null);
   }
 
   getUserOrders(user: User): any[] {
-    // For demo purposes, we associate ORD-001 and ORD-002 with Carlos Hernández (id: '1')
-    // and let others have empty arrays or we can assign them randomly.
-    if (user.id === '1') {
-      return this.orderService.getOrders();
-    }
-    return [];
+    return this.orderService.getOrders().filter((order) =>
+      order.shippingAddress.fullName.toLowerCase().includes(user.firstName.toLowerCase()) ||
+      order.shippingAddress.fullName.toLowerCase().includes(user.lastName.toLowerCase()),
+    );
+  }
+
+  private mapCustomer(customer: ApiCustomer): User {
+    const [firstName, ...rest] = customer.name.split(' ');
+    return {
+      id: customer.id,
+      firstName: firstName || customer.name,
+      lastName: rest.join(' ') || '',
+      email: customer.email ?? '',
+      phone: customer.phone ?? '',
+      isVerified: true,
+      createdAt: new Date(),
+      role: 'user',
+    };
   }
 
   formatDate(date: Date): string {
@@ -260,3 +256,4 @@ export class UserDirectory {
     });
   }
 }
+

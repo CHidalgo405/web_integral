@@ -2,7 +2,7 @@ const Inventory = require('../models/inventory.model');
 
 const getAll = async (req, res, next) => {
   try {
-    const { rows } = await Inventory.findAll();
+    const { rows } = await Inventory.findAll(req.query);
     res.json(rows);
   } catch (err) { next(err); }
 };
@@ -76,3 +76,4 @@ const removeBarcode = async (req, res, next) => {
 };
 
 module.exports = { getAll, getOne, getLowStock, findByBarcode, create, update, remove, getBarcodes, addBarcode, removeBarcode };
+

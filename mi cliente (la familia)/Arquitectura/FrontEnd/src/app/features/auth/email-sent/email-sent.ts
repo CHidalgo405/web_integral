@@ -41,7 +41,7 @@ export class EmailSent {
   }
 
   resend(): void {
-    // Mock resend
-    alert('Correo reenviado exitosamente');
+    alert('El backend aun no expone reenvio de correo de recuperacion.');
   }
 }
+

@@ -142,6 +142,10 @@ import { ShippingMethod, PaymentMethod } from '../../../core/models/order.model'
         <div class="summary-row total"><span>Total</span><span>{{ cartService.cart().total | mxnCurrency }}</span></div>
       </div>
 
+      @if (orderError()) {
+        <p class="coupon-msg error">{{ orderError() }}</p>
+      }
+
       <button class="btn-pay" [disabled]="isPlacingOrder() || !canPlaceOrder()" (click)="placeOrder()" id="place-order-btn">
         @if (isPlacingOrder()) {
           <app-icon name="loader" size="18" className="app-icon-spin" style="margin-right: 8px;" />
@@ -166,6 +170,7 @@ export class CheckoutSummary {
   couponInput = '';
   couponApplied = signal(false);
   couponError = signal('');
+  orderError = signal('');
 
   canPlaceOrder(): boolean {
     return !!this.checkoutState.selectedAddress() &&
@@ -173,31 +178,43 @@ export class CheckoutSummary {
            !!this.checkoutState.selectedPayment();
   }
 
-  applyCoupon(): void {
+  async applyCoupon(): Promise<void> {
     const code = this.couponInput.trim().toUpperCase();
     if (!code) return;
-    // Placeholder: cuando se conecte el backend se validará aquí
-    this.couponError.set('Este cupón no es válido o ya expiró.');
+    this.couponError.set('');
+    const result = await this.cartService.applyCoupon(code);
+    this.couponApplied.set(result.valid);
+    if (!result.valid) {
+      this.couponError.set(result.message);
+    }
   }
 
-  placeOrder(): void {
+  async placeOrder(): Promise<void> {
     if (this.isPlacingOrder() || !this.canPlaceOrder()) return;
     this.isPlacingOrder.set(true);
+    this.orderError.set('');
 
     const cart = this.cartService.cart();
     const addr = this.checkoutState.selectedAddress()!;
     const shipping = this.checkoutState.selectedShipping() as ShippingMethod;
     const payment = this.checkoutState.selectedPayment() as PaymentMethod;
 
-    setTimeout(() => {
-      this.orderService.createOrder(
+    try {
+      await this.orderService.createOrder(
         cart.items, addr, shipping, payment,
-        cart.subtotal, cart.discount, cart.shipping, cart.total
+        cart.subtotal, cart.discount, cart.shipping, cart.total,
       );
       this.cartService.clearCart();
       this.checkoutState.reset();
       this.router.navigate(['/orders/confirmation']);
+    } catch (error) {
+      this.orderError.set(error instanceof Error ? error.message : 'No se pudo crear el pedido. Intenta de nuevo.');
+    } finally {
       this.isPlacingOrder.set(false);
-    }, 1500);
+    }
   }
 }
+
+
+
+

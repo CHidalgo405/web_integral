@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
@@ -68,8 +68,8 @@ import { IconComponent } from '../../../shared/components/icon/icon';
             <label>Contraseña</label>
             <div class="input-wrapper">
               <span class="input-icon" style="display: flex; align-items: center;"><app-icon name="lock" size="18" /></span>
-              <input type="password" formControlName="password" placeholder="••••••••" />
-              <span class="input-icon-right" style="display: flex; align-items: center;"><app-icon name="eye" size="18" /></span>
+              <input [type]="showPassword() ? 'text' : 'password'" formControlName="password" placeholder="••••••••" />
+              <button type="button" class="input-icon-right" (click)="togglePasswordVisibility()" [attr.aria-label]="showPassword() ? 'Ocultar contrasena' : 'Mostrar contrasena'" style="display: flex; align-items: center;"><app-icon [name]="showPassword() ? 'eye-off' : 'eye'" size="18" /></button>
             </div>
             @if (form.get('password')?.touched && form.get('password')?.hasError('minlength')) {
               <span class="error-msg">Mínimo 6 caracteres</span>
@@ -208,11 +208,18 @@ import { IconComponent } from '../../../shared/components/icon/icon';
     }
     
     .input-icon-right {
+      border: 0;
+      background: transparent;
+      padding: 0;
       font-size: 1.1rem;
       margin-left: 10px;
       color: var(--text-muted);
       cursor: pointer;
       opacity: 0.6;
+    }
+
+    .input-icon-right:hover {
+      opacity: 1;
     }
 
     .input-wrapper input {
@@ -340,6 +347,7 @@ export class Register {
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
   private router = inject(Router);
+  showPassword = signal(false);
 
   form = this.fb.group({
     firstName: ['', Validators.required],
@@ -349,6 +357,10 @@ export class Register {
     password: ['', [Validators.required, Validators.minLength(6)]],
     confirmPassword: ['', Validators.required],
   }, { validators: this.passwordMatchValidator });
+
+  togglePasswordVisibility(): void {
+    this.showPassword.update((value) => !value);
+  }
 
   passwordMatchValidator(control: AbstractControl): ValidationErrors | null {
     const password = control.get('password')?.value;
@@ -367,3 +379,4 @@ export class Register {
     }
   }
 }
+

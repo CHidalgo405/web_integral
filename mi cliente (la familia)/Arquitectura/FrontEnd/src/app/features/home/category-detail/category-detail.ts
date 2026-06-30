@@ -74,7 +74,7 @@ export class CategoryDetail implements OnInit {
   ngOnInit(): void {
     this.route.params.subscribe(params => {
       const id = params['id'];
-      this.category = this.productService.mockCategories.find(c => c.id === id);
+      this.category = this.productService.getCategories().find(c => c.id === id);
       this.products = this.productService.getProductsByCategory(id);
     });
   }
@@ -83,3 +83,4 @@ export class CategoryDetail implements OnInit {
     return this.category?.icon ?? 'package';
   }
 }
+
