@@ -2,6 +2,35 @@ import { Injectable, signal, computed } from '@angular/core';
 import { Router } from '@angular/router';
 import { User, LoginRequest, RegisterRequest, ForgotPasswordRequest, VerifyOtpRequest } from '../models/user.model';
 
+const DEMO_ACCOUNTS: Record<string, { password: string; user: User }> = {
+  'admin@tienditamaday.test': {
+    password: 'Admin123!',
+    user: {
+      id: 'demo-admin',
+      firstName: 'Admin',
+      lastName: 'Maday',
+      email: 'admin@tienditamaday.test',
+      phone: '+52 555 000 0001',
+      isVerified: true,
+      createdAt: new Date('2026-01-01T00:00:00'),
+      role: 'admin',
+    },
+  },
+  'cliente@tienditamaday.test': {
+    password: 'Cliente123!',
+    user: {
+      id: 'demo-client',
+      firstName: 'Cliente',
+      lastName: 'Maday',
+      email: 'cliente@tienditamaday.test',
+      phone: '+52 555 000 0002',
+      isVerified: true,
+      createdAt: new Date('2026-01-01T00:00:00'),
+      role: 'user',
+    },
+  },
+};
+
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private currentUser = signal<User | null>(null);
@@ -24,30 +53,23 @@ export class AuthService {
   }
 
   login(request: LoginRequest): boolean {
-    // Mock login
-    const isAdmin = request.email.toLowerCase().includes('admin');
-    const mockUser: User = {
-      id: isAdmin ? '1' : '2',
-      firstName: isAdmin ? 'Carlos' : 'María',
-      lastName: isAdmin ? 'Hernández' : 'López',
-      email: request.email,
-      phone: '+52 555 123 4567',
-      isVerified: true,
-      createdAt: new Date(),
-      role: isAdmin ? 'admin' : 'user',
-    };
-    const mockToken = 'mock-jwt-token-' + Date.now();
+    const email = request.email.trim().toLowerCase();
+    const account = DEMO_ACCOUNTS[email];
+    if (!account || account.password !== request.password) return false;
 
-    this.currentUser.set(mockUser);
-    this.token.set(mockToken);
-    localStorage.setItem('auth_token', mockToken);
-    localStorage.setItem('auth_user', JSON.stringify(mockUser));
+    const user: User = { ...account.user, createdAt: new Date(account.user.createdAt) };
+    const token = `demo-token-${user.role}-${Date.now()}`;
+
+    this.currentUser.set(user);
+    this.token.set(token);
+    localStorage.setItem('auth_token', token);
+    localStorage.setItem('auth_user', JSON.stringify(user));
     return true;
   }
 
   register(request: RegisterRequest): boolean {
-    const mockUser: User = {
-      id: '2',
+    const registeredUser: User = {
+      id: `registered-${Date.now()}`,
       firstName: request.firstName,
       lastName: request.lastName,
       email: request.email,
@@ -56,17 +78,15 @@ export class AuthService {
       createdAt: new Date(),
       role: 'user',
     };
-    this.currentUser.set(mockUser);
+    this.currentUser.set(registeredUser);
     return true;
   }
 
   forgotPassword(request: ForgotPasswordRequest): boolean {
-    // Mock: always succeeds
     return true;
   }
 
   verifyOtp(request: VerifyOtpRequest): boolean {
-    // Mock: code "123456" is valid
     if (request.code === '123456') {
       const user = this.currentUser();
       if (user) {
