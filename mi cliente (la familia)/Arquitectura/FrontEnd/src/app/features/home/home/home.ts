@@ -125,7 +125,7 @@ export class Home {
   private cartService = inject(CartService);
 
   getCategoryIcon(categoryId: string): string {
-    return this.productService.mockCategories.find(c => c.id === categoryId)?.icon ?? 'package';
+    return this.productService.getCategories().find(c => c.id === categoryId)?.icon ?? 'package';
   }
 
   getDiscount(product: Product): number {
