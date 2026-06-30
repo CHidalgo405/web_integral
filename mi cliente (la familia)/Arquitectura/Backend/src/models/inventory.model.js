@@ -75,3 +75,4 @@ const removeBarcode = (barcode) =>
   db.query('DELETE FROM product_barcodes WHERE barcode=$1 RETURNING *', [barcode]);
 
 module.exports = { findAll, findById, findLowStock, findByBarcode, create, update, remove, findBarcodes, addBarcode, removeBarcode };
+

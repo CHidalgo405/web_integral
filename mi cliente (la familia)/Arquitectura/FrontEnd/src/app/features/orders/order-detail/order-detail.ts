@@ -1054,3 +1054,4 @@ export class OrderDetail implements OnInit {
     }
   }
 }
+

@@ -295,3 +295,6 @@ export class Dashboard {
     return daysShort[date.getDay()];
   }
 }
+
+
+

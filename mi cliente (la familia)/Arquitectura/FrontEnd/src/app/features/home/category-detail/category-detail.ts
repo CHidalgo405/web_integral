@@ -83,3 +83,4 @@ export class CategoryDetail implements OnInit {
     return this.category?.icon ?? 'package';
   }
 }
+

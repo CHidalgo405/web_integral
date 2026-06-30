@@ -1066,3 +1066,4 @@ VALUES (
     (SELECT id FROM employees WHERE first_name='Ana'),
     'morning', 'float_in', 500.00, 'Opening float added to drawer'
 );
+

@@ -147,3 +147,4 @@ export class Home {
     return this.productService.isFavorite(productId);
   }
 }
+

@@ -76,3 +76,4 @@ const removeBarcode = async (req, res, next) => {
 };
 
 module.exports = { getAll, getOne, getLowStock, findByBarcode, create, update, remove, getBarcodes, addBarcode, removeBarcode };
+
