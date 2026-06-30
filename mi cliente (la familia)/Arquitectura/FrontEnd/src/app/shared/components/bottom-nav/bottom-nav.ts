@@ -165,8 +165,6 @@ import { CartService } from '../../../core/services/cart.service';
         /* display: none; */
         max-width: 600px;
         margin: 0 auto;
-        left: 50%;
-        transform: translateX(-50%);
         bottom: 24px;
         border-radius: 9999px;
       }
