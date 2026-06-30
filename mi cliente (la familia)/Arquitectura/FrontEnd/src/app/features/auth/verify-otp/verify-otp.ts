@@ -15,8 +15,6 @@ import { IconComponent } from '../../../shared/components/icon/icon';
       <!-- Hero superior con gradiente -->
       <div class="verify-hero">
         <div class="verify-blob"></div>
-        <div class="verify-blob-2"></div>
-        
         <div class="verify-icon-wrap">
           <app-icon name="hash" size="48" color="#fff" />
         </div>
@@ -116,38 +114,35 @@ import { IconComponent } from '../../../shared/components/icon/icon';
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 48px 24px 56px;
+      padding: 64px 24px 80px;
       overflow: hidden;
-      border-bottom-left-radius: 32px;
-      border-bottom-right-radius: 32px;
     }
 
     .verify-blob {
       position: absolute;
-      width: 300px;
-      height: 300px;
+      width: 280px;
+      height: 280px;
       border-radius: 50%;
-      background: rgba(255,255,255,0.06);
-      top: -120px;
-      right: -100px;
+      background: rgba(255,255,255,0.05);
+      top: -80px;
+      right: -80px;
       pointer-events: none;
     }
-
-    .verify-blob-2 {
+    .verify-blob::after {
+      content: '';
       position: absolute;
       width: 200px;
       height: 200px;
       border-radius: 50%;
       background: rgba(255,255,255,0.04);
-      bottom: -80px;
+      bottom: -120px;
       left: -60px;
-      pointer-events: none;
     }
 
     .verify-icon-wrap {
-      width: 80px;
-      height: 80px;
-      border-radius: 24px;
+      width: 96px;
+      height: 96px;
+      border-radius: 28px;
       background: rgba(255,255,255,0.12);
       border: 2px solid rgba(255,255,255,0.2);
       display: flex;
@@ -157,10 +152,14 @@ import { IconComponent } from '../../../shared/components/icon/icon';
       z-index: 2;
       animation: floatUp 3s ease-in-out infinite;
       box-shadow: 0 12px 32px rgba(0,0,0,0.15);
-      margin-bottom: 20px;
     }
 
     .verify-icon-wrap app-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 48px;
+      height: 48px;
       filter: brightness(0) invert(1);
     }
 
@@ -173,10 +172,11 @@ import { IconComponent } from '../../../shared/components/icon/icon';
       font-size: 1.75rem;
       font-weight: 800;
       color: #fff;
-      margin: 0 0 8px;
+      margin: 20px 0 8px;
       font-family: var(--font-heading);
       position: relative;
       z-index: 2;
+      text-align: center;
     }
 
     .verify-subtitle {
@@ -222,7 +222,7 @@ import { IconComponent } from '../../../shared/components/icon/icon';
       flex-direction: column;
       align-items: center;
       gap: 24px;
-      margin-top: -16px;
+      margin-top: -24px;
     }
 
     /* ---- OTP Inputs ---- */
@@ -384,7 +384,6 @@ import { IconComponent } from '../../../shared/components/icon/icon';
       cursor: pointer;
       transition: all 0.2s ease;
       width: 100%;
-      margin-top: 4px;
     }
 
     .btn-back:hover {
@@ -400,17 +399,32 @@ import { IconComponent } from '../../../shared/components/icon/icon';
     /* ---- Responsive ---- */
     @media (max-width: 480px) {
       .verify-hero {
-        padding: 36px 20px 44px;
+        padding: 48px 20px 64px;
       }
 
       .verify-icon-wrap {
-        width: 64px;
-        height: 64px;
-        border-radius: 18px;
+        width: 76px;
+        height: 76px;
+        border-radius: 22px;
+      }
+
+      .verify-icon-wrap app-icon {
+        width: 38px;
+        height: 38px;
       }
 
       .verify-title {
         font-size: 1.5rem;
+        margin-top: 16px;
+      }
+
+      .verify-subtitle {
+        font-size: 0.85rem;
+      }
+
+      .verify-body {
+        padding: 28px 16px 0;
+        margin-top: -24px;
       }
 
       .otp-input {
@@ -422,9 +436,55 @@ import { IconComponent } from '../../../shared/components/icon/icon';
       .otp-container {
         gap: 8px;
       }
+
+      .btn-verify {
+        padding: 14px;
+        font-size: 0.9rem;
+      }
+
+      .btn-resend {
+        padding: 12px;
+        font-size: 0.85rem;
+      }
+
+      .btn-back {
+        padding: 12px;
+        font-size: 0.85rem;
+      }
     }
 
     @media (max-width: 380px) {
+      .verify-hero {
+        padding: 40px 16px 56px;
+      }
+
+      .verify-icon-wrap {
+        width: 64px;
+        height: 64px;
+        border-radius: 18px;
+      }
+
+      .verify-icon-wrap app-icon {
+        width: 32px;
+        height: 32px;
+      }
+
+      .verify-title {
+        font-size: 1.25rem;
+        margin-top: 12px;
+      }
+
+      .verify-subtitle {
+        font-size: 0.8rem;
+        margin-bottom: 12px;
+      }
+
+      .verify-body {
+        padding: 24px 14px 0;
+        margin-top: -20px;
+        gap: 20px;
+      }
+
       .otp-input {
         width: 38px;
         height: 48px;
@@ -433,6 +493,34 @@ import { IconComponent } from '../../../shared/components/icon/icon';
 
       .otp-container {
         gap: 6px;
+      }
+
+      .btn-verify {
+        padding: 12px;
+        font-size: 0.85rem;
+      }
+
+      .btn-resend {
+        padding: 10px;
+        font-size: 0.8rem;
+      }
+
+      .btn-back {
+        padding: 10px;
+        font-size: 0.8rem;
+      }
+
+      .message {
+        padding: 12px 14px;
+        font-size: 0.8rem;
+      }
+
+      .email-badge {
+        padding: 6px 12px;
+      }
+
+      .email-badge span {
+        font-size: 0.75rem;
       }
     }
   `],
