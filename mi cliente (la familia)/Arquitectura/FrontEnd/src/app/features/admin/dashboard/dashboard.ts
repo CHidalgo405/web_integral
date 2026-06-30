@@ -1,3 +1,4 @@
+// dashboard.component.ts
 import { HttpClient } from '@angular/common/http';
 import { Component, inject, computed, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
@@ -17,54 +18,74 @@ interface ApiCustomer {
   imports: [RouterLink, MxnCurrencyPipe, IconComponent],
   template: `
     <div class="dashboard-container">
+      <!-- Header -->
       <div class="dashboard-header">
-        <div>
-          <h1 class="page-title">Panel de Control</h1>
+        <div class="header-content">
+          <h1 class="page-title">
+            Panel de Control
+          </h1>
           <p class="page-subtitle">Bienvenido al centro administrativo de Tiendita Maday</p>
         </div>
-        <div class="header-date" style="display: inline-flex; align-items: center; gap: 6px;">
-          <app-icon name="calendar" size="18" /> {{ currentDateLabel }}
+        <div class="header-date">
+          <app-icon name="calendar" size="16" color="var(--primary)" />
+          {{ currentDateLabel }}
         </div>
       </div>
 
       <!-- KPI Metrics Grid -->
       <div class="kpi-grid">
         <div class="kpi-card" id="kpi-sales">
-          <div class="kpi-icon sales-icon"><app-icon name="dollar-sign" size="24" /></div>
+          <div class="kpi-icon sales-icon">
+            <app-icon name="dollar-sign" size="22" color="var(--primary)" />
+          </div>
           <div class="kpi-content">
             <h3>Ventas Totales</h3>
             <p class="kpi-value">{{ totalSales() | mxnCurrency }}</p>
-            <span class="kpi-trend positive">↑ Activo</span>
+            <span class="kpi-trend positive">
+              <app-icon name="arrow-up" size="12" color="var(--success)" />
+              Activo
+            </span>
           </div>
         </div>
 
         <div class="kpi-card" id="kpi-orders">
-          <div class="kpi-icon orders-icon"><app-icon name="package" size="24" /></div>
+          <div class="kpi-icon orders-icon">
+            <app-icon name="package" size="22" color="var(--secondary)" />
+          </div>
           <div class="kpi-content">
             <h3>Pedidos Totales</h3>
             <p class="kpi-value">{{ totalOrders() }}</p>
-            <span class="kpi-trend positive">↑ {{ pendingOrders() }} pendientes</span>
+            <span class="kpi-trend positive">
+              <app-icon name="clock" size="12" color="var(--warning)" />
+              {{ pendingOrders() }} pendientes
+            </span>
           </div>
         </div>
 
         <div class="kpi-card" id="kpi-products">
-          <div class="kpi-icon products-icon"><app-icon name="leaf" size="24" /></div>
+          <div class="kpi-icon products-icon">
+            <app-icon name="leaf" size="22" color="var(--success)" />
+          </div>
           <div class="kpi-content">
             <h3>En Catálogo</h3>
             <p class="kpi-value">{{ totalProducts() }}</p>
-            <span class="kpi-trend warning" style="display: inline-flex; align-items: center; gap: 4px;">
-              <app-icon name="alert-triangle" size="14" /> {{ lowStockCount() }} stock bajo
+            <span class="kpi-trend warning">
+              <app-icon name="alert-triangle" size="12" color="var(--warning)" />
+              {{ lowStockCount() }} stock bajo
             </span>
           </div>
         </div>
 
         <div class="kpi-card" id="kpi-users">
-          <div class="kpi-icon users-icon"><app-icon name="users" size="24" /></div>
+          <div class="kpi-icon users-icon">
+            <app-icon name="users" size="22" color="#F59E0B" />
+          </div>
           <div class="kpi-content">
             <h3>Clientes Activos</h3>
             <p class="kpi-value">{{ activeUsersCount() }}</p>
-            <span class="kpi-trend positive" style="display: inline-flex; align-items: center; gap: 4px;">
-              <app-icon name="star" size="14" fill="currentColor" /> 100% verificados
+            <span class="kpi-trend positive">
+              <app-icon name="star" size="12" color="#FFD700" fill="currentColor" />
+              100% verificados
             </span>
           </div>
         </div>
@@ -75,8 +96,14 @@ interface ApiCustomer {
         <!-- Sales Chart Card -->
         <section class="card chart-card">
           <div class="card-header">
-            <h2>Tendencia de Ventas (Últimos 7 Días)</h2>
-            <span class="chart-badge-tag">Monto (MXN)</span>
+            <h2>
+              <app-icon name="bar-chart" size="18" color="var(--primary)" />
+              Tendencia de Ventas (Últimos 7 Días)
+            </h2>
+            <span class="chart-badge-tag">
+              <app-icon name="dollar-sign" size="12" color="var(--text-muted)" />
+              Monto (MXN)
+            </span>
           </div>
           <div class="chart-wrapper">
             <svg viewBox="0 0 500 220" class="svg-chart" preserveAspectRatio="none">
@@ -88,8 +115,8 @@ interface ApiCustomer {
               <!-- SVG Gradient definitions -->
               <defs>
                 <linearGradient id="chart-grad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stop-color="var(--primary)" stop-opacity="0.3"/>
-                  <stop offset="100%" stop-color="var(--primary)" stop-opacity="0.0"/>
+                  <stop offset="0%" stop-color="var(--primary)" stop-opacity="0.35"/>
+                  <stop offset="100%" stop-color="var(--primary)" stop-opacity="0.02"/>
                 </linearGradient>
               </defs>
 
@@ -117,28 +144,42 @@ interface ApiCustomer {
         <!-- Low Stock Alerts -->
         <section class="card alert-card">
           <div class="card-header">
-            <h2>Existencias Críticas</h2>
-            <a routerLink="/admin/products" class="card-action-link">Ir a inventario</a>
+            <h2>
+              <app-icon name="alert-triangle" size="18" color="var(--warning)" />
+              Existencias Críticas
+            </h2>
+            <a routerLink="/admin/products" class="card-action-link">
+              Ir a inventario
+              <app-icon name="arrow-right" size="12" color="var(--primary)" />
+            </a>
           </div>
           <div class="alert-list">
             @for (prod of lowStockProducts(); track prod.id) {
               <div class="alert-item" [class.danger]="prod.stockQuantity === 0">
-                <span class="alert-item-emoji"><app-icon [name]="getCategoryIcon(prod.categoryId)" size="20" /></span>
+                <span class="alert-item-emoji">
+                  <app-icon [name]="getCategoryIcon(prod.categoryId)" size="18" color="var(--primary)" />
+                </span>
                 <div class="alert-item-info">
                   <h4>{{ prod.name }}</h4>
                   <p>{{ prod.category }}</p>
                 </div>
                 <div class="alert-item-badge">
                   @if (prod.stockQuantity === 0) {
-                    <span class="badge-out">Agotado</span>
+                    <span class="badge-out">
+                      <app-icon name="x" size="10" color="white" />
+                      Agotado
+                    </span>
                   } @else {
-                    <span class="badge-low">{{ prod.stockQuantity }} unid.</span>
+                    <span class="badge-low">
+                      <app-icon name="package" size="10" color="var(--warning)" />
+                      {{ prod.stockQuantity }} unid.
+                    </span>
                   }
                 </div>
               </div>
             } @empty {
               <div class="empty-state">
-                <span class="empty-emoji" style="display: flex; justify-content: center;"><app-icon name="check" size="32" color="var(--success)" /></span>
+                <app-icon name="check" size="32" color="var(--success)" />
                 <p>Todo el catálogo cuenta con inventario suficiente.</p>
               </div>
             }
@@ -149,16 +190,26 @@ interface ApiCustomer {
       <!-- Recent Activity Feed -->
       <section class="card activity-card">
         <div class="card-header">
-          <h2>Bitácora de Actividad Reciente</h2>
-          <span class="activity-status">Sistema en Vivo</span>
+          <h2>
+            <app-icon name="activity" size="18" color="var(--primary)" />
+            Bitácora de Actividad Reciente
+          </h2>
+          <span class="activity-status">
+            <app-icon name="check" size="10" color="var(--success)" />
+            Sistema en Vivo
+          </span>
         </div>
         <div class="activity-list">
           @for (log of activityLogs(); track log.id) {
             <div class="activity-item">
-              <div class="activity-time">{{ log.time }}</div>
+              <div class="activity-time">
+                <app-icon name="clock" size="12" color="var(--text-muted)" />
+                {{ log.time }}
+              </div>
               <div class="activity-indicator" [style.background-color]="log.color"></div>
               <div class="activity-desc">
-                <strong>{{ log.title }}</strong>: {{ log.desc }}
+                <strong>{{ log.title }}</strong>
+                <span>{{ log.desc }}</span>
               </div>
             </div>
           }
@@ -187,7 +238,6 @@ export class Dashboard {
     this.loadCustomerCount();
   }
 
-  // Computeds for metrics
   readonly totalSales = computed(() => {
     return this.orderService.getOrders()
       .filter((o) => o.status !== 'cancelled')
@@ -208,7 +258,6 @@ export class Dashboard {
 
   readonly lowStockCount = computed(() => this.lowStockProducts().length);
 
-  // SVG Chart Computations
   readonly chartPoints = computed(() => {
     const orders = this.orderService.getOrders().filter((o) => o.status !== 'cancelled');
     const days: Date[] = [];
@@ -231,12 +280,11 @@ export class Dashboard {
         .reduce((sum, o) => sum + o.total, 0);
     });
 
-    const maxSales = Math.max(...dailySales, 200); // Scale relative to sales (at least 200)
+    const maxSales = Math.max(...dailySales, 200);
 
-    // Map to SVG coordinate grid: width=420 (from 40 to 460), height=120 (from 50 to 170)
     return dailySales.map((val, idx) => {
-      const x = 40 + idx * 70; // 7 points spaced evenly by 70px
-      const y = 170 - (val / maxSales) * 110; // scale values up to 110px height
+      const x = 40 + idx * 70;
+      const y = 170 - (val / maxSales) * 110;
       return { x, y, val, label: this.getDayLabel(days[idx]) };
     });
   });
@@ -260,7 +308,7 @@ export class Dashboard {
       logs.push({
         id: `order-log-${order.id}`,
         time: order.createdAt.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }),
-        color: order.status === 'pending' ? 'var(--secondary)' : 'var(--accent)',
+        color: order.status === 'pending' ? 'var(--secondary)' : 'var(--success)',
         title: `Pedido ${order.id}`,
         desc: `Recibido por un total de MXN ${order.total.toFixed(2)} (${this.orderService.getStatusLabel(order.status)})`,
       });
@@ -295,6 +343,3 @@ export class Dashboard {
     return daysShort[date.getDay()];
   }
 }
-
-
-
