@@ -1,5 +1,5 @@
+// users.component.ts
 import { Component, inject, signal, computed } from '@angular/core';
-
 import { FormsModule } from '@angular/forms';
 import { OrderService } from '../../../core/services/order.service';
 import { User } from '../../../core/models/user.model';
@@ -19,17 +19,18 @@ const INITIAL_USERS: User[] = [
   imports: [FormsModule, MxnCurrencyPipe, IconComponent],
   template: `
     <div class="user-directory">
+      <!-- Header -->
       <div class="manager-header">
-        <div>
+        <div class="header-content">
           <h1 class="page-title">Directorio de Clientes</h1>
           <p class="page-subtitle">Visualiza perfiles, cambia permisos administrativos y examina historiales de compras</p>
         </div>
       </div>
 
-      <!-- Search Filters -->
+      <!-- Search Bar -->
       <div class="filters-bar">
         <div class="search-input-wrapper">
-          <span class="search-icon"><app-icon name="search" size="18" /></span>
+          <span class="search-icon"><app-icon name="search" size="18" color="var(--text-muted)" /></span>
           <input 
             type="text" 
             [ngModel]="searchQuery()" 
@@ -38,14 +39,22 @@ const INITIAL_USERS: User[] = [
             class="form-control"
           />
         </div>
+        <div class="stats-badge">
+          <app-icon name="users" size="16" color="white" />
+          <span>{{ filteredUsers().length }} clientes</span>
+        </div>
       </div>
 
-      <!-- Users Grid layout -->
+      <!-- Main Grid -->
       <div class="users-grid-layout">
-        <!-- Users list card -->
+        <!-- Users List -->
         <div class="card list-card">
           <div class="list-header">
-            <h2>Lista de Usuarios ({{ filteredUsers().length }})</h2>
+            <h2>
+              <app-icon name="users" size="18" color="var(--primary)" />
+              Lista de Usuarios
+            </h2>
+            <span class="list-count">{{ filteredUsers().length }}</span>
           </div>
           <div class="users-scroll-list">
             @for (usr of filteredUsers(); track usr.id) {
@@ -54,110 +63,312 @@ const INITIAL_USERS: User[] = [
                 [class.selected]="selectedUser()?.id === usr.id" 
                 class="user-item-row"
               >
-                <div class="user-avatar-bubble">
+                <div class="user-avatar-bubble" [style.background]="getAvatarColor(usr)">
                   {{ usr.firstName.charAt(0) }}{{ usr.lastName.charAt(0) }}
                 </div>
                 <div class="user-item-details">
                   <div class="user-item-name-row">
                     <h4>{{ usr.firstName }} {{ usr.lastName }}</h4>
                     @if (usr.role === 'admin') {
-                      <span class="admin-role-badge">Admin</span>
+                      <span class="admin-role-badge">
+                        <app-icon name="shield" size="12" color="white" />
+                        Admin
+                      </span>
+                    }
+                    @if (usr.isVerified) {
+                      <span class="verified-badge">
+                        <app-icon name="check" size="14" color="var(--success)" />
+                      </span>
                     }
                   </div>
                   <p class="user-item-sub">{{ usr.email }}</p>
                 </div>
-                <span class="arrow-indicator">›</span>
+                <span class="arrow-indicator">
+                  <app-icon name="chevron-right" size="16" color="var(--text-muted)" />
+                </span>
               </div>
             } @empty {
               <div class="empty-state">
-                <span class="empty-emoji"><app-icon name="users" size="48" /></span>
+                <app-icon name="users" size="48" color="var(--text-muted)" />
                 <p>No se encontraron usuarios coincidentes.</p>
               </div>
             }
           </div>
         </div>
 
-        <!-- Detail and History Card -->
+        <!-- Detail Card -->
         <div class="card detail-card">
           @if (selectedUser(); as usr) {
-            <div class="detail-header-block">
-              <div class="detail-avatar">
+            <!-- VIP Header -->
+            <div class="vip-header">
+              <div class="vip-banner"></div>
+              <div class="detail-avatar-large" [style.background]="getAvatarColor(usr)">
                 {{ usr.firstName.charAt(0) }}{{ usr.lastName.charAt(0) }}
               </div>
-              <h2>{{ usr.firstName }} {{ usr.lastName }}</h2>
-              <span class="detail-verified-badge" [class.unverified]="!usr.isVerified" style="display: inline-flex; align-items: center; gap: 6px;">
-                <app-icon [name]="usr.isVerified ? 'check' : 'clock'" size="16" />
-                <span>{{ usr.isVerified ? 'Cuenta Verificada' : 'Verificación Pendiente' }}</span>
-              </span>
-            </div>
-
-            <!-- Profile Fields -->
-            <div class="detail-info-section">
-              <div class="detail-field">
-                <span class="field-label">Correo Electrónico:</span>
-                <span class="field-val">{{ usr.email }}</span>
-              </div>
-              <div class="detail-field">
-                <span class="field-label">Teléfono móvil:</span>
-                <span class="field-val">{{ usr.phone }}</span>
-              </div>
-              <div class="detail-field">
-                <span class="field-label">Miembro desde:</span>
-                <span class="field-val">{{ formatDate(usr.createdAt) }}</span>
-              </div>
-            </div>
-
-            <!-- Role Control Switch -->
-            <div class="detail-role-section">
-              <h3>Privilegios Administrativos</h3>
-              <label class="switch-label role-switch">
-                <input 
-                  type="checkbox" 
-                  [checked]="usr.role === 'admin'"
-                  (change)="toggleRole(usr)"
-                  [disabled]="usr.id === '1'" 
-                  class="switch-input"
-                />
-                <span class="switch-slider"></span>
-                <div class="role-switch-labels">
-                  <span class="status-text font-bold" [class.active-status]="usr.role === 'admin'">
-                    {{ usr.role === 'admin' ? 'Permiso Administrador Otorgado' : 'Rol Estándar de Cliente' }}
+              <h2 class="detail-name">{{ usr.firstName }} {{ usr.lastName }}</h2>
+              <p class="detail-email">{{ usr.email }}</p>
+              
+              <!-- Quick Stats -->
+              <div class="quick-stats">
+                <div class="stat-item">
+                  <span class="stat-number">{{ getUserOrders(usr).length }}</span>
+                  <span class="stat-label">
+                    <app-icon name="shopping-cart" size="12" color="rgba(255,255,255,0.7)" />
+                    Órdenes
                   </span>
-                  @if (usr.id === '1') {
-                    <span class="lock-msg">(Tu propia cuenta no se puede modificar)</span>
-                  }
                 </div>
-              </label>
+                <div class="stat-divider"></div>
+                <div class="stat-item">
+                  <span class="stat-number">1</span>
+                  <span class="stat-label">
+                    <app-icon name="map-pin" size="12" color="rgba(255,255,255,0.7)" />
+                    Direcciones
+                  </span>
+                </div>
+                <div class="stat-divider"></div>
+                <div class="stat-item">
+                  <span class="stat-number">2</span>
+                  <span class="stat-label">
+                    <app-icon name="credit-card" size="12" color="rgba(255,255,255,0.7)" />
+                    Pagados
+                  </span>
+                </div>
+              </div>
+
+              <!-- Tabs Navigation -->
+              <div class="profile-tabs">
+                <button class="tab-btn" [class.active]="activeTab === 'data'" (click)="activeTab = 'data'">
+                  <app-icon name="user" size="14" color="currentColor" />
+                  Datos
+                </button>
+                <button class="tab-btn" [class.active]="activeTab === 'orders'" (click)="activeTab = 'orders'">
+                  <app-icon name="shopping-cart" size="14" color="currentColor" />
+                  Órdenes
+                </button>
+                <button class="tab-btn" [class.active]="activeTab === 'addresses'" (click)="activeTab = 'addresses'">
+                  <app-icon name="map-pin" size="14" color="currentColor" />
+                  Direcciones
+                </button>
+                <button class="tab-btn" [class.active]="activeTab === 'payments'" (click)="activeTab = 'payments'">
+                  <app-icon name="credit-card" size="14" color="currentColor" />
+                  Pagados
+                </button>
+                <button class="tab-btn" [class.active]="activeTab === 'activity'" (click)="activeTab = 'activity'">
+                  <app-icon name="activity" size="14" color="currentColor" />
+                  Mi Actividad
+                </button>
+              </div>
             </div>
 
-            <!-- Purchases list -->
-            <div class="detail-purchases-section">
-              <h3>Historial de Pedidos</h3>
-              <div class="purchases-scroll-list">
-                @for (ord of getUserOrders(usr); track ord.id) {
-                  <div class="purchase-item">
-                    <div class="purchase-item-header">
-                      <strong>{{ ord.id }}</strong>
-                      <span class="status-badge" [class]="'badge-' + ord.status">
-                        {{ orderService.getStatusLabel(ord.status) }}
+            <!-- Content Sections -->
+            <div class="detail-content">
+              <!-- Data Tab -->
+              @if (activeTab === 'data') {
+                <div class="tab-content">
+                  <!-- Profile Info -->
+                  <div class="info-grid">
+                    <div class="info-item">
+                      <span class="info-label">
+                        <app-icon name="mail" size="14" color="var(--text-muted)" />
+                        Correo Electrónico
+                      </span>
+                      <span class="info-value">{{ usr.email }}</span>
+                    </div>
+                    <div class="info-item">
+                      <span class="info-label">
+                        <app-icon name="phone" size="14" color="var(--text-muted)" />
+                        Teléfono móvil
+                      </span>
+                      <span class="info-value">{{ usr.phone }}</span>
+                    </div>
+                    <div class="info-item">
+                      <span class="info-label">
+                        <app-icon name="calendar" size="14" color="var(--text-muted)" />
+                        Miembro desde
+                      </span>
+                      <span class="info-value">{{ formatDate(usr.createdAt) }}</span>
+                    </div>
+                    <div class="info-item">
+                      <span class="info-label">
+                        <app-icon name="check" size="14" color="var(--text-muted)" />
+                        Estado
+                      </span>
+                      <span class="info-value">
+                        <span class="status-chip" [class.verified]="usr.isVerified" [class.pending]="!usr.isVerified">
+                          <app-icon [name]="usr.isVerified ? 'check' : 'clock'" size="12" color="currentColor" />
+                          {{ usr.isVerified ? 'Cuenta Verificada' : 'Verificación Pendiente' }}
+                        </span>
                       </span>
                     </div>
-                    <div class="purchase-item-footer">
-                      <span class="purchase-date">{{ formatOrderDate(ord.createdAt) }}</span>
-                      <strong class="purchase-price">{{ ord.total | mxnCurrency }}</strong>
+                  </div>
+
+                  <!-- Role Control -->
+                  <div class="role-control-card">
+                    <div class="role-control-header">
+                      <app-icon name="shield" size="18" color="var(--primary)" />
+                      <h3>Privilegios Administrativos</h3>
+                    </div>
+                    <label class="toggle-switch">
+                      <input 
+                        type="checkbox" 
+                        [checked]="usr.role === 'admin'"
+                        (change)="toggleRole(usr)"
+                        [disabled]="usr.id === '1'"
+                      />
+                      <span class="toggle-slider"></span>
+                      <span class="toggle-label">
+                        <app-icon [name]="usr.role === 'admin' ? 'shield' : 'user'" size="16" color="var(--primary)" />
+                        {{ usr.role === 'admin' ? 'Administrador' : 'Cliente Estándar' }}
+                      </span>
+                    </label>
+                    @if (usr.id === '1') {
+                      <span class="lock-hint">
+                        <app-icon name="lock" size="14" color="var(--text-muted)" />
+                        Tu propia cuenta no se puede modificar
+                      </span>
+                    }
+                  </div>
+                </div>
+              }
+
+              <!-- Orders Tab -->
+              @if (activeTab === 'orders') {
+                <div class="tab-content">
+                  <div class="purchase-section">
+                    <div class="section-header">
+                      <app-icon name="package" size="18" color="var(--primary)" />
+                      <h3>Historial de Pedidos</h3>
+                      <span class="order-count">{{ getUserOrders(usr).length }}</span>
+                    </div>
+                    <div class="purchases-scroll-list">
+                      @for (ord of getUserOrders(usr); track ord.id) {
+                        <div class="purchase-item">
+                          <div class="purchase-left">
+                            <span class="purchase-id">{{ ord.id }}</span>
+                            <span class="purchase-date">{{ formatOrderDate(ord.createdAt) }}</span>
+                          </div>
+                          <div class="purchase-right">
+                            <span class="status-badge" [class]="'badge-' + ord.status">
+                              <app-icon [name]="getStatusIcon(ord.status)" size="10" color="currentColor" />
+                              {{ orderService.getStatusLabel(ord.status) }}
+                            </span>
+                            <strong class="purchase-price">{{ ord.total | mxnCurrency }}</strong>
+                          </div>
+                        </div>
+                      } @empty {
+                        <div class="empty-purchases">
+                          <app-icon name="shopping-cart" size="32" color="var(--text-muted)" />
+                          <p>Este usuario no cuenta con pedidos registrados.</p>
+                        </div>
+                      }
                     </div>
                   </div>
-                } @empty {
-                  <div class="empty-purchases">
-                    <span class="empty-emoji"><app-icon name="shopping-cart" size="32" /></span>
-                    <p>Este usuario no cuenta con pedidos registrados.</p>
+                </div>
+              }
+
+              <!-- Addresses Tab -->
+              @if (activeTab === 'addresses') {
+                <div class="tab-content">
+                  <div class="addresses-section">
+                    <div class="section-header">
+                      <app-icon name="map-pin" size="18" color="var(--primary)" />
+                      <h3>Direcciones Guardadas</h3>
+                      <span class="order-count">1</span>
+                    </div>
+                    <div class="address-item">
+                      <div class="address-card">
+                        <div class="address-type">
+                          <app-icon name="home" size="16" color="var(--primary)" />
+                          <span>Principal</span>
+                        </div>
+                        <p class="address-detail">Calle Principal #123, Colonia Centro</p>
+                        <p class="address-detail">Ciudad de México, CP 12345</p>
+                        <span class="address-phone">Tel: {{ usr.phone }}</span>
+                      </div>
+                    </div>
                   </div>
-                }
-              </div>
+                </div>
+              }
+
+              <!-- Payments Tab -->
+              @if (activeTab === 'payments') {
+                <div class="tab-content">
+                  <div class="payments-section">
+                    <div class="section-header">
+                      <app-icon name="credit-card" size="18" color="var(--primary)" />
+                      <h3>Métodos de Pago</h3>
+                      <span class="order-count">2</span>
+                    </div>
+                    <div class="payment-item">
+                      <div class="payment-card">
+                        <div class="payment-type">
+                          <app-icon name="credit-card" size="16" color="var(--primary)" />
+                          <span>Tarjeta de Crédito</span>
+                        </div>
+                        <p class="payment-detail">•••• •••• •••• 1234</p>
+                        <p class="payment-detail">Vence: 12/26</p>
+                      </div>
+                    </div>
+                    <div class="payment-item">
+                      <div class="payment-card">
+                        <div class="payment-type">
+                          <app-icon name="credit-card" size="16" color="var(--primary)" />
+                          <span>Tarjeta de Débito</span>
+                        </div>
+                        <p class="payment-detail">•••• •••• •••• 5678</p>
+                        <p class="payment-detail">Vence: 08/25</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              }
+
+              <!-- Activity Tab -->
+              @if (activeTab === 'activity') {
+                <div class="tab-content">
+                  <div class="activity-section">
+                    <div class="section-header">
+                      <app-icon name="activity" size="18" color="var(--primary)" />
+                      <h3>Actividad Reciente</h3>
+                    </div>
+                    <div class="activity-timeline">
+                      <div class="activity-item">
+                        <div class="activity-icon">
+                          <app-icon name="shopping-cart" size="14" color="var(--primary)" />
+                        </div>
+                        <div class="activity-content">
+                          <p class="activity-text">Realizó un pedido</p>
+                          <span class="activity-date">Hace 2 días</span>
+                        </div>
+                      </div>
+                      <div class="activity-item">
+                        <div class="activity-icon">
+                          <app-icon name="log-in" size="14" color="var(--primary)" />
+                        </div>
+                        <div class="activity-content">
+                          <p class="activity-text">Inició sesión</p>
+                          <span class="activity-date">Hace 3 días</span>
+                        </div>
+                      </div>
+                      <div class="activity-item">
+                        <div class="activity-icon">
+                          <app-icon name="eye" size="14" color="var(--primary)" />
+                        </div>
+                        <div class="activity-content">
+                          <p class="activity-text">Vio productos en oferta</p>
+                          <span class="activity-date">Hace 5 días</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              }
             </div>
           } @else {
             <div class="no-selection-state">
-              <span class="selection-emoji"><app-icon name="shield" size="48" /></span>
+              <div class="no-selection-icon">
+                <app-icon name="users" size="56" color="var(--text-muted)" />
+              </div>
               <h3>Selecciona un Usuario</h3>
               <p>Haz clic en cualquier cliente de la lista para examinar su ficha de perfil, roles de acceso e historial de transacciones.</p>
             </div>
@@ -174,6 +385,11 @@ export class UserDirectory {
   searchQuery = signal('');
   usersList = signal<User[]>([]);
   selectedUser = signal<User | null>(null);
+  activeTab = 'data';
+
+  private avatarColors = [
+    '#1a4a2e', '#1a4a2e', '#1a4a2e', '#1a4a2e'
+  ];
 
   constructor() {
     this.loadUsers();
@@ -192,7 +408,6 @@ export class UserDirectory {
       this.saveUsers();
     }
 
-    // Auto-select first user if available
     const list = this.usersList();
     if (list.length > 0) {
       this.selectedUser.set(list[0]);
@@ -218,10 +433,11 @@ export class UserDirectory {
 
   selectUser(user: User): void {
     this.selectedUser.set(user);
+    this.activeTab = 'data';
   }
 
   toggleRole(user: User): void {
-    if (user.id === '1') return; // Cannot modify own account
+    if (user.id === '1') return;
 
     const newRole: 'admin' | 'user' = user.role === 'admin' ? 'user' : 'admin';
     const updatedList: User[] = this.usersList().map((u) =>
@@ -230,18 +446,30 @@ export class UserDirectory {
     this.usersList.set(updatedList);
     this.saveUsers();
 
-    // Update selection ref
     const updatedUser = updatedList.find((u) => u.id === user.id) || null;
     this.selectedUser.set(updatedUser);
   }
 
   getUserOrders(user: User): any[] {
-    // For demo purposes, we associate ORD-001 and ORD-002 with Carlos Hernández (id: '1')
-    // and let others have empty arrays or we can assign them randomly.
     if (user.id === '1') {
       return this.orderService.getOrders();
     }
     return [];
+  }
+
+  getStatusIcon(status: string): string {
+    const icons: Record<string, string> = {
+      'delivered': 'check',
+      'shipped': 'truck',
+      'pending': 'clock',
+      'cancelled': 'x'
+    };
+    return icons[status] || 'clock';
+  }
+
+  getAvatarColor(user: User): string {
+    const index = this.usersList().indexOf(user) % this.avatarColors.length;
+    return this.avatarColors[index];
   }
 
   formatDate(date: Date): string {
