@@ -1,3 +1,4 @@
+// admin-layout.component.ts
 import { Component, inject, signal } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
@@ -12,7 +13,9 @@ import { IconComponent } from '../../../shared/components/icon/icon';
       <!-- Desktop Sidebar -->
       <aside class="sidebar">
         <div class="sidebar-header">
-          <span class="logo-emoji"><app-icon name="shield" size="28" /></span>
+          <span class="logo-emoji">
+            <app-icon name="shield" size="28" color="white" />
+          </span>
           <div class="logo-text">
             <h2>Maday Admin</h2>
             <p>Control de Tienda</p>
@@ -21,29 +24,31 @@ import { IconComponent } from '../../../shared/components/icon/icon';
 
         <nav class="sidebar-menu">
           <a routerLink="/admin/dashboard" routerLinkActive="active" class="menu-link">
-            <span class="link-icon"><app-icon name="bar-chart" size="20" /></span>
+            <span class="link-icon"><app-icon name="bar-chart" size="18" color="currentColor" /></span>
             <span class="link-label">Resumen</span>
           </a>
           <a routerLink="/admin/products" routerLinkActive="active" class="menu-link">
-            <span class="link-icon"><app-icon name="leaf" size="20" /></span>
+            <span class="link-icon"><app-icon name="package" size="18" color="currentColor" /></span>
             <span class="link-label">Productos</span>
           </a>
           <a routerLink="/admin/orders" routerLinkActive="active" class="menu-link">
-            <span class="link-icon"><app-icon name="clipboard" size="20" /></span>
+            <span class="link-icon"><app-icon name="clipboard" size="18" color="currentColor" /></span>
             <span class="link-label">Pedidos</span>
           </a>
           <a routerLink="/admin/users" routerLinkActive="active" class="menu-link">
-            <span class="link-icon"><app-icon name="users" size="20" /></span>
+            <span class="link-icon"><app-icon name="users" size="18" color="currentColor" /></span>
             <span class="link-label">Usuarios</span>
           </a>
         </nav>
 
         <div class="sidebar-footer">
-          <a routerLink="/home" class="btn-return" style="display: inline-flex; align-items: center; gap: 8px;">
-            <app-icon name="store" size="18" /> Volver a Tienda
+          <a routerLink="/home" class="btn-return">
+            <app-icon name="store" size="16" color="currentColor" />
+            Volver a Tienda
           </a>
-          <button (click)="authService.logout()" class="btn-logout" style="display: inline-flex; align-items: center; gap: 8px;">
-            <app-icon name="log-out" size="18" /> Cerrar Sesión
+          <button (click)="authService.logout()" class="btn-logout">
+            <app-icon name="log-out" size="16" color="currentColor" />
+            Cerrar Sesión
           </button>
         </div>
       </aside>
@@ -57,7 +62,10 @@ import { IconComponent } from '../../../shared/components/icon/icon';
             <line x1="3" y1="18" x2="21" y2="18"></line>
           </svg>
         </button>
-        <h1 class="header-title">Maday Admin</h1>
+        <h1 class="header-title">
+          <app-icon name="shield" size="18" color="white" />
+          Maday Admin
+        </h1>
         <div class="user-badge">
           {{ authService.user()?.firstName?.charAt(0) || 'A' }}
         </div>
@@ -84,26 +92,32 @@ import { IconComponent } from '../../../shared/components/icon/icon';
         </div>
 
         <nav class="drawer-menu">
-          <a routerLink="/admin/dashboard" routerLinkActive="active" (click)="toggleMobileMenu()" class="drawer-link" style="display: flex; align-items: center; gap: 10px;">
-            <app-icon name="bar-chart" size="20" /> Resumen
+          <a routerLink="/admin/dashboard" routerLinkActive="active" (click)="toggleMobileMenu()" class="drawer-link">
+            <app-icon name="bar-chart" size="18" color="currentColor" />
+            Resumen
           </a>
-          <a routerLink="/admin/products" routerLinkActive="active" (click)="toggleMobileMenu()" class="drawer-link" style="display: flex; align-items: center; gap: 10px;">
-            <app-icon name="leaf" size="20" /> Productos
+          <a routerLink="/admin/products" routerLinkActive="active" (click)="toggleMobileMenu()" class="drawer-link">
+            <app-icon name="package" size="18" color="currentColor" />
+            Productos
           </a>
-          <a routerLink="/admin/orders" routerLinkActive="active" (click)="toggleMobileMenu()" class="drawer-link" style="display: flex; align-items: center; gap: 10px;">
-            <app-icon name="clipboard" size="20" /> Pedidos
+          <a routerLink="/admin/orders" routerLinkActive="active" (click)="toggleMobileMenu()" class="drawer-link">
+            <app-icon name="clipboard" size="18" color="currentColor" />
+            Pedidos
           </a>
-          <a routerLink="/admin/users" routerLinkActive="active" (click)="toggleMobileMenu()" class="drawer-link" style="display: flex; align-items: center; gap: 10px;">
-            <app-icon name="users" size="20" /> Usuarios
+          <a routerLink="/admin/users" routerLinkActive="active" (click)="toggleMobileMenu()" class="drawer-link">
+            <app-icon name="users" size="18" color="currentColor" />
+            Usuarios
           </a>
         </nav>
 
         <div class="drawer-footer">
-          <a routerLink="/home" class="btn-return" style="display: inline-flex; align-items: center; gap: 8px;">
-            <app-icon name="store" size="18" /> Volver a Tienda
+          <a routerLink="/home" class="btn-return">
+            <app-icon name="store" size="16" color="currentColor" />
+            Volver a Tienda
           </a>
-          <button (click)="authService.logout()" class="btn-logout" style="display: inline-flex; align-items: center; gap: 8px;">
-            <app-icon name="log-out" size="18" /> Cerrar Sesión
+          <button (click)="authService.logout()" class="btn-logout">
+            <app-icon name="log-out" size="16" color="currentColor" />
+            Cerrar Sesión
           </button>
         </div>
       </div>
