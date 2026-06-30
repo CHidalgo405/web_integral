@@ -1,7 +1,30 @@
 const db = require('../db');
 
-const findAll = () =>
-  db.query('SELECT * FROM v_inventory_status ORDER BY name');
+const findAll = ({ active, category_id, low_stock } = {}) => {
+  const conditions = [];
+  const params = [];
+
+  if (active !== undefined) conditions.push(`i.active=$${params.push(active === true || active === 'true')}`);
+  if (category_id) conditions.push(`i.category_id=$${params.push(category_id)}`);
+  if (low_stock !== undefined && (low_stock === true || low_stock === 'true')) {
+    conditions.push('i.stock <= i.min_stock');
+  }
+
+  const where = conditions.length ? 'WHERE ' + conditions.join(' AND ') : '';
+  return db.query(
+    `SELECT
+       i.id, i.name, i.sku, i.description, i.category_id, c.name AS category,
+       u.abbreviation AS unit, i.uom_id, i.price, i.cost, i.stock, i.min_stock,
+       i.stock <= i.min_stock AS low_stock, i.has_expiration, i.active,
+       i.created_at, i.updated_at
+     FROM inventory i
+     LEFT JOIN categories c ON c.id = i.category_id
+     LEFT JOIN units_of_measure u ON u.id = i.uom_id
+     ${where}
+     ORDER BY i.name`,
+    params
+  );
+};
 
 const findById = (id) =>
   db.query('SELECT * FROM inventory WHERE id=$1', [id]);
@@ -27,13 +50,13 @@ const create = ({ name, sku, description, category_id, uom_id, price, cost, stoc
      price, cost ?? null, stock ?? 0, min_stock ?? 0, has_expiration ?? false]
   );
 
-const update = (id, { name, sku, description, category_id, uom_id, price, cost, min_stock, has_expiration, active }) =>
+const update = (id, { name, sku, description, category_id, uom_id, price, cost, stock, min_stock, has_expiration, active }) =>
   db.query(
     `UPDATE inventory
      SET name=$1, sku=$2, description=$3, category_id=$4, uom_id=$5,
-         price=$6, cost=$7, min_stock=$8, has_expiration=$9, active=$10
-     WHERE id=$11 RETURNING *`,
-    [name, sku, description, category_id, uom_id, price, cost, min_stock, has_expiration, active ?? true, id]
+         price=$6, cost=$7, stock=$8, min_stock=$9, has_expiration=$10, active=$11
+     WHERE id=$12 RETURNING *`,
+    [name, sku, description, category_id, uom_id, price, cost, stock ?? 0, min_stock ?? 0, has_expiration ?? false, active ?? true, id]
   );
 
 const remove = (id) =>
