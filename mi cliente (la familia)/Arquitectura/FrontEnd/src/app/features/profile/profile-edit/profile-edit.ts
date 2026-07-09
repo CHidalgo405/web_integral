@@ -321,8 +321,8 @@ export class ProfileEdit implements OnInit {
     if (u) {
       this.firstName.set(u.firstName);
       this.lastName.set(u.lastName);
-      this.phone.set(u.phone);
-      this.email.set(u.email);
+      this.phone.set(u.phone || '');
+      this.email.set(u.email || '');
     }
   }
 
