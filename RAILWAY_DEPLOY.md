@@ -12,6 +12,13 @@ Vas a crear 3 piezas dentro de un mismo proyecto de Railway:
 No hace falta tocar `docker-compose.yml` — eso sigue sirviendo solo para tu
 entorno local. Railway usa Dockerfiles propios que ya dejé listos.
 
+> ⚠️ **El paso que más falla:** por defecto Railway construye desde la raíz
+> del repo, que no tiene ni `package.json` ni Dockerfile útil. **Siempre**
+> que crees un servicio nuevo, entra a **Settings → Source → Root Directory**
+> y ponlo ANTES de dejar que corra el primer build (o, si ya falló, ponlo y
+> dale **Deploy** de nuevo manualmente — cambiar la variable sola no siempre
+> dispara un redeploy).
+
 ---
 
 ## 1. Crear el proyecto y la base de datos
