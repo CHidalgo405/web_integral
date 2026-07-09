@@ -472,16 +472,18 @@ export class UserDirectory {
     return this.avatarColors[index];
   }
 
-  formatDate(date: Date): string {
-    return date.toLocaleDateString('es-MX', {
+  formatDate(date: Date | string): string {
+    const d = new Date(date);
+    return d.toLocaleDateString('es-MX', {
       day: '2-digit',
       month: 'long',
       year: 'numeric',
     });
   }
 
-  formatOrderDate(date: Date): string {
-    return date.toLocaleDateString('es-MX', {
+  formatOrderDate(date: Date | string): string {
+    const d = new Date(date);
+    return d.toLocaleDateString('es-MX', {
       day: '2-digit',
       month: 'short',
       year: 'numeric',
