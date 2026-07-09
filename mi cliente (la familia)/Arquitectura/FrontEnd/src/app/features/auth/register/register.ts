@@ -87,8 +87,12 @@ import { IconComponent } from '../../../shared/components/icon/icon';
             }
           </div>
 
-          <button type="submit" class="btn-main" [disabled]="form.invalid">
-            Regístrate
+          @if (errorMessage) {
+            <div class="auth-error">{{ errorMessage }}</div>
+          }
+
+          <button type="submit" class="btn-main" [disabled]="form.invalid || isLoading()">
+            {{ isLoading() ? 'Registrando...' : 'Regístrate' }}
           </button>
 
           <div class="divider">
@@ -336,6 +340,16 @@ import { IconComponent } from '../../../shared/components/icon/icon';
       letter-spacing: 0.5px;
     }
 
+    .auth-error {
+      padding: 12px;
+      background: var(--danger-alpha);
+      color: var(--danger);
+      border-radius: 12px;
+      font-size: 0.85rem;
+      text-align: center;
+      font-weight: 600;
+    }
+
     @media (min-width: 768px) {
       .register-card {
         padding: 48px;
@@ -368,14 +382,32 @@ export class Register {
     return password === confirm ? null : { mismatch: true };
   }
 
+  errorMessage = '';
+  isLoading = signal(false);
+
   onSubmit(): void {
     if (this.form.valid) {
+      this.isLoading.set(true);
+      this.errorMessage = '';
       const v = this.form.value;
       this.authService.register({
         firstName: v.firstName!, lastName: v.lastName!, email: v.email!,
         phone: v.phone!, password: v.password!, confirmPassword: v.confirmPassword!,
+      }).subscribe({
+        next: () => {
+          this.isLoading.set(false);
+          const user = this.authService.user();
+          if (user?.role === 'admin') {
+            this.router.navigate(['/admin']);
+          } else {
+            this.router.navigate(['/home']);
+          }
+        },
+        error: (err) => {
+          this.isLoading.set(false);
+          this.errorMessage = err.error?.error || 'Error al registrar usuario';
+        }
       });
-      this.router.navigate(['/auth/verify'], { queryParams: { email: v.email } });
     }
   }
 }
