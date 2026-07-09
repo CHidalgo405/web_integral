@@ -1,5 +1,6 @@
 const router = require('express').Router();
 
+router.use('/auth',                require('./auth.routes'));
 router.use('/shop-config',         require('./shopConfig.routes'));
 router.use('/categories',          require('./categories.routes'));
 router.use('/units',               require('./units.routes'));
