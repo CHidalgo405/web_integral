@@ -1067,3 +1067,21 @@ VALUES (
     'morning', 'float_in', 500.00, 'Opening float added to drawer'
 );
 
+-- Administradores Iniciales (Formato estándar)
+
+INSERT INTO employees (first_name, last_name, email, role) VALUES
+    ('Carlos',    'Admin', 'carlos@gmail.com',    'admin'),
+    ('Christian', 'Admin', 'christian@gmail.com', 'admin'),
+    ('Zahid',     'Admin', 'zahid@gmail.com',     'admin'),
+    ('Kevin',     'Admin', 'kevin@gmail.com',     'admin');
+
+INSERT INTO users (employee_id, username, role, must_change_password, password_hash) VALUES
+    ((SELECT id FROM employees WHERE email='carlos@gmail.com'),
+     'carlos@gmail.com', 'admin', FALSE, '$2b$10$VMmzRJuXnCxjo3AzlcKkfeqAO0oUEXC9GGAWD30oG8mN.sMR13Vja'),
+    ((SELECT id FROM employees WHERE email='christian@gmail.com'),
+     'christian@gmail.com', 'admin', FALSE, '$2b$10$opEyHQUBnlS50ma9RZQ03u4ynNeN2FVVU7YIlquxtGSzDIC0uGERO'),
+    ((SELECT id FROM employees WHERE email='zahid@gmail.com'),
+     'zahid@gmail.com', 'admin', FALSE, '$2b$10$rtwF4HzCwwywB.wtFJNnpunehPW5ACpkG5BFXDemzBnGqEQfgBQnW'),
+    ((SELECT id FROM employees WHERE email='kevin@gmail.com'),
+     'kevin@gmail.com', 'admin', FALSE, '$2b$10$uwR6ujIhxhghyxeuvdydYeo28mMfMLUH08pCTY9QOvOaFaNbvOyBy');
+

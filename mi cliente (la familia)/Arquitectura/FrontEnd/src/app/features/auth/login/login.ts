@@ -46,7 +46,7 @@ import { IconComponent } from '../../../shared/components/icon/icon';
 
           <div class="form-options">
             <label class="remember-me">
-              <input type="checkbox" />
+              <input type="checkbox" formControlName="rememberMe" />
               <span>Recuérdame</span>
             </label>
             <a routerLink="/auth/forgot-password" class="forgot-link">¿Olvidaste tu contraseña?</a>
@@ -56,8 +56,8 @@ import { IconComponent } from '../../../shared/components/icon/icon';
             <div class="auth-error">{{ errorMessage }}</div>
           }
 
-          <button type="submit" class="btn-main" [disabled]="form.invalid">
-            Iniciar Sesión
+          <button type="submit" class="btn-main" [disabled]="form.invalid || isLoading()">
+            {{ isLoading() ? 'Iniciando...' : 'Iniciar Sesión' }}
           </button>
 
           <div class="divider">
@@ -362,22 +362,32 @@ export class Login {
   form = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required]],
+    rememberMe: [false]
   });
+
+  isLoading = signal(false);
 
   onSubmit(): void {
     if (this.form.valid) {
-      const { email, password } = this.form.value;
-      const success = this.authService.login({ email: email!, password: password! });
-      if (success) {
-        const user = this.authService.user();
-        if (user?.role === 'admin') {
-          this.router.navigate(['/admin']);
-        } else {
-          this.router.navigate(['/home']);
+      this.isLoading.set(true);
+      this.errorMessage = '';
+      const { email, password, rememberMe } = this.form.value;
+      
+      this.authService.login({ email: email!, password: password!, remember_me: rememberMe! }).subscribe({
+        next: () => {
+          this.isLoading.set(false);
+          const user = this.authService.user();
+          if (user?.role === 'admin') {
+            this.router.navigate(['/admin']);
+          } else {
+            this.router.navigate(['/home']);
+          }
+        },
+        error: (err) => {
+          this.isLoading.set(false);
+          this.errorMessage = err.error?.error || 'Credenciales incorrectas';
         }
-      } else {
-        this.errorMessage = 'Credenciales incorrectas';
-      }
+      });
     }
   }
 }
