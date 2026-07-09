@@ -128,7 +128,13 @@ const openapi = {
       description: 'Local development API',
     },
   ],
+  security: [
+    {
+      bearerAuth: [],
+    },
+  ],
   tags: [
+    { name: 'Auth' },
     { name: 'Health' },
     { name: 'Shop Config' },
     { name: 'Categories' },
@@ -156,6 +162,13 @@ const openapi = {
     { name: 'Notifications' },
   ],
   components: {
+    securitySchemes: {
+      bearerAuth: {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+      },
+    },
     responses: {
       NotFound: {
         description: 'Resource not found',
@@ -884,8 +897,111 @@ const openapi = {
       get: {
         tags: ['Health'],
         summary: 'API health check',
+        security: [], // Health check no necesita token
         responses: {
           200: ok({ $ref: '#/components/schemas/Message' }),
+        },
+      },
+    },
+    '/auth/register': {
+      post: {
+        tags: ['Auth'],
+        summary: 'Register a new user and login automatically',
+        security: [],
+        requestBody: requestBody({
+          type: 'object',
+          required: ['first_name', 'last_name', 'email', 'password'],
+          properties: {
+            first_name: { type: 'string' },
+            last_name: { type: 'string' },
+            email: { type: 'string', format: 'email' },
+            phone: { type: 'string' },
+            password: { type: 'string', format: 'password' },
+          },
+        }),
+        responses: {
+          201: created({
+            type: 'object',
+            properties: {
+              message: { type: 'string' },
+              user: { $ref: '#/components/schemas/User' },
+              accessToken: { type: 'string' },
+              refreshToken: { type: 'string' },
+            },
+          }),
+          400: { $ref: '#/components/responses/ValidationError' },
+          409: { description: 'Username already exists' },
+        },
+      },
+    },
+    '/auth/login': {
+      post: {
+        tags: ['Auth'],
+        summary: 'Login and get tokens',
+        security: [],
+        requestBody: requestBody({
+          type: 'object',
+          required: ['email', 'password'],
+          properties: {
+            email: { type: 'string', format: 'email' },
+            password: { type: 'string', format: 'password' },
+            remember_me: { type: 'boolean', default: false },
+          },
+        }),
+        responses: {
+          200: ok({
+            type: 'object',
+            properties: {
+              message: { type: 'string' },
+              user: { $ref: '#/components/schemas/User' },
+              accessToken: { type: 'string' },
+              refreshToken: { type: 'string' },
+            },
+          }),
+          400: { $ref: '#/components/responses/ValidationError' },
+          401: { description: 'Invalid credentials' },
+          403: { description: 'User is deactivated' },
+        },
+      },
+    },
+    '/auth/refresh': {
+      post: {
+        tags: ['Auth'],
+        summary: 'Refresh access token using refresh token (Refresh Token Rotation)',
+        security: [],
+        requestBody: requestBody({
+          type: 'object',
+          required: ['refreshToken'],
+          properties: {
+            refreshToken: { type: 'string' },
+          },
+        }),
+        responses: {
+          200: ok({
+            type: 'object',
+            properties: {
+              accessToken: { type: 'string' },
+              refreshToken: { type: 'string' },
+            },
+          }),
+          401: { description: 'Refresh token is required' },
+          403: { description: 'Invalid, expired, or revoked refresh token' },
+        },
+      },
+    },
+    '/auth/logout': {
+      post: {
+        tags: ['Auth'],
+        summary: 'Logout and revoke refresh token',
+        security: [],
+        requestBody: requestBody({
+          type: 'object',
+          properties: {
+            refreshToken: { type: 'string' },
+          },
+        }),
+        responses: {
+          204: deleted,
         },
       },
     },

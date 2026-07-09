@@ -1,5 +1,10 @@
 const router = require('express').Router();
 const ctrl = require('../controllers/users.controller');
+const { verifyToken, requireRole } = require('../middleware/auth.middleware');
+
+// Proteger todo el catálogo de usuarios
+router.use(verifyToken);
+router.use(requireRole('admin'));
 
 router.get('/', ctrl.getAll);
 router.get('/:id', ctrl.getOne);

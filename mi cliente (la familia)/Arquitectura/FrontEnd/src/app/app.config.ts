@@ -1,15 +1,16 @@
 import { ApplicationConfig, inject, provideBrowserGlobalErrorListeners, isDevMode } from '@angular/core';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideRouter, withNavigationErrorHandler } from '@angular/router';
 
 import { routes } from './app.routes';
 import { provideServiceWorker } from '@angular/service-worker';
 import { AlertService } from './core/services/alert.service';
+import { authInterceptor } from './core/interceptors/auth.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
-    provideHttpClient(),
+    provideHttpClient(withInterceptors([authInterceptor])),
     provideRouter(
       routes,
       withNavigationErrorHandler((error) => {
