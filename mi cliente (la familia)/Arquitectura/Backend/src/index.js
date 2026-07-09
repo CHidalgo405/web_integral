@@ -8,7 +8,9 @@ const openapi = require('./openapi');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(cors());
+// Si se define FRONTEND_URL solo se permite ese origen; si no, queda abierto (útil en desarrollo).
+const allowedOrigin = process.env.FRONTEND_URL;
+app.use(cors(allowedOrigin ? { origin: allowedOrigin } : undefined));
 app.use(express.json());
 
 app.get('/', (req, res) => res.json({ message: 'Tiendita Maday API running' }));
