@@ -1,0 +1,18 @@
+# Dockerfile de producción del Backend para Railway.
+# Vive en la raíz del repo (no dentro de Backend/) a propósito: así el
+# "Root Directory" del servicio en Railway puede quedar vacío (raíz del
+# repo) y no depende de que Railway interprete bien un path con espacios
+# y paréntesis. Ver RAILWAY_DEPLOY.md.
+
+FROM node:20-alpine
+
+WORKDIR /app
+
+COPY ["mi cliente (la familia)/Arquitectura/Backend/package.json", "mi cliente (la familia)/Arquitectura/Backend/package-lock.json", "./"]
+RUN npm ci --omit=dev
+
+COPY ["mi cliente (la familia)/Arquitectura/Backend/src", "./src"]
+
+EXPOSE 3000
+
+CMD ["node", "src/index.js"]

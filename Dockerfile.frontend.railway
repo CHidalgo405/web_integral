@@ -1,0 +1,34 @@
+# Dockerfile de producción del Frontend (Angular) para Railway.
+# Vive en la raíz del repo por la misma razón que Dockerfile.backend.railway:
+# evita depender del "Root Directory" del servicio con un path que tiene
+# espacios y paréntesis. Ver RAILWAY_DEPLOY.md.
+
+# ---- Etapa 1: build ----
+FROM node:20-alpine AS build
+
+WORKDIR /app
+
+COPY ["mi cliente (la familia)/Arquitectura/FrontEnd/package.json", "mi cliente (la familia)/Arquitectura/FrontEnd/package-lock.json", "./"]
+RUN npm ci
+
+COPY ["mi cliente (la familia)/Arquitectura/FrontEnd/", "./"]
+
+# API_BASE_URL se define como variable del servicio en Railway y queda
+# compilada dentro del bundle estático (ver scripts/generate-env.js).
+ARG API_BASE_URL
+ENV API_BASE_URL=$API_BASE_URL
+
+RUN npm run build:railway
+
+# ---- Etapa 2: runtime (solo archivos estáticos) ----
+FROM node:20-alpine AS runtime
+
+WORKDIR /app
+
+RUN npm install -g serve
+
+COPY --from=build /app/dist/la-familia/browser ./browser
+
+EXPOSE 8080
+
+CMD sh -c "serve -s browser -l ${PORT:-8080}"

@@ -1,0 +1,13 @@
+.git
+/muebles zajo
+/src
+/public
+/dist
+/.vscode
+/.claude
+/.angular
+**/node_modules
+**/.angular
+**/dist
+**/.DS_Store
+**/*.log
