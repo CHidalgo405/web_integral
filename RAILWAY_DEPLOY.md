@@ -5,30 +5,42 @@ Este repo es un mono-repo (Frontend + Backend + Database en
 mismo proyecto de Railway:
 
 1. **PostgreSQL** (plugin administrado por Railway)
-2. **Backend** (Express)
-3. **Frontend** (Angular, servido como archivos estáticos)
+2. **Backend** (Express) — carpeta `mi cliente (la familia)/Arquitectura/Backend`
+3. **Frontend** (Angular, estático) — carpeta `mi cliente (la familia)/Arquitectura/FrontEnd`
 
 No hace falta tocar `docker-compose.yml` — eso sigue sirviendo solo para tu
 entorno local.
 
-## Cómo está resuelto el problema del mono-repo
+---
 
-El campo **Root Directory** de Railway fallaba repetidamente con el path
-`mi cliente (la familia)/Arquitectura/Backend` (espacios y paréntesis) y
-Railway terminaba construyendo desde la raíz del repo, donde no hay nada
-que detectar.
+## ⚠️ Lo único que tienes que configurar: Root Directory
 
-Para eliminar ese punto de falla, **ya no se usa Root Directory en
-absoluto**. En su lugar:
+Cada subcarpeta (`Backend/`, `FrontEnd/`) ya tiene su propio `railway.json`
+apuntando al Dockerfile correcto. Railway detecta ese archivo **solo**
+(sin que toques nada en Settings → Build) siempre y cuando el **Root
+Directory** del servicio esté puesto correctamente. Ese es el único campo
+que debes llenar, y es el que ha fallado en los intentos anteriores (o
+porque no se guardó, o porque no se redepliegue después de guardarlo).
 
-- Los Dockerfiles de producción viven en la **raíz del repo**:
-  `Dockerfile.backend.railway` y `Dockerfile.frontend.railway`. Cada uno
-  copia únicamente su subcarpeta correspondiente (con `COPY` en formato
-  array, que sí soporta paths con espacios).
-- Cada servicio de Railway apunta a su Dockerfile de forma manual, sin
-  depender de que Railway adivine nada.
-- Esto ya se probó de punta a punta con `docker build` local (backend y
-  frontend), no es teoría.
+### Dónde está ese campo, paso a paso
+
+1. Entra al servicio (Backend o Frontend) dentro de tu proyecto de Railway.
+2. Click en la pestaña **Settings** (arriba del panel del servicio).
+3. La primera sección se llama **Source**. Ahí, justo debajo de dónde dice
+   el repo de GitHub conectado, hay un campo de texto llamado
+   **Root Directory** (a veces aparece como "Add Root Directory" si está
+   vacío).
+4. Escribe (copia y pega, sin comillas):
+   - Backend: `mi cliente (la familia)/Arquitectura/Backend`
+   - Frontend: `mi cliente (la familia)/Arquitectura/FrontEnd`
+5. Presiona Enter o el botón de guardar que aparezca junto al campo.
+6. **Importante:** cambiar este campo no siempre dispara un build nuevo
+   solo. Ve a la pestaña **Deployments** y dale clic a **Deploy** (o a los
+   tres puntos `⋮` del último deployment fallido → **Redeploy**).
+7. Repite lo mismo en el otro servicio, con su propia carpeta.
+
+No toques nada en **Settings → Build** — no hace falta, el `railway.json`
+de cada carpeta ya le dice a Railway qué Dockerfile usar.
 
 ---
 
@@ -50,22 +62,16 @@ absoluto**. En su lugar:
 
 ## 2. Servicio Backend
 
-1. **New → GitHub Repo** (mismo repo) para crear un segundo servicio.
-2. **Settings → Source → Root Directory**: déjalo **vacío** (raíz del repo).
-3. **Settings → Build**:
-   - Builder: **Dockerfile**
-   - Custom Dockerfile Path: `Dockerfile.backend.railway`
-
-   (Si tu versión de Railway soporta "Config File Path" en vez de estos
-   campos, puedes apuntarlo a `railway.backend.json` y hace lo mismo
-   automáticamente.)
-4. En **Variables** agrega:
+1. **New → GitHub Repo** (mismo repo) para crear el servicio.
+2. Configura el **Root Directory** como se explicó arriba:
+   `mi cliente (la familia)/Arquitectura/Backend`.
+3. En **Variables** agrega:
    - `DATABASE_URL` → **Reference Variable** apuntando al servicio de
      Postgres (Railway te la sugiere al escribir `DATABASE_URL`).
    - No definas `PORT` manualmente, Railway lo inyecta solo.
-5. **Settings → Networking → Generate Domain** para obtener la URL pública,
+4. **Settings → Networking → Generate Domain** para obtener la URL pública,
    por ejemplo `https://backend-production-xxxx.up.railway.app`.
-6. Verifica que responde entrando a esa URL — debe devolver
+5. Verifica que responde entrando a esa URL — debe devolver
    `{"message":"Tiendita Maday API running"}`. La documentación interactiva
    queda en `/api-docs`.
 
@@ -75,20 +81,16 @@ Guarda esa URL, la necesitas en el siguiente paso.
 
 ## 3. Servicio Frontend
 
-1. **New → GitHub Repo** (mismo repo) para el tercer servicio.
-2. **Settings → Source → Root Directory**: déjalo **vacío** también.
-3. **Settings → Build**:
-   - Builder: **Dockerfile**
-   - Custom Dockerfile Path: `Dockerfile.frontend.railway`
-
-   (o Config File Path → `railway.frontend.json`)
-4. En **Variables** agrega:
+1. **New → GitHub Repo** (mismo repo) para el otro servicio.
+2. Configura el **Root Directory**:
+   `mi cliente (la familia)/Arquitectura/FrontEnd`.
+3. En **Variables** agrega:
    - `API_BASE_URL` = `https://backend-production-xxxx.up.railway.app/api`
      (la URL del backend del paso anterior, **con `/api` al final**).
      Railway la pasa como build arg al Dockerfile automáticamente porque
      el Dockerfile declara `ARG API_BASE_URL` con el mismo nombre.
-5. **Settings → Networking → Generate Domain** para la URL pública del frontend.
-6. Railway hace el build (Angular compila con esa URL ya "horneada" en el
+4. **Settings → Networking → Generate Domain** para la URL pública del frontend.
+5. Railway hace el build (Angular compila con esa URL ya "horneada" en el
    bundle — es una SPA estática, no hay servidor Node corriendo Angular,
    solo `serve` sirviendo archivos).
 
@@ -100,7 +102,7 @@ Por defecto el backend acepta peticiones de cualquier origen. Para
 restringirlo solo al frontend:
 
 1. En el servicio **Backend → Variables**, agrega `FRONTEND_URL` = la URL
-   pública del frontend (paso 3.5).
+   pública del frontend (paso 3.4).
 2. Railway redespliega el backend automáticamente al guardar la variable.
 
 ---
@@ -108,11 +110,32 @@ restringirlo solo al frontend:
 ## Cuando cambie la URL del backend
 
 Actualiza la variable `API_BASE_URL` en el servicio Frontend y vuelve a
-desplegar — no hace falta tocar código ni el Dockerfile.
+desplegar (Deployments → Redeploy) — no hace falta tocar código.
 
-## Nota sobre los Dockerfiles nested (`Backend/Dockerfile`, `FrontEnd/Dockerfile`)
+---
 
-Esos siguen existiendo y siguen siendo los que usa `docker-compose.yml`
-para tu entorno local (`ng serve` con hot reload, etc). Railway usa
-exclusivamente los de la raíz (`Dockerfile.backend.railway` /
-`Dockerfile.frontend.railway`), pensados para producción.
+## Plan B — si Root Directory sigue sin funcionar
+
+Si después de configurar el Root Directory correctamente **y** darle
+Redeploy manual el build sigue sin usar el Dockerfile de esa carpeta (por
+ejemplo si vuelve a construir desde la raíz o el error menciona
+"railpack"), es señal de que Railway no está tomando ese campo. En ese
+caso, en vez de depender de Root Directory:
+
+1. Deja el **Root Directory vacío** (raíz del repo).
+2. Ve a **Settings → Build** y fija manualmente:
+   - Builder: `Dockerfile`
+   - Custom Dockerfile Path: `Dockerfile.backend.railway` (Backend) o
+     `Dockerfile.frontend.railway` (Frontend)
+
+Estos dos Dockerfiles ya existen en la raíz del repo exactamente para este
+caso — cada uno copia solo su subcarpeta correspondiente usando sintaxis
+de `COPY` en array (soporta los espacios y paréntesis del path). Ya se
+probaron de punta a punta con `docker build` + `docker run` local: el
+backend responde en `/` y el frontend sirve el bundle con la URL del
+backend correctamente compilada adentro.
+
+## Nota sobre los Dockerfiles normales (`Backend/Dockerfile`, `FrontEnd/Dockerfile`)
+
+Esos siguen existiendo y son los que usa `docker-compose.yml` para tu
+entorno local (`ng serve` con hot reload, etc). No son los que usa Railway.

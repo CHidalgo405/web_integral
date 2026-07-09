@@ -1,0 +1,32 @@
+# Dockerfile de producción para Railway.
+# El Dockerfile normal de esta carpeta es para desarrollo local (ng serve).
+
+# ---- Etapa 1: build ----
+FROM node:20-alpine AS build
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm ci
+
+COPY . .
+
+# API_BASE_URL se define como variable de entorno del servicio en Railway
+# (ver scripts/generate-env.js) y queda compilada dentro del bundle estático.
+ARG API_BASE_URL
+ENV API_BASE_URL=$API_BASE_URL
+
+RUN npm run build:railway
+
+# ---- Etapa 2: runtime (solo archivos estáticos) ----
+FROM node:20-alpine AS runtime
+
+WORKDIR /app
+
+RUN npm install -g serve
+
+COPY --from=build /app/dist/la-familia/browser ./browser
+
+EXPOSE 8080
+
+CMD sh -c "serve -s browser -l ${PORT:-8080}"
