@@ -124,8 +124,8 @@ const openapi = {
   },
   servers: [
     {
-      url: 'http://localhost:3000/api',
-      description: 'Local development API',
+      url: process.env.BACKEND_URL || 'http://localhost:3000/api',
+      description: 'API Server',
     },
   ],
   security: [
