@@ -8,8 +8,18 @@ import { MxnCurrencyPipe } from '../../../shared/pipes/currency.pipe';
 import { IconComponent } from '../../../shared/components/icon/icon';
 import { API_BASE_URL } from '../../../core/api.config';
 
-interface ApiCustomer {
-  id: string;
+interface ApiMetrics {
+  total_orders: number;
+  pending_orders: number;
+  total_sales: string | number;
+  avg_ticket: string | number;
+  sales_today: string | number;
+  sales_week: string | number;
+  sales_month: string | number;
+  daily: { day: string; sales: string | number; orders: number }[];
+  top_products: { id: string; name: string; units_sold: number; revenue: string | number }[];
+  by_status: { status: string; count: number }[];
+  active_users: number;
 }
 
 @Component({
@@ -42,8 +52,8 @@ interface ApiCustomer {
             <h3>Ventas Totales</h3>
             <p class="kpi-value">{{ totalSales() | mxnCurrency }}</p>
             <span class="kpi-trend positive">
-              <app-icon name="arrow-up" size="12" color="var(--success)" />
-              Activo
+              <app-icon name="trending-up" size="12" color="var(--success)" />
+              Hoy: {{ salesToday() | mxnCurrency }} · Mes: {{ salesMonth() | mxnCurrency }}
             </span>
           </div>
         </div>
@@ -187,6 +197,32 @@ interface ApiCustomer {
         </section>
       </div>
 
+      <!-- Top Productos -->
+      @if (topProducts().length > 0) {
+        <section class="card activity-card">
+          <div class="card-header">
+            <h2>
+              <app-icon name="trending-up" size="18" color="var(--primary)" />
+              Productos Más Vendidos
+            </h2>
+            <a routerLink="/admin/products" class="card-action-link">
+              Ver catálogo
+              <app-icon name="arrow-right" size="12" color="var(--primary)" />
+            </a>
+          </div>
+          <div class="top-products-list">
+            @for (prod of topProducts(); track prod.id; let idx = $index) {
+              <div class="top-product-row">
+                <span class="top-rank" [class.gold]="idx === 0">{{ idx + 1 }}</span>
+                <span class="top-name">{{ prod.name }}</span>
+                <span class="top-units">{{ prod.units_sold }} vendidos</span>
+                <strong class="top-revenue">{{ prod.revenue | mxnCurrency }}</strong>
+              </div>
+            }
+          </div>
+        </section>
+      }
+
       <!-- Recent Activity Feed -->
       <section class="card activity-card">
         <div class="card-header">
@@ -231,24 +267,44 @@ export class Dashboard {
     day: 'numeric',
   });
 
-  readonly customerCount = signal(0);
-  readonly activeUsersCount = computed(() => this.customerCount());
+  readonly metrics = signal<ApiMetrics | null>(null);
+  readonly activeUsersCount = computed(() => this.metrics()?.active_users ?? 0);
 
   constructor() {
-    this.loadCustomerCount();
+    this.loadMetrics();
   }
 
+  private loadMetrics(): void {
+    this.http.get<ApiMetrics>(`${API_BASE_URL}/purchases/metrics`).subscribe({
+      next: (data) => this.metrics.set(data),
+      error: () => this.metrics.set(null),
+    });
+  }
+
+  // Métricas del servidor (exactas sobre toda la historia); si aún no
+  // cargan, se calculan localmente con los pedidos ya descargados.
   readonly totalSales = computed(() => {
+    const m = this.metrics();
+    if (m) return Number(m.total_sales);
     return this.orderService.getOrders()
       .filter((o) => o.status !== 'cancelled')
       .reduce((sum, o) => sum + o.total, 0);
   });
 
-  readonly totalOrders = computed(() => this.orderService.getOrders().length);
+  readonly totalOrders = computed(() => this.metrics()?.total_orders ?? this.orderService.getOrders().length);
 
   readonly pendingOrders = computed(() => {
+    const m = this.metrics();
+    if (m) return m.pending_orders;
     return this.orderService.getOrders().filter((o) => o.status === 'pending').length;
   });
+
+  readonly salesToday = computed(() => Number(this.metrics()?.sales_today ?? 0));
+  readonly salesWeek = computed(() => Number(this.metrics()?.sales_week ?? 0));
+  readonly salesMonth = computed(() => Number(this.metrics()?.sales_month ?? 0));
+  readonly topProducts = computed(() =>
+    (this.metrics()?.top_products ?? []).map((p) => ({ ...p, revenue: Number(p.revenue) })),
+  );
 
   readonly totalProducts = computed(() => this.productService.getProducts().length);
 
@@ -259,33 +315,42 @@ export class Dashboard {
   readonly lowStockCount = computed(() => this.lowStockProducts().length);
 
   readonly chartPoints = computed(() => {
-    const orders = this.orderService.getOrders().filter((o) => o.status !== 'cancelled');
-    const days: Date[] = [];
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      d.setHours(0, 0, 0, 0);
-      days.push(d);
+    const m = this.metrics();
+    let dailySales: number[];
+    let labels: string[];
+
+    if (m && m.daily.length > 0) {
+      dailySales = m.daily.map((d) => Number(d.sales));
+      labels = m.daily.map((d) => this.getDayLabel(new Date(d.day + 'T12:00:00')));
+    } else {
+      const orders = this.orderService.getOrders().filter((o) => o.status !== 'cancelled');
+      const days: Date[] = [];
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        d.setHours(0, 0, 0, 0);
+        days.push(d);
+      }
+
+      dailySales = days.map((day) => {
+        const nextDay = new Date(day);
+        nextDay.setDate(day.getDate() + 1);
+        return orders
+          .filter((o) => {
+            const cDate = new Date(o.createdAt);
+            return cDate >= day && cDate < nextDay;
+          })
+          .reduce((sum, o) => sum + o.total, 0);
+      });
+      labels = days.map((d) => this.getDayLabel(d));
     }
-
-    const dailySales = days.map((day) => {
-      const nextDay = new Date(day);
-      nextDay.setDate(day.getDate() + 1);
-
-      return orders
-        .filter((o) => {
-          const cDate = new Date(o.createdAt);
-          return cDate >= day && cDate < nextDay;
-        })
-        .reduce((sum, o) => sum + o.total, 0);
-    });
 
     const maxSales = Math.max(...dailySales, 200);
 
     return dailySales.map((val, idx) => {
       const x = 40 + idx * 70;
       const y = 170 - (val / maxSales) * 110;
-      return { x, y, val, label: this.getDayLabel(days[idx]) };
+      return { x, y, val, label: labels[idx] };
     });
   });
 
@@ -326,13 +391,6 @@ export class Dashboard {
 
     return logs;
   });
-
-  private loadCustomerCount(): void {
-    this.http.get<ApiCustomer[]>(`${API_BASE_URL}/customers`).subscribe({
-      next: (customers) => this.customerCount.set(customers.length),
-      error: () => this.customerCount.set(0),
-    });
-  }
 
   getCategoryIcon(categoryId: string): string {
     return this.productService.getCategories().find((c) => c.id === categoryId)?.icon ?? 'package';

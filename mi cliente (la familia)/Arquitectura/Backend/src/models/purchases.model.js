@@ -50,8 +50,9 @@ const createWithItems = async (purchase, items) => {
       `INSERT INTO purchases
          (customer_id, employee_id, user_id, delivery_method, delivery_address,
           delivery_distance_km, delivery_zone_id, delivery_fee,
-          payment_method, status, subtotal, discount_total, total, cash_tendered, notes)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) RETURNING *`,
+          payment_method, status, subtotal, discount_total, total, cash_tendered,
+          paypal_order_id, paid_at, notes)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17) RETURNING *`,
       [
         purchase.customer_id ?? null,
         purchase.employee_id ?? null,
@@ -67,6 +68,8 @@ const createWithItems = async (purchase, items) => {
         purchase.discount_total ?? 0,
         purchase.total,
         purchase.cash_tendered ?? null,
+        purchase.paypal_order_id ?? null,
+        purchase.paid_at ?? null,
         purchase.notes ?? null,
       ]
     );
@@ -90,7 +93,62 @@ const createWithItems = async (purchase, items) => {
   }
 };
 
-const updateStatus = (id, status) =>
-  db.query('UPDATE purchases SET status=$1 WHERE id=$2 RETURNING *', [status, id]);
+const updateStatus = (id, status, tracking_number) => {
+  if (tracking_number !== undefined) {
+    return db.query(
+      'UPDATE purchases SET status=$1, tracking_number=$2 WHERE id=$3 RETURNING *',
+      [status, tracking_number, id]
+    );
+  }
+  return db.query('UPDATE purchases SET status=$1 WHERE id=$2 RETURNING *', [status, id]);
+};
 
-module.exports = { findAll, findById, findItems, createWithItems, updateStatus };
+// Agregados para el dashboard admin
+const metrics = async () => {
+  const [totals, daily, topProducts, byStatus, usersCount] = await Promise.all([
+    db.query(
+      `SELECT
+         COUNT(*)::int AS total_orders,
+         COUNT(*) FILTER (WHERE status = 'pending')::int AS pending_orders,
+         COALESCE(SUM(total) FILTER (WHERE status <> 'cancelled'), 0) AS total_sales,
+         COALESCE(AVG(total) FILTER (WHERE status <> 'cancelled'), 0) AS avg_ticket,
+         COALESCE(SUM(total) FILTER (WHERE status <> 'cancelled' AND created_at::date = CURRENT_DATE), 0) AS sales_today,
+         COALESCE(SUM(total) FILTER (WHERE status <> 'cancelled' AND created_at >= date_trunc('week', NOW())), 0) AS sales_week,
+         COALESCE(SUM(total) FILTER (WHERE status <> 'cancelled' AND created_at >= date_trunc('month', NOW())), 0) AS sales_month
+       FROM purchases`
+    ),
+    db.query(
+      `SELECT d.day::date AS day,
+              COALESCE(SUM(p.total) FILTER (WHERE p.status <> 'cancelled'), 0) AS sales,
+              COUNT(p.id) FILTER (WHERE p.status <> 'cancelled')::int AS orders
+       FROM generate_series(CURRENT_DATE - INTERVAL '6 days', CURRENT_DATE, '1 day') AS d(day)
+       LEFT JOIN purchases p ON p.created_at::date = d.day::date
+       GROUP BY d.day ORDER BY d.day`
+    ),
+    db.query(
+      `SELECT i.id, i.name,
+              SUM(pi.quantity)::int AS units_sold,
+              COALESCE(SUM(pi.line_total), 0) AS revenue
+       FROM purchase_items pi
+       JOIN purchases p ON p.id = pi.purchase_id AND p.status <> 'cancelled'
+       JOIN inventory i ON i.id = pi.inventory_id
+       GROUP BY i.id, i.name
+       ORDER BY units_sold DESC
+       LIMIT 5`
+    ),
+    db.query(
+      `SELECT status, COUNT(*)::int AS count FROM purchases GROUP BY status`
+    ),
+    db.query(`SELECT COUNT(*)::int AS count FROM users WHERE active = TRUE`),
+  ]);
+
+  return {
+    ...totals.rows[0],
+    daily: daily.rows,
+    top_products: topProducts.rows,
+    by_status: byStatus.rows,
+    active_users: usersCount.rows[0].count,
+  };
+};
+
+module.exports = { findAll, findById, findItems, createWithItems, updateStatus, metrics };

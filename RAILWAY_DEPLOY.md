@@ -68,6 +68,13 @@ de cada carpeta ya le dice a Railway qué Dockerfile usar.
 3. En **Variables** agrega:
    - `DATABASE_URL` → **Reference Variable** apuntando al servicio de
      Postgres (Railway te la sugiere al escribir `DATABASE_URL`).
+   - `JWT_SECRET` y `JWT_REFRESH_SECRET` → valores largos y aleatorios
+     (genera cada uno con `openssl rand -hex 32`).
+   - `PAYPAL_CLIENT_ID` y `PAYPAL_SECRET` → las credenciales de tu app
+     de PayPal (developer.paypal.com). **Nunca** las metas al código.
+   - `PAYPAL_API_BASE` → déjala sin definir para sandbox (pruebas);
+     cuando pases a producción real ponla en `https://api-m.paypal.com`
+     con credenciales live.
    - No definas `PORT` manualmente, Railway lo inyecta solo.
 4. **Settings → Networking → Generate Domain** para obtener la URL pública,
    por ejemplo `https://backend-production-xxxx.up.railway.app`.

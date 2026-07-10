@@ -1303,3 +1303,20 @@
     color: var(--success, #2e7d32);
 }
 
+
+/* ---- 14. PayPal ---- */
+.paypal-container {
+    margin-top: 16px;
+    min-height: 48px;
+}
+
+.paypal-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 16px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}

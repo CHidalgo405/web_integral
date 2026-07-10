@@ -3,7 +3,7 @@ import { Address } from './address.model';
 
 export type OrderStatus = 'pending' | 'preparing' | 'shipped' | 'delivered' | 'cancelled' | 'refunded';
 
-export type PaymentMethod = 'card' | 'cash' | 'transfer';
+export type PaymentMethod = 'card' | 'cash' | 'transfer' | 'paypal';
 
 export type ShippingMethod = 'standard' | 'express' | 'pickup';
 

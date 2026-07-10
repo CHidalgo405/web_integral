@@ -1,6 +1,7 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { OrderService } from '../../../core/services/order.service';
+import { ReceiptService } from '../../../core/services/receipt.service';
 import { ProductService } from '../../../core/services/product.service';
 import { MxnCurrencyPipe } from '../../../shared/pipes/currency.pipe';
 import { Header } from '../../../shared/components/header/header';
@@ -199,6 +200,11 @@ import { IconComponent } from '../../../shared/components/icon/icon';
             </div>
           }
         </div>
+
+        <button class="receipt-btn" (click)="downloadReceipt()" [disabled]="downloadingReceipt" id="download-receipt-btn">
+          <app-icon name="download" size="16" color="var(--primary)" />
+          {{ downloadingReceipt ? 'Generando recibo...' : 'Descargar recibo (PDF)' }}
+        </button>
 
         @if (order.status === 'pending' || order.status === 'preparing') {
           <button class="cancel-btn" (click)="cancelOrder()" id="cancel-order-btn">Cancelar pedido</button>
@@ -752,6 +758,28 @@ import { IconComponent } from '../../../shared/components/icon/icon';
     .cancel-btn:hover {
       background: var(--danger-alpha);
     }
+
+    .receipt-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 14px;
+      background: var(--surface);
+      color: var(--primary);
+      border: 1.5px solid var(--primary);
+      border-radius: 9999px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      margin-top: 24px;
+      transition: background 0.2s;
+    }
+    .receipt-btn:hover:not(:disabled) {
+      background: rgba(27, 61, 50, 0.05);
+    }
+    .receipt-btn:disabled { opacity: 0.6; cursor: wait; }
     
     /* Sliding Toast */
     .toast-notification {
@@ -854,6 +882,7 @@ export class OrderDetail implements OnInit {
   protected orderService = inject(OrderService);
   private route = inject(ActivatedRoute);
   private productService = inject(ProductService);
+  private receiptService = inject(ReceiptService);
 
   order: Order | undefined;
   statusOrder: OrderStatus[] = ['pending', 'preparing', 'shipped', 'delivered'];
@@ -861,12 +890,23 @@ export class OrderDetail implements OnInit {
   showLogs = false;
   showProductsList = false;
   showPriceDetails = false;
+  downloadingReceipt = false;
 
   showNeighborModal = false;
   showHelpModal = false;
   tempNeighborName = '';
   neighborName = '';
   toastMessage = '';
+
+  async downloadReceipt(): Promise<void> {
+    if (!this.order || this.downloadingReceipt) return;
+    this.downloadingReceipt = true;
+    try {
+      await this.receiptService.downloadReceipt(this.order);
+    } finally {
+      this.downloadingReceipt = false;
+    }
+  }
 
   ngOnInit(): void {
     this.route.params.subscribe(p => {

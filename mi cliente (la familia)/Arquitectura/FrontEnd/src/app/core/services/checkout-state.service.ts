@@ -59,6 +59,7 @@ export class CheckoutStateService {
       card: 'Tarjeta de crédito/débito',
       cash: 'Efectivo al recibir',
       transfer: 'Transferencia bancaria (SPEI)',
+      paypal: 'PayPal',
     };
     return method ? map[method] : '';
   }
@@ -68,6 +69,7 @@ export class CheckoutStateService {
       card: 'credit-card',
       cash: 'dollar-sign',
       transfer: 'landmark',
+      paypal: 'paypal',
     };
     return method ? map[method] : 'credit-card';
   }

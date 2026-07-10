@@ -52,6 +52,9 @@ export class IconComponent implements OnInit, OnChanges {
   protected resolvedSize: number = 28;
 
   private icons: Record<string, string> = {
+    'paypal': '<path d="M6.5 21 8 13.5h3.5a5 5 0 0 0 5-4.5c.3-2.7-1.8-5-4.5-5H7L4.5 17"/><path d="M8.5 21h3a5 5 0 0 0 5-4.2l.3-1.8"/>',
+    'download': '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
+    'trending-up': '<polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/>',
     'leaf': '<path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 3.5 2 5.5a7 7 0 0 1-7 7v6ZM11 20v-6"/>',
     'milk': '<path d="M15.2 22H8.8a2 2 0 0 1-2-1.79L5 3h14l-1.81 17.21A2 2 0 0 1 15.2 22Z"/><path d="M6 12h12"/>',
     'drumstick': '<path d="m16 8-5 5"/><path d="m11 8 5 5"/><path d="M18.8 3.3a4.2 4.2 0 0 0-6 0l-9.6 9.6a6 6 0 1 0 8.5 8.5l9.6-9.6a4.2 4.2 0 0 0 0-6v0Z"/>',

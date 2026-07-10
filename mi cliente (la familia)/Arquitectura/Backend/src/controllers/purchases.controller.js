@@ -42,13 +42,25 @@ const create = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
+const VALID_STATUSES = ['pending', 'preparing', 'shipped', 'delivered', 'completed', 'cancelled'];
+
 const updateStatus = async (req, res, next) => {
   try {
-    const { status } = req.body;
-    const { rows } = await Purchases.updateStatus(req.params.id, status);
+    const { status, tracking_number } = req.body;
+    if (!VALID_STATUSES.includes(status)) {
+      return res.status(400).json({ error: `Estado inválido. Usa uno de: ${VALID_STATUSES.join(', ')}` });
+    }
+    const { rows } = await Purchases.updateStatus(req.params.id, status, tracking_number);
     if (!rows.length) return res.status(404).json({ error: 'Purchase not found' });
     res.json(rows[0]);
   } catch (err) { next(err); }
 };
 
-module.exports = { getAll, getOne, getItems, getMine, create, updateStatus };
+const getMetrics = async (req, res, next) => {
+  try {
+    const data = await Purchases.metrics();
+    res.json(data);
+  } catch (err) { next(err); }
+};
+
+module.exports = { getAll, getOne, getItems, getMine, create, updateStatus, getMetrics };

@@ -8,6 +8,8 @@ import { Address } from '../models/address.model';
 import { Product } from '../models/product.model';
 import { AuthService } from './auth.service';
 
+type ApiPurchaseStatus = 'pending' | 'preparing' | 'shipped' | 'delivered' | 'completed' | 'cancelled';
+
 interface ApiPurchase {
   id: string;
   customer_name?: string | null;
@@ -16,12 +18,15 @@ interface ApiPurchase {
   user_email?: string | null;
   delivery_method: 'on_spot' | 'home_delivery' | 'pickup';
   delivery_address?: string | null;
-  payment_method: 'cash' | 'card';
-  status: 'pending' | 'completed' | 'cancelled';
+  payment_method: 'cash' | 'card' | 'paypal';
+  status: ApiPurchaseStatus;
   subtotal: string | number;
   discount_total: string | number;
   delivery_fee: string | number;
   total: string | number;
+  tracking_number?: string | null;
+  paypal_order_id?: string | null;
+  paid_at?: string | null;
   created_at: string;
 }
 
@@ -111,6 +116,7 @@ export class OrderService {
     discount: number,
     shippingCost: number,
     total: number,
+    paypal?: { orderId: string },
   ): Promise<Order> {
     if (paymentMethod === 'transfer') {
       throw new Error('La transferencia bancaria aun no esta disponible para pedidos conectados al servidor.');
@@ -121,10 +127,14 @@ export class OrderService {
       delivery_address: this.formatAddress(address),
       delivery_fee: shippingCost,
       payment_method: paymentMethod,
-      status: 'completed',
+      // Los pedidos nacen pendientes para que el admin los procese
+      // (preparando → en camino → entregado)
+      status: 'pending',
       subtotal,
       discount_total: discount,
       total,
+      paypal_order_id: paypal?.orderId ?? null,
+      paid_at: paypal ? new Date().toISOString() : null,
       notes: `Cliente: ${address.fullName}. Telefono: ${address.phone}`,
       items: items.map((item) => ({
         inventory_id: item.product.id,
@@ -176,7 +186,9 @@ export class OrderService {
 
   updateOrderStatus(orderId: string, status: OrderStatus, trackingNumber?: string, estimatedDelivery?: Date): void {
     const apiStatus = this.toApiStatus(status);
-    this.http.patch<ApiPurchase>(`${API_BASE_URL}/purchases/${orderId}/status`, { status: apiStatus }).subscribe({
+    const body: { status: string; tracking_number?: string } = { status: apiStatus };
+    if (trackingNumber !== undefined) body.tracking_number = trackingNumber;
+    this.http.patch<ApiPurchase>(`${API_BASE_URL}/purchases/${orderId}/status`, body).subscribe({
       next: () => {
         const updated = this.ordersSignal().map((o) =>
           o.id === orderId
@@ -206,6 +218,7 @@ export class OrderService {
       discount: Number(row.discount_total),
       shippingCost: Number(row.delivery_fee),
       total: Number(row.total),
+      trackingNumber: row.tracking_number ?? undefined,
       createdAt,
       updatedAt: createdAt,
     };
@@ -258,16 +271,16 @@ export class OrderService {
     return method === 'pickup' || method === 'on_spot' ? 'pickup' : 'standard';
   }
 
-  private toApiStatus(status: OrderStatus): 'pending' | 'completed' | 'cancelled' {
-    if (status === 'cancelled' || status === 'refunded') return 'cancelled';
-    if (status === 'pending' || status === 'preparing' || status === 'shipped') return 'pending';
-    return 'completed';
+  private toApiStatus(status: OrderStatus): ApiPurchaseStatus {
+    // La DB ya soporta estados granulares; solo refunded se colapsa a cancelled
+    if (status === 'refunded') return 'cancelled';
+    return status;
   }
 
-  private fromApiStatus(status: ApiPurchase['status']): OrderStatus {
-    if (status === 'cancelled') return 'cancelled';
-    if (status === 'pending') return 'pending';
-    return 'delivered';
+  private fromApiStatus(status: ApiPurchaseStatus): OrderStatus {
+    // 'completed' es el estado legado del punto de venta
+    if (status === 'completed') return 'delivered';
+    return status;
   }
 
   private formatAddress(address: Address): string {

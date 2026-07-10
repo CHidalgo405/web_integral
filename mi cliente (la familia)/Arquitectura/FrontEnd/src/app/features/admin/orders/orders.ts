@@ -2,6 +2,7 @@
 import { Component, inject, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { OrderService } from '../../../core/services/order.service';
+import { ReceiptService } from '../../../core/services/receipt.service';
 import { Order, OrderStatus } from '../../../core/models/order.model';
 import { MxnCurrencyPipe } from '../../../shared/pipes/currency.pipe';
 import { IconComponent } from '../../../shared/components/icon/icon';
@@ -254,6 +255,14 @@ import { IconComponent } from '../../../shared/components/icon/icon';
             }
           </div>
 
+          <!-- Recibo PDF -->
+          <div class="detail-section">
+            <button class="btn btn-secondary btn-full" (click)="downloadReceipt()" [disabled]="downloadingReceipt">
+              <app-icon name="download" size="16" color="var(--primary)" />
+              {{ downloadingReceipt ? 'Generando recibo...' : 'Descargar recibo (PDF)' }}
+            </button>
+          </div>
+
           <!-- Items Table -->
           <div class="detail-section">
             <h3 class="section-title">
@@ -337,12 +346,25 @@ import { IconComponent } from '../../../shared/components/icon/icon';
 })
 export class OrderTracker {
   protected orderService = inject(OrderService);
+  private receiptService = inject(ReceiptService);
 
   selectedTab = signal<string>('all');
   searchQuery = signal('');
   isDetailDrawerOpen = signal<boolean>(false);
   selectedOrder = signal<Order | null>(null);
   tempTrackingNumber = '';
+  downloadingReceipt = false;
+
+  async downloadReceipt(): Promise<void> {
+    const order = this.selectedOrder();
+    if (!order || this.downloadingReceipt) return;
+    this.downloadingReceipt = true;
+    try {
+      await this.receiptService.downloadReceipt(order);
+    } finally {
+      this.downloadingReceipt = false;
+    }
+  }
 
   readonly countAll = computed(() => this.orderService.getOrders().length);
   readonly countPending = computed(() => this.orderService.getOrders().filter(o => o.status === 'pending').length);

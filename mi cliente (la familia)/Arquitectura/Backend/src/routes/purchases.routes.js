@@ -1,10 +1,11 @@
 const router = require('express').Router();
 const ctrl = require('../controllers/purchases.controller');
-const { verifyToken, attachUser } = require('../middleware/auth.middleware');
+const { verifyToken, requireRole, attachUser } = require('../middleware/auth.middleware');
 
 router.get('/', ctrl.getAll);
-// /mine debe declararse antes de /:id para que no lo capture el parámetro
+// /mine y /metrics deben declararse antes de /:id para que no los capture el parámetro
 router.get('/mine', verifyToken, ctrl.getMine);
+router.get('/metrics', verifyToken, requireRole('admin'), ctrl.getMetrics);
 router.get('/:id', ctrl.getOne);
 router.get('/:id/items', ctrl.getItems);
 // attachUser: si hay sesión la compra queda ligada al usuario; sin sesión sigue funcionando (POS/invitado)

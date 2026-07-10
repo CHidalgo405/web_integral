@@ -2,6 +2,7 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { DatePipe } from '@angular/common';
 import { OrderService } from '../../../core/services/order.service';
+import { ReceiptService } from '../../../core/services/receipt.service';
 import { MxnCurrencyPipe } from '../../../shared/pipes/currency.pipe';
 import { IconComponent } from '../../../shared/components/icon/icon';
 import { Order, ShippingMethod } from '../../../core/models/order.model';
@@ -101,6 +102,12 @@ import { Order, ShippingMethod } from '../../../core/models/order.model';
             <app-icon name="clipboard" size="18" color="#fff" />
             Ver mis pedidos
           </a>
+          @if (order) {
+            <button type="button" class="btn-receipt" (click)="downloadReceipt()" [disabled]="downloading()" id="download-receipt-btn">
+              <app-icon name="download" size="18" color="var(--primary)" />
+              {{ downloading() ? 'Generando...' : 'Descargar recibo (PDF)' }}
+            </button>
+          }
           <a routerLink="/home" class="btn-secondary-conf" id="continue-shopping-btn">
             Seguir comprando
           </a>
@@ -382,14 +389,45 @@ import { Order, ShippingMethod } from '../../../core/models/order.model';
     }
 
     .btn-secondary-conf:hover { background: var(--surface-raised); }
+
+    .btn-receipt {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 15px;
+      background: var(--surface);
+      color: var(--primary);
+      border: 1.5px solid var(--primary);
+      border-radius: 9999px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-receipt:hover:not(:disabled) { background: rgba(27, 61, 50, 0.05); }
+    .btn-receipt:disabled { opacity: 0.6; cursor: wait; }
   `],
 })
 export class OrderConfirmation implements OnInit {
   private orderService = inject(OrderService);
+  private receiptService = inject(ReceiptService);
   order: Order | undefined;
+  downloading = signal(false);
 
   ngOnInit(): void {
     this.order = this.orderService.getOrders()[0];
+  }
+
+  async downloadReceipt(): Promise<void> {
+    if (!this.order || this.downloading()) return;
+    this.downloading.set(true);
+    try {
+      await this.receiptService.downloadReceipt(this.order);
+    } finally {
+      this.downloading.set(false);
+    }
   }
 
   deliveryIcon(): string {

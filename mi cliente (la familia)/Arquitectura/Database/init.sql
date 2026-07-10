@@ -13,9 +13,9 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 --  SHARED ENUMS
 -- =============================================================
 CREATE TYPE shift_code       AS ENUM ('morning', 'afternoon');
-CREATE TYPE payment_method   AS ENUM ('cash', 'card');
+CREATE TYPE payment_method   AS ENUM ('cash', 'card', 'paypal');
 CREATE TYPE delivery_method  AS ENUM ('on_spot', 'home_delivery', 'pickup');
-CREATE TYPE purchase_status  AS ENUM ('pending', 'completed', 'cancelled');
+CREATE TYPE purchase_status  AS ENUM ('pending', 'completed', 'cancelled', 'preparing', 'shipped', 'delivered');
 CREATE TYPE refund_method    AS ENUM ('cash', 'card');
 CREATE TYPE return_reason    AS ENUM ('defective', 'wrong_item', 'expired', 'customer_changed_mind', 'other');
 CREATE TYPE po_status        AS ENUM ('draft', 'sent', 'partial', 'received', 'cancelled');
@@ -477,6 +477,9 @@ CREATE TABLE purchases (
                              CASE WHEN cash_tendered IS NOT NULL
                              THEN cash_tendered - total ELSE NULL END
                          ) STORED,
+    paypal_order_id      TEXT,
+    paid_at              TIMESTAMPTZ,
+    tracking_number      VARCHAR(60),
     notes                TEXT,
     created_at           TIMESTAMPTZ     NOT NULL DEFAULT NOW()
 );
@@ -531,8 +534,9 @@ DECLARE
 BEGIN
     SELECT status INTO v_status FROM purchases WHERE id = NEW.purchase_id;
 
-    -- Pending purchases skip stock deduction; handled when status → completed
-    IF v_status <> 'completed' THEN
+    -- Solo las compras canceladas no descuentan stock; una compra
+    -- 'pending' del e-commerce es venta comprometida (evita sobreventa)
+    IF v_status = 'cancelled' THEN
         RETURN NEW;
     END IF;
 
@@ -562,34 +566,18 @@ CREATE TRIGGER trg_sale_reduce_stock
 AFTER INSERT ON purchase_items
 FOR EACH ROW EXECUTE FUNCTION sale_reduce_stock();
 
--- When a pending purchase is confirmed, deduct stock for all its line items
+-- Al cancelar una compra se restaura el stock de sus productos
+-- (el descuento ocurre al insertar los items, ver sale_reduce_stock)
 CREATE OR REPLACE FUNCTION purchase_complete_stock_adjust()
 RETURNS TRIGGER LANGUAGE plpgsql AS $$
 DECLARE
-    item             RECORD;
-    v_stock          INTEGER;
-    v_has_expiration BOOLEAN;
+    item RECORD;
 BEGIN
-    IF OLD.status = 'pending' AND NEW.status = 'completed' THEN
+    IF NEW.status = 'cancelled' AND OLD.status <> 'cancelled' THEN
         FOR item IN
             SELECT inventory_id, quantity FROM purchase_items WHERE purchase_id = NEW.id
         LOOP
-            SELECT stock, has_expiration
-            INTO   v_stock, v_has_expiration
-            FROM   inventory WHERE id = item.inventory_id
-            FOR UPDATE;
-
-            IF v_stock < item.quantity THEN
-                RAISE EXCEPTION 'insufficient_stock: % available, % requested for product %',
-                    v_stock, item.quantity, item.inventory_id
-                    USING ERRCODE = 'P0001';
-            END IF;
-
-            UPDATE inventory SET stock = stock - item.quantity WHERE id = item.inventory_id;
-
-            IF v_has_expiration THEN
-                PERFORM reduce_expiration_batches(item.inventory_id, item.quantity);
-            END IF;
+            UPDATE inventory SET stock = stock + item.quantity WHERE id = item.inventory_id;
         END LOOP;
     END IF;
     RETURN NEW;

@@ -1,10 +1,11 @@
-import { Component, inject, signal } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, ViewChild, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CartService } from '../../../core/services/cart.service';
 import { OrderService } from '../../../core/services/order.service';
 import { CheckoutStateService } from '../../../core/services/checkout-state.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { PaypalService } from '../../../core/services/paypal.service';
 import { MxnCurrencyPipe } from '../../../shared/pipes/currency.pipe';
 import { Header } from '../../../shared/components/header/header';
 import { IconComponent } from '../../../shared/components/icon/icon';
@@ -146,31 +147,76 @@ import { ShippingMethod, PaymentMethod } from '../../../core/models/order.model'
         <p class="coupon-msg error">{{ orderError() }}</p>
       }
 
-      <button class="btn-pay" [disabled]="isPlacingOrder() || !canPlaceOrder()" (click)="placeOrder()" id="place-order-btn">
-        @if (isPlacingOrder()) {
-          <app-icon name="loader" size="18" className="app-icon-spin" style="margin-right: 8px;" />
-          Procesando...
-        } @else {
-          Pagar · {{ cartService.cart().total | mxnCurrency }}
+      @if (checkoutState.selectedPayment() === 'paypal') {
+        <!-- Botones oficiales de PayPal -->
+        @if (!canPlaceOrder()) {
+          <p class="coupon-msg error">Completa dirección, envío y pago para continuar.</p>
         }
-      </button>
+        @if (paypalLoading()) {
+          <div class="paypal-loading">
+            <app-icon name="loader" size="18" className="app-icon-spin" />
+            Cargando PayPal...
+          </div>
+        }
+        <div #paypalContainer class="paypal-container" [style.display]="canPlaceOrder() ? 'block' : 'none'"></div>
+      } @else {
+        <button class="btn-pay" [disabled]="isPlacingOrder() || !canPlaceOrder()" (click)="placeOrder()" id="place-order-btn">
+          @if (isPlacingOrder()) {
+            <app-icon name="loader" size="18" className="app-icon-spin" style="margin-right: 8px;" />
+            Procesando...
+          } @else {
+            Pagar · {{ cartService.cart().total | mxnCurrency }}
+          }
+        </button>
+      }
 
     </div>
   `,
   styleUrl: '../checkout-shared.css',
 })
-export class CheckoutSummary {
+export class CheckoutSummary implements AfterViewInit {
   protected cartService = inject(CartService);
   protected checkoutState = inject(CheckoutStateService);
   protected authService = inject(AuthService);
   private orderService = inject(OrderService);
+  private paypalService = inject(PaypalService);
   private router = inject(Router);
 
+  @ViewChild('paypalContainer') paypalContainer?: ElementRef<HTMLElement>;
+
   isPlacingOrder = signal(false);
+  paypalLoading = signal(false);
   couponInput = '';
   couponApplied = signal(false);
   couponError = signal('');
   orderError = signal('');
+
+  ngAfterViewInit(): void {
+    if (this.checkoutState.selectedPayment() === 'paypal') {
+      this.setupPaypal();
+    }
+  }
+
+  private async setupPaypal(): Promise<void> {
+    const container = this.paypalContainer?.nativeElement;
+    if (!container) return;
+
+    this.paypalLoading.set(true);
+    try {
+      await this.paypalService.renderButtons(
+        container,
+        () => this.cartService.cart().total,
+        async (paypalOrderId) => {
+          await this.finalizeOrder('paypal', { orderId: paypalOrderId });
+        },
+        (message) => this.orderError.set(message),
+      );
+    } catch {
+      this.orderError.set('No se pudo cargar PayPal. Verifica tu conexión o elige otro método de pago.');
+    } finally {
+      this.paypalLoading.set(false);
+    }
+  }
 
   canPlaceOrder(): boolean {
     return !!this.checkoutState.selectedAddress() &&
@@ -191,24 +237,34 @@ export class CheckoutSummary {
 
   async placeOrder(): Promise<void> {
     if (this.isPlacingOrder() || !this.canPlaceOrder()) return;
+    const payment = this.checkoutState.selectedPayment() as PaymentMethod;
+    await this.finalizeOrder(payment);
+  }
+
+  /** Crea el pedido en el backend. Para PayPal se llama después de capturar el pago. */
+  private async finalizeOrder(payment: PaymentMethod, paypal?: { orderId: string }): Promise<void> {
     this.isPlacingOrder.set(true);
     this.orderError.set('');
 
     const cart = this.cartService.cart();
     const addr = this.checkoutState.selectedAddress()!;
     const shipping = this.checkoutState.selectedShipping() as ShippingMethod;
-    const payment = this.checkoutState.selectedPayment() as PaymentMethod;
 
     try {
       await this.orderService.createOrder(
         cart.items, addr, shipping, payment,
         cart.subtotal, cart.discount, cart.shipping, cart.total,
+        paypal,
       );
       this.cartService.clearCart();
       this.checkoutState.reset();
       this.router.navigate(['/orders/confirmation']);
     } catch (error) {
-      this.orderError.set(error instanceof Error ? error.message : 'No se pudo crear el pedido. Intenta de nuevo.');
+      this.orderError.set(
+        paypal
+          ? 'Tu pago con PayPal fue procesado, pero el pedido no se pudo registrar. Contacta a soporte con este dato: ' + paypal.orderId
+          : error instanceof Error ? error.message : 'No se pudo crear el pedido. Intenta de nuevo.',
+      );
     } finally {
       this.isPlacingOrder.set(false);
     }

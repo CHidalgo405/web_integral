@@ -26,7 +26,7 @@ import { IconComponent } from '../../../shared/components/icon/icon';
             <div class="opt-info"><h3>{{ opt.label }}</h3><p>{{ opt.description }}</p></div>
           </div>
         }
-      </div>
+      </div>
 
       @if (selected() === 'card') {
         <a routerLink="/checkout/payment/card" class="btn-continue" id="card-form-btn">Ingresar datos de tarjeta</a>
@@ -44,6 +44,7 @@ export class CheckoutPayment {
   selected = signal<PaymentMethod | ''>(this.checkoutState.selectedPayment());
 
   paymentOptions = [
+    { key: 'paypal' as PaymentMethod, icon: 'paypal', label: 'PayPal', description: 'Paga seguro con tu cuenta PayPal o tarjeta' },
     { key: 'card' as PaymentMethod, icon: 'credit-card', label: 'Tarjeta de crédito/débito', description: 'Visa, Mastercard, AMEX' },
     { key: 'cash' as PaymentMethod, icon: 'dollar-sign', label: 'Efectivo', description: 'Paga al recibir tu pedido' },
   ];
