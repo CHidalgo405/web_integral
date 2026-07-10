@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { GoogleAuthService } from '../../../core/services/google-auth.service';
 import { IconComponent } from '../../../shared/components/icon/icon';
 
 @Component({
@@ -64,7 +65,7 @@ import { IconComponent } from '../../../shared/components/icon/icon';
             <span>O</span>
           </div>
 
-          <button type="button" class="btn-google">
+          <button type="button" class="btn-google" [disabled]="isLoading()" (click)="loginWithGoogle()">
             <svg viewBox="0 0 24 24" width="20" height="20">
               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
               <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
@@ -297,9 +298,14 @@ import { IconComponent } from '../../../shared/components/icon/icon';
       transition: background-color 0.2s, border-color 0.2s;
     }
 
-    .btn-google:hover {
+    .btn-google:hover:not(:disabled) {
       background-color: var(--surface);
       border-color: var(--border);
+    }
+
+    .btn-google:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
     }
 
     .register-prompt {
@@ -350,6 +356,7 @@ import { IconComponent } from '../../../shared/components/icon/icon';
 export class Login {
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
+  private googleAuthService = inject(GoogleAuthService);
   private router = inject(Router);
 
   errorMessage = '';
@@ -388,6 +395,35 @@ export class Login {
           this.errorMessage = err.error?.error || 'Credenciales incorrectas';
         }
       });
+    }
+  }
+
+  async loginWithGoogle(): Promise<void> {
+    if (this.isLoading()) return;
+    this.errorMessage = '';
+    this.isLoading.set(true);
+
+    try {
+      const idToken = await this.googleAuthService.signIn();
+      const rememberMe = !!this.form.value.rememberMe;
+      this.authService.loginWithGoogle(idToken, rememberMe).subscribe({
+        next: () => {
+          this.isLoading.set(false);
+          const user = this.authService.user();
+          if (user?.role === 'admin') {
+            this.router.navigate(['/admin']);
+          } else {
+            this.router.navigate(['/home']);
+          }
+        },
+        error: (err) => {
+          this.isLoading.set(false);
+          this.errorMessage = err.error?.error || 'No se pudo iniciar sesión con Google';
+        },
+      });
+    } catch (err) {
+      this.isLoading.set(false);
+      this.errorMessage = err instanceof Error ? err.message : 'No se pudo iniciar sesión con Google';
     }
   }
 }

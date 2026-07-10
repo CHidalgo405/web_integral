@@ -75,6 +75,9 @@ de cada carpeta ya le dice a Railway qué Dockerfile usar.
    - `PAYPAL_API_BASE` → déjala sin definir para sandbox (pruebas);
      cuando pases a producción real ponla en `https://api-m.paypal.com`
      con credenciales live.
+   - `GOOGLE_CLIENT_ID` → `404377374895-n3b126dqau688rqvcpsl56k20p7r3t2n.apps.googleusercontent.com`
+     (el mismo Client ID que usa el frontend; el backend lo necesita para
+     verificar la firma de los tokens de Google).
    - No definas `PORT` manualmente, Railway lo inyecta solo.
 4. **Settings → Networking → Generate Domain** para obtener la URL pública,
    por ejemplo `https://backend-production-xxxx.up.railway.app`.

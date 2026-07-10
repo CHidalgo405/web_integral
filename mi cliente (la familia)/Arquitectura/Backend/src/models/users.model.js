@@ -25,12 +25,15 @@ const findById = (id) =>
 const findByUsername = (username) =>
   db.query('SELECT * FROM users WHERE username=$1', [username]);
 
-const create = ({ employee_id, username, password_hash, role, must_change_password }) =>
+const create = ({ employee_id, username, password_hash, role, must_change_password, google_id }) =>
   db.query(
-    `INSERT INTO users (employee_id, username, password_hash, role, must_change_password)
-     VALUES ($1,$2,$3,$4,$5) RETURNING ${SAFE_COLS}`,
-    [employee_id ?? null, username, password_hash, role ?? 'cashier', must_change_password ?? false]
+    `INSERT INTO users (employee_id, username, password_hash, role, must_change_password, google_id)
+     VALUES ($1,$2,$3,$4,$5,$6) RETURNING ${SAFE_COLS}`,
+    [employee_id ?? null, username, password_hash, role ?? 'cashier', must_change_password ?? false, google_id ?? null]
   );
+
+const linkGoogleId = (id, google_id) =>
+  db.query('UPDATE users SET google_id=$1 WHERE id=$2 RETURNING id', [google_id, id]);
 
 const update = (id, { username, role, active, must_change_password }) =>
   db.query(
@@ -48,4 +51,4 @@ const updatePassword = (id, password_hash) =>
 const remove = (id) =>
   db.query('UPDATE users SET active=FALSE WHERE id=$1 RETURNING id', [id]);
 
-module.exports = { findAll, findById, findByUsername, create, update, updatePassword, remove };
+module.exports = { findAll, findById, findByUsername, create, update, updatePassword, remove, linkGoogleId };

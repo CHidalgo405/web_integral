@@ -8,8 +8,9 @@ const db = require('../db');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecret_jwt_key_please_change';
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'supersecret_refresh_key_please_change';
-const ACCESS_TOKEN_EXPIRATION = '15m'; // 15 minutes
-const REFRESH_TOKEN_EXPIRATION_DAYS = 7; 
+// El interceptor del front ya refresca solo en un 401, pero 15 min forzaba
+// refresh constante. Se sube a un valor razonable y configurable por env.
+const ACCESS_TOKEN_EXPIRATION = process.env.ACCESS_TOKEN_EXPIRATION || '2h';
 
 // Helper para generar y guardar los tokens
 const generateTokens = async (user, req, remember_me = false) => {
@@ -191,6 +192,89 @@ const refresh = async (req, res, next) => {
   }
 };
 
+// Login / registro automático con Google. El id_token se verifica contra
+// Google (firma, audiencia y expiración), nunca se confía en datos del cliente.
+const { OAuth2Client } = require('google-auth-library');
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
+const googleClient = GOOGLE_CLIENT_ID ? new OAuth2Client(GOOGLE_CLIENT_ID) : null;
+
+const googleLogin = async (req, res, next) => {
+  try {
+    if (!googleClient) {
+      return res.status(503).json({ error: 'El login con Google no está configurado en el servidor' });
+    }
+
+    const { id_token, remember_me } = req.body;
+    if (!id_token) {
+      return res.status(400).json({ error: 'id_token es requerido' });
+    }
+
+    let payload;
+    try {
+      const ticket = await googleClient.verifyIdToken({ idToken: id_token, audience: GOOGLE_CLIENT_ID });
+      payload = ticket.getPayload();
+    } catch (err) {
+      return res.status(401).json({ error: 'Token de Google inválido o expirado' });
+    }
+
+    if (!payload?.email || !payload.email_verified) {
+      return res.status(401).json({ error: 'Tu cuenta de Google debe tener el correo verificado' });
+    }
+
+    const username = payload.email.toLowerCase();
+    const { rows } = await Users.findByUsername(username);
+    let userId;
+
+    if (rows.length > 0) {
+      const existing = rows[0];
+      if (!existing.active) {
+        return res.status(403).json({ error: 'El usuario está desactivado' });
+      }
+      // Vincula la cuenta existente (admin o no) la primera vez que entra por Google
+      if (!existing.google_id) {
+        await Users.linkGoogleId(existing.id, payload.sub);
+      }
+      userId = existing.id;
+    } else {
+      const { rows: employeeRows } = await Employees.create({
+        first_name: payload.given_name || payload.name || 'Usuario',
+        last_name: payload.family_name || '',
+        email: username,
+        phone: null,
+        role: 'cashier',
+      });
+      const newEmployee = employeeRows[0];
+
+      // Cuenta creada solo para login con Google: password aleatoria e inutilizable
+      const randomPassword = crypto.randomBytes(32).toString('hex');
+      const salt = await bcrypt.genSalt(10);
+      const password_hash = await bcrypt.hash(randomPassword, salt);
+
+      const { rows: userRows } = await Users.create({
+        username,
+        password_hash,
+        employee_id: newEmployee.id,
+        role: 'cashier',
+        google_id: payload.sub,
+      });
+      userId = userRows[0].id;
+    }
+
+    const { rows: fullRows } = await Users.findById(userId);
+    const user = fullRows[0];
+
+    const tokens = await generateTokens(user, req, remember_me);
+
+    res.json({
+      message: 'Login con Google exitoso',
+      user,
+      ...tokens,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 const logout = async (req, res, next) => {
   try {
     const { refreshToken } = req.body;
@@ -319,6 +403,7 @@ const changePassword = async (req, res, next) => {
 module.exports = {
   register,
   login,
+  googleLogin,
   refresh,
   logout,
   me,

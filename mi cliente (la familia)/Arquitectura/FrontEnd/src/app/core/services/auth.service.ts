@@ -54,6 +54,12 @@ export class AuthService {
     );
   }
 
+  loginWithGoogle(idToken: string, rememberMe = false): Observable<AuthResponse> {
+    return this.http.post<any>(`${API_BASE_URL}/auth/google`, { id_token: idToken, remember_me: rememberMe }).pipe(
+      tap(res => this.handleAuthSuccess(res))
+    );
+  }
+
   register(request: RegisterRequest): Observable<AuthResponse> {
     // Map RegisterRequest camelCase to snake_case for backend
     const payload = {

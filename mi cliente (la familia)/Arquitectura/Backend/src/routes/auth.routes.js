@@ -4,6 +4,7 @@ const { verifyToken } = require('../middleware/auth.middleware');
 
 router.post('/register', authCtrl.register);
 router.post('/login', authCtrl.login);
+router.post('/google', authCtrl.googleLogin);
 router.post('/refresh', authCtrl.refresh);
 router.post('/logout', authCtrl.logout);
 

@@ -297,6 +297,7 @@ CREATE TABLE users (
     employee_id          UUID      UNIQUE REFERENCES employees(id) ON DELETE SET NULL,
     username             VARCHAR(60) NOT NULL UNIQUE,
     password_hash        TEXT        NOT NULL,
+    google_id            TEXT        UNIQUE,
     role                 user_role   NOT NULL DEFAULT 'cashier',
     active               BOOLEAN     NOT NULL DEFAULT TRUE,
     must_change_password BOOLEAN     NOT NULL DEFAULT FALSE,

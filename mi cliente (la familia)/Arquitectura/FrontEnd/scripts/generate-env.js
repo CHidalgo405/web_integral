@@ -1,7 +1,7 @@
 // Se ejecuta antes del build de producción (ver Dockerfile.railway).
-// Toma la variable de entorno API_BASE_URL (definida en Railway) y la
-// escribe en environment.prod.ts para que quede compilada en el bundle.
-// Si no existe la variable, deja el valor por defecto ya presente en el archivo.
+// Toma las variables de entorno de Railway y las escribe en
+// environment.prod.ts para que queden compiladas en el bundle.
+// Si no existe API_BASE_URL, deja el archivo tal cual (build local).
 
 const fs = require('fs');
 const path = require('path');
@@ -14,10 +14,16 @@ if (!apiBaseUrl) {
   process.exit(0);
 }
 
+// El client ID de Google no es secreto; se puede sobreescribir por env var,
+// si no, se conserva el mismo que ya está en desarrollo.
+const googleClientId = process.env.GOOGLE_CLIENT_ID
+  || '404377374895-n3b126dqau688rqvcpsl56k20p7r3t2n.apps.googleusercontent.com';
+
 const content = `// Generado automáticamente por scripts/generate-env.js durante el build.
 export const environment = {
   production: true,
   apiBaseUrl: '${apiBaseUrl}',
+  googleClientId: '${googleClientId}',
 };
 `;
 
