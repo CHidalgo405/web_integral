@@ -97,16 +97,21 @@ import { IconComponent } from '../../../shared/components/icon/icon';
 
       <!-- Acciones -->
       <div class="actions">
+        @if (saveError()) {
+          <p class="save-error">{{ saveError() }}</p>
+        }
         <button
           class="btn-save"
           type="button"
-          [disabled]="!canSave()"
+          [disabled]="!canSave() || saving()"
           (click)="save()"
           id="save-profile-btn"
         >
           @if (saved()) {
             <app-icon name="check" size="18" color="#fff" />
             Cambios guardados
+          } @else if (saving()) {
+            Guardando...
           } @else {
             Guardar cambios
           }
@@ -272,6 +277,18 @@ import { IconComponent } from '../../../shared/components/icon/icon';
       gap: 10px;
     }
 
+    .save-error {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--danger);
+      background: rgba(220, 53, 69, 0.08);
+      border: 1px solid rgba(220, 53, 69, 0.25);
+      border-radius: 12px;
+      padding: 10px 14px;
+      margin: 0;
+      text-align: center;
+    }
+
     .btn-save {
       display: flex;
       align-items: center;
@@ -315,6 +332,8 @@ export class ProfileEdit implements OnInit {
   phone     = signal('');
   email     = signal('');
   saved     = signal(false);
+  saving    = signal(false);
+  saveError = signal('');
 
   ngOnInit(): void {
     const u = this.authService.user();
@@ -331,13 +350,23 @@ export class ProfileEdit implements OnInit {
   }
 
   save(): void {
-    if (!this.canSave()) return;
+    if (!this.canSave() || this.saving()) return;
+    this.saving.set(true);
+    this.saveError.set('');
     this.authService.updateProfile({
       firstName: this.firstName().trim(),
       lastName:  this.lastName().trim(),
       phone:     this.phone().trim(),
+    }).subscribe({
+      next: () => {
+        this.saving.set(false);
+        this.saved.set(true);
+        setTimeout(() => this.router.navigate(['/profile']), 1200);
+      },
+      error: () => {
+        this.saving.set(false);
+        this.saveError.set('No se pudieron guardar los cambios. Intenta de nuevo.');
+      },
     });
-    this.saved.set(true);
-    setTimeout(() => this.router.navigate(['/profile']), 1200);
   }
 }

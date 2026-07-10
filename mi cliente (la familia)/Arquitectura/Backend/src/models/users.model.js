@@ -2,11 +2,25 @@ const db = require('../db');
 
 const SAFE_COLS = 'id, employee_id, username, role, active, must_change_password, created_at, updated_at';
 
+// Columnas seguras + datos del employee vinculado (nombre, teléfono) para el panel admin
+const SAFE_COLS_JOINED = `u.id, u.employee_id, u.username, u.role, u.active,
+   u.must_change_password, u.created_at, u.updated_at,
+   e.first_name, e.last_name, e.phone, COALESCE(e.email, u.username) AS email`;
+
 const findAll = () =>
-  db.query(`SELECT ${SAFE_COLS} FROM users ORDER BY username`);
+  db.query(
+    `SELECT ${SAFE_COLS_JOINED}
+     FROM users u LEFT JOIN employees e ON e.id = u.employee_id
+     ORDER BY u.created_at DESC`
+  );
 
 const findById = (id) =>
-  db.query(`SELECT ${SAFE_COLS} FROM users WHERE id=$1`, [id]);
+  db.query(
+    `SELECT ${SAFE_COLS_JOINED}
+     FROM users u LEFT JOIN employees e ON e.id = u.employee_id
+     WHERE u.id=$1`,
+    [id]
+  );
 
 const findByUsername = (username) =>
   db.query('SELECT * FROM users WHERE username=$1', [username]);

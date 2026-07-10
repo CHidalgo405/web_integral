@@ -22,12 +22,21 @@ const getItems = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
+const getMine = async (req, res, next) => {
+  try {
+    const { rows } = await Purchases.findAll({ ...req.query, user_id: req.user.id });
+    res.json(rows);
+  } catch (err) { next(err); }
+};
+
 const create = async (req, res, next) => {
   try {
     const { items, ...purchase } = req.body;
     if (!items || !items.length) {
       return res.status(400).json({ error: 'At least one item is required' });
     }
+    // Si hay sesión activa, la compra queda ligada a ese usuario
+    if (req.user?.id) purchase.user_id = req.user.id;
     const row = await Purchases.createWithItems(purchase, items);
     res.status(201).json(row);
   } catch (err) { next(err); }
@@ -42,4 +51,4 @@ const updateStatus = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
-module.exports = { getAll, getOne, getItems, create, updateStatus };
+module.exports = { getAll, getOne, getItems, getMine, create, updateStatus };

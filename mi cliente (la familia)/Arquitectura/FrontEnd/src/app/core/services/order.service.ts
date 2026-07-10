@@ -1,15 +1,19 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable, computed, inject, signal } from '@angular/core';
+import { Injectable, computed, effect, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { API_BASE_URL } from '../api.config';
 import { Order, OrderStatus, PaymentMethod, ShippingMethod } from '../models/order.model';
 import { CartItem } from '../models/cart.model';
 import { Address } from '../models/address.model';
 import { Product } from '../models/product.model';
+import { AuthService } from './auth.service';
 
 interface ApiPurchase {
   id: string;
   customer_name?: string | null;
+  user_first_name?: string | null;
+  user_last_name?: string | null;
+  user_email?: string | null;
   delivery_method: 'on_spot' | 'home_delivery' | 'pickup';
   delivery_address?: string | null;
   payment_method: 'cash' | 'card';
@@ -34,6 +38,7 @@ interface ApiPurchaseItem {
 @Injectable({ providedIn: 'root' })
 export class OrderService {
   private http = inject(HttpClient);
+  private authService = inject(AuthService);
   private ordersSignal = signal<Order[]>([]);
 
   readonly allOrders = computed(() => this.ordersSignal());
@@ -41,12 +46,26 @@ export class OrderService {
   readonly isLoading = signal(false);
 
   constructor() {
-    this.refresh();
+    // Recargar al cambiar la sesión: admin ve todo, usuario solo lo suyo
+    effect(() => {
+      this.authService.user();
+      this.refresh();
+    });
   }
 
   refresh(): void {
+    // Los admin ven el historial completo (panel admin); los usuarios solo sus compras
+    const isAdmin = this.authService.user()?.role === 'admin';
+    const isLoggedIn = this.authService.isAuthenticated();
+    const endpoint = isAdmin ? `${API_BASE_URL}/purchases` : `${API_BASE_URL}/purchases/mine`;
+
+    if (!isLoggedIn) {
+      this.ordersSignal.set([]);
+      return;
+    }
+
     this.isLoading.set(true);
-    this.http.get<ApiPurchase[]>(`${API_BASE_URL}/purchases`).subscribe({
+    this.http.get<ApiPurchase[]>(endpoint).subscribe({
       next: (rows) => {
         const orders = rows.map((row) => this.mapPurchase(row));
         this.ordersSignal.set(orders);
@@ -215,10 +234,11 @@ export class OrderService {
   }
 
   private addressFromPurchase(row: ApiPurchase): Address {
+    const userName = [row.user_first_name, row.user_last_name].filter(Boolean).join(' ');
     return {
       id: row.id,
       label: row.delivery_method === 'pickup' || row.delivery_method === 'on_spot' ? 'Tienda' : 'Entrega',
-      fullName: row.customer_name ?? 'Cliente',
+      fullName: userName || row.customer_name || row.user_email || 'Cliente',
       street: row.delivery_address ?? '',
       exteriorNumber: '',
       neighborhood: '',

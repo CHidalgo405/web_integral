@@ -8,6 +8,8 @@ router.use(requireRole('admin'));
 
 router.get('/', ctrl.getAll);
 router.get('/:id', ctrl.getOne);
+router.get('/:id/addresses', ctrl.getAddresses);
+router.get('/:id/payment-methods', ctrl.getPaymentMethods);
 router.post('/', ctrl.create);
 router.put('/:id', ctrl.update);
 router.delete('/:id', ctrl.remove);

@@ -951,6 +951,49 @@ END;
 $$;
 
 -- =============================================================
+--  USER FLOWS (app e-commerce) — direcciones, métodos de pago
+--  y compras ligadas al usuario. (Igual que migrations/001)
+-- =============================================================
+CREATE TABLE user_addresses (
+    id              UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id         UUID         NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    label           VARCHAR(40)  NOT NULL DEFAULT 'Casa',
+    full_name       VARCHAR(120) NOT NULL,
+    phone           VARCHAR(30),
+    street          VARCHAR(160) NOT NULL,
+    exterior_number VARCHAR(20),
+    interior_number VARCHAR(20),
+    neighborhood    VARCHAR(120),
+    city            VARCHAR(120),
+    state           VARCHAR(120),
+    zip_code        VARCHAR(10),
+    notes           TEXT,
+    is_default      BOOLEAN      NOT NULL DEFAULT FALSE,
+    created_at      TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_user_addresses_user ON user_addresses(user_id);
+
+-- Solo datos de presentación (marca, últimos 4). Nunca el PAN ni CVV.
+CREATE TABLE user_payment_methods (
+    id          UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id     UUID         NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    type        VARCHAR(10)  NOT NULL CHECK (type IN ('card', 'cash')),
+    label       VARCHAR(80)  NOT NULL,
+    brand       VARCHAR(20),
+    last4       CHAR(4),
+    holder_name VARCHAR(120),
+    expiry      VARCHAR(7),
+    is_default  BOOLEAN      NOT NULL DEFAULT FALSE,
+    created_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_user_payment_methods_user ON user_payment_methods(user_id);
+
+ALTER TABLE purchases ADD COLUMN user_id UUID REFERENCES users(id);
+CREATE INDEX idx_purchases_user ON purchases(user_id);
+
+-- =============================================================
 --  SEED DATA
 -- =============================================================
 

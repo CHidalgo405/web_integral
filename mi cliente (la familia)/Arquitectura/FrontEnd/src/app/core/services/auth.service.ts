@@ -87,12 +87,26 @@ export class AuthService {
     return true; // Unchanged mocked
   }
 
-  updateProfile(data: Partial<User>): void {
-    const user = this.currentUser();
-    if (!user) return;
-    const updated = { ...user, ...data };
-    this.currentUser.set(updated);
-    localStorage.setItem('auth_user', JSON.stringify(updated));
+  updateProfile(data: Partial<User>): Observable<{ user: any }> {
+    const payload = {
+      first_name: data.firstName,
+      last_name: data.lastName,
+      phone: data.phone,
+    };
+    return this.http.put<{ user: any }>(`${API_BASE_URL}/auth/me`, payload).pipe(
+      tap((res) => {
+        const current = this.currentUser();
+        if (!current) return;
+        const updated: User = {
+          ...current,
+          firstName: res.user.first_name ?? current.firstName,
+          lastName: res.user.last_name ?? current.lastName,
+          phone: res.user.phone ?? current.phone,
+        };
+        this.currentUser.set(updated);
+        localStorage.setItem('auth_user', JSON.stringify(updated));
+      })
+    );
   }
 
   logout(): void {

@@ -24,5 +24,7 @@ router.use('/till-movements',      require('./tillMovements.routes'));
 router.use('/cash-audit',          require('./cashAudit.routes'));
 router.use('/notifications',       require('./notifications.routes'));
 router.use('/price-history',       require('./priceHistory.routes'));
+router.use('/addresses',           require('./userAddresses.routes'));
+router.use('/payment-methods',     require('./userPaymentMethods.routes'));
 
 module.exports = router;

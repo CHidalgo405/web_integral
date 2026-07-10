@@ -38,4 +38,22 @@ const remove = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
-module.exports = { getAll, getOne, create, update, remove };
+// Vistas admin: direcciones y métodos de pago de cualquier usuario
+const Addresses = require('../models/userAddresses.model');
+const PaymentMethods = require('../models/userPaymentMethods.model');
+
+const getAddresses = async (req, res, next) => {
+  try {
+    const { rows } = await Addresses.findAllByUser(req.params.id);
+    res.json(rows);
+  } catch (err) { next(err); }
+};
+
+const getPaymentMethods = async (req, res, next) => {
+  try {
+    const { rows } = await PaymentMethods.findAllByUser(req.params.id);
+    res.json(rows);
+  } catch (err) { next(err); }
+};
+
+module.exports = { getAll, getOne, create, update, remove, getAddresses, getPaymentMethods };

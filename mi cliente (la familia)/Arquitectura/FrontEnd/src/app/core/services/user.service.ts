@@ -1,58 +1,110 @@
-import { Injectable, signal, computed } from '@angular/core';
-import { User } from '../models/user.model';
+import { Injectable, computed, effect, inject, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { API_BASE_URL } from '../api.config';
 import { Address } from '../models/address.model';
 import { SavedPaymentMethod } from '../models/order.model';
 import { AuthService } from './auth.service';
 
+interface ApiAddress {
+  id: string;
+  label: string;
+  full_name: string;
+  phone: string | null;
+  street: string;
+  exterior_number: string | null;
+  interior_number: string | null;
+  neighborhood: string | null;
+  city: string | null;
+  state: string | null;
+  zip_code: string | null;
+  notes: string | null;
+  is_default: boolean;
+}
+
+interface ApiPaymentMethod {
+  id: string;
+  type: 'card' | 'cash';
+  label: string;
+  brand: string | null;
+  last4: string | null;
+  holder_name: string | null;
+  expiry: string | null;
+  is_default: boolean;
+}
+
 @Injectable({ providedIn: 'root' })
 export class UserService {
-  private addresses = signal<Address[]>([
-    {
-      id: 'addr-1', label: 'Casa', fullName: 'Carlos Hernández', street: 'Av. Reforma',
-      exteriorNumber: '123', neighborhood: 'Centro', city: 'CDMX', state: 'CDMX',
-      zipCode: '06000', phone: '+52 555 123 4567', isDefault: true,
-    },
-    {
-      id: 'addr-2', label: 'Oficina', fullName: 'Carlos Hernández', street: 'Calle Madero',
-      exteriorNumber: '456', interiorNumber: 'Piso 3', neighborhood: 'Juárez', city: 'CDMX', state: 'CDMX',
-      zipCode: '06600', phone: '+52 555 987 6543', isDefault: false,
-    },
-  ]);
+  private http = inject(HttpClient);
+  private authService = inject(AuthService);
 
-  private paymentMethods = signal<SavedPaymentMethod[]>([
-    { id: 'pm-1', type: 'card', label: 'Visa terminada en', last4: '4532', isDefault: true },
-    { id: 'pm-2', type: 'card', label: 'Mastercard terminada en', last4: '8901', isDefault: false },
-    { id: 'pm-3', type: 'cash', label: 'Pago en efectivo', isDefault: false },
-  ]);
+  private addresses = signal<Address[]>([]);
+  private paymentMethods = signal<SavedPaymentMethod[]>([]);
 
   readonly allAddresses = computed(() => this.addresses());
   readonly defaultAddress = computed(() => this.addresses().find((a) => a.isDefault));
   readonly allPaymentMethods = computed(() => this.paymentMethods());
+  readonly lastError = signal<string | null>(null);
 
-  constructor(private authService: AuthService) {}
+  constructor() {
+    // Carga/limpieza automática según el estado de sesión
+    effect(() => {
+      if (this.authService.isAuthenticated()) {
+        this.loadAddresses();
+        this.loadPaymentMethods();
+      } else {
+        this.addresses.set([]);
+        this.paymentMethods.set([]);
+      }
+    });
+  }
+
+  // ---- Direcciones ----
+
+  loadAddresses(): void {
+    this.http.get<ApiAddress[]>(`${API_BASE_URL}/addresses`).subscribe({
+      next: (rows) => {
+        this.addresses.set(rows.map((r) => this.mapAddress(r)));
+        this.lastError.set(null);
+      },
+      error: () => this.lastError.set('No se pudieron cargar tus direcciones.'),
+    });
+  }
 
   getAddresses(): Address[] {
     return this.addresses();
   }
 
   addAddress(address: Omit<Address, 'id'>): void {
-    const newAddress: Address = { ...address, id: `addr-${Date.now()}` };
-    if (newAddress.isDefault) {
-      this.addresses.set(this.addresses().map((a) => ({ ...a, isDefault: false })));
-    }
-    this.addresses.set([...this.addresses(), newAddress]);
+    this.http.post<ApiAddress>(`${API_BASE_URL}/addresses`, this.toApiAddress(address)).subscribe({
+      next: () => this.loadAddresses(),
+      error: () => this.lastError.set('No se pudo guardar la dirección.'),
+    });
   }
 
   updateAddress(address: Address): void {
-    if (address.isDefault) {
-      this.addresses.set(this.addresses().map((a) => (a.id === address.id ? address : { ...a, isDefault: false })));
-    } else {
-      this.addresses.set(this.addresses().map((a) => (a.id === address.id ? address : a)));
-    }
+    this.http.put<ApiAddress>(`${API_BASE_URL}/addresses/${address.id}`, this.toApiAddress(address)).subscribe({
+      next: () => this.loadAddresses(),
+      error: () => this.lastError.set('No se pudo actualizar la dirección.'),
+    });
   }
 
   deleteAddress(id: string): void {
-    this.addresses.set(this.addresses().filter((a) => a.id !== id));
+    this.http.delete<void>(`${API_BASE_URL}/addresses/${id}`).subscribe({
+      next: () => this.addresses.set(this.addresses().filter((a) => a.id !== id)),
+      error: () => this.lastError.set('No se pudo eliminar la dirección.'),
+    });
+  }
+
+  // ---- Métodos de pago ----
+
+  loadPaymentMethods(): void {
+    this.http.get<ApiPaymentMethod[]>(`${API_BASE_URL}/payment-methods`).subscribe({
+      next: (rows) => {
+        this.paymentMethods.set(rows.map((r) => this.mapPaymentMethod(r)));
+        this.lastError.set(null);
+      },
+      error: () => this.lastError.set('No se pudieron cargar tus métodos de pago.'),
+    });
   }
 
   getPaymentMethods(): SavedPaymentMethod[] {
@@ -60,22 +112,79 @@ export class UserService {
   }
 
   addPaymentMethod(pm: Omit<SavedPaymentMethod, 'id'>): void {
-    const newPm: SavedPaymentMethod = { ...pm, id: `pm-${Date.now()}` };
-    if (newPm.isDefault) {
-      this.paymentMethods.set(this.paymentMethods().map((p) => ({ ...p, isDefault: false })));
-    }
-    this.paymentMethods.set([...this.paymentMethods(), newPm]);
+    this.http.post<ApiPaymentMethod>(`${API_BASE_URL}/payment-methods`, this.toApiPaymentMethod(pm)).subscribe({
+      next: () => this.loadPaymentMethods(),
+      error: () => this.lastError.set('No se pudo guardar el método de pago.'),
+    });
   }
 
   updatePaymentMethod(pm: SavedPaymentMethod): void {
-    if (pm.isDefault) {
-      this.paymentMethods.set(this.paymentMethods().map((p) => (p.id === pm.id ? pm : { ...p, isDefault: false })));
-    } else {
-      this.paymentMethods.set(this.paymentMethods().map((p) => (p.id === pm.id ? pm : p)));
-    }
+    this.http.put<ApiPaymentMethod>(`${API_BASE_URL}/payment-methods/${pm.id}`, this.toApiPaymentMethod(pm)).subscribe({
+      next: () => this.loadPaymentMethods(),
+      error: () => this.lastError.set('No se pudo actualizar el método de pago.'),
+    });
   }
 
   deletePaymentMethod(id: string): void {
-    this.paymentMethods.set(this.paymentMethods().filter((p) => p.id !== id));
+    this.http.delete<void>(`${API_BASE_URL}/payment-methods/${id}`).subscribe({
+      next: () => this.paymentMethods.set(this.paymentMethods().filter((p) => p.id !== id)),
+      error: () => this.lastError.set('No se pudo eliminar el método de pago.'),
+    });
+  }
+
+  // ---- Mapeos API <-> modelo del front ----
+
+  private mapAddress(r: ApiAddress): Address {
+    return {
+      id: r.id,
+      label: r.label,
+      fullName: r.full_name,
+      phone: r.phone ?? '',
+      street: r.street,
+      exteriorNumber: r.exterior_number ?? '',
+      interiorNumber: r.interior_number ?? undefined,
+      neighborhood: r.neighborhood ?? '',
+      city: r.city ?? '',
+      state: r.state ?? '',
+      zipCode: r.zip_code ?? '',
+      notes: r.notes ?? undefined,
+      isDefault: r.is_default,
+    };
+  }
+
+  private toApiAddress(a: Omit<Address, 'id'> | Address): Record<string, unknown> {
+    return {
+      label: a.label,
+      full_name: a.fullName,
+      phone: a.phone || null,
+      street: a.street,
+      exterior_number: a.exteriorNumber || null,
+      interior_number: a.interiorNumber || null,
+      neighborhood: a.neighborhood || null,
+      city: a.city || null,
+      state: a.state || null,
+      zip_code: a.zipCode || null,
+      notes: a.notes || null,
+      is_default: a.isDefault,
+    };
+  }
+
+  private mapPaymentMethod(r: ApiPaymentMethod): SavedPaymentMethod {
+    return {
+      id: r.id,
+      type: r.type,
+      label: r.label,
+      last4: r.last4 ?? undefined,
+      isDefault: r.is_default,
+    };
+  }
+
+  private toApiPaymentMethod(p: Omit<SavedPaymentMethod, 'id'> | SavedPaymentMethod): Record<string, unknown> {
+    return {
+      type: p.type,
+      label: p.label,
+      last4: p.last4 || null,
+      is_default: p.isDefault,
+    };
   }
 }

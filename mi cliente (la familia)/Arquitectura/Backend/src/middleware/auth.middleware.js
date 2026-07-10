@@ -36,7 +36,23 @@ const requireRole = (...roles) => {
   };
 };
 
+// Auth opcional: si viene un token válido pobla req.user, si no, continúa sin él.
+// Útil en endpoints públicos que se enriquecen cuando hay sesión (ej. POST /purchases).
+const attachUser = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader?.split(' ')[1];
+  if (!token) return next();
+
+  try {
+    req.user = jwt.verify(token, JWT_SECRET);
+  } catch (err) {
+    // Token inválido o expirado: se ignora, el request sigue como anónimo
+  }
+  next();
+};
+
 module.exports = {
   verifyToken,
-  requireRole
+  requireRole,
+  attachUser
 };

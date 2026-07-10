@@ -1,17 +1,22 @@
 const db = require('../db');
 
-const findAll = ({ date, employee_id, status } = {}) => {
+const findAll = ({ date, employee_id, status, user_id } = {}) => {
   const conditions = [];
   const params = [];
   if (date)        conditions.push(`DATE(p.created_at)=$${params.push(date)}`);
   if (employee_id) conditions.push(`p.employee_id=$${params.push(employee_id)}`);
   if (status)      conditions.push(`p.status=$${params.push(status)}`);
+  if (user_id)     conditions.push(`p.user_id=$${params.push(user_id)}`);
   const where = conditions.length ? 'WHERE ' + conditions.join(' AND ') : '';
   return db.query(
-    `SELECT p.*, e.first_name, e.last_name, c.name AS customer_name
+    `SELECT p.*, e.first_name, e.last_name, c.name AS customer_name,
+            ue.first_name AS user_first_name, ue.last_name AS user_last_name,
+            u.username AS user_email
      FROM purchases p
      LEFT JOIN employees e ON e.id = p.employee_id
      LEFT JOIN customers c ON c.id = p.customer_id
+     LEFT JOIN users u ON u.id = p.user_id
+     LEFT JOIN employees ue ON ue.id = u.employee_id
      ${where} ORDER BY p.created_at DESC`,
     params
   );
@@ -43,13 +48,14 @@ const createWithItems = async (purchase, items) => {
 
     const { rows: [p] } = await client.query(
       `INSERT INTO purchases
-         (customer_id, employee_id, delivery_method, delivery_address,
+         (customer_id, employee_id, user_id, delivery_method, delivery_address,
           delivery_distance_km, delivery_zone_id, delivery_fee,
           payment_method, status, subtotal, discount_total, total, cash_tendered, notes)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING *`,
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) RETURNING *`,
       [
         purchase.customer_id ?? null,
         purchase.employee_id ?? null,
+        purchase.user_id ?? null,
         purchase.delivery_method ?? 'on_spot',
         purchase.delivery_address ?? null,
         purchase.delivery_distance_km ?? null,
