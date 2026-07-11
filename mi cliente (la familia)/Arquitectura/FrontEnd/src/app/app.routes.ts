@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 import { guestGuard } from './core/guards/guest.guard';
 import { adminGuard } from './core/guards/admin.guard';
+import { cashierGuard } from './core/guards/cashier.guard';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'auth', pathMatch: 'full' },
@@ -44,6 +45,11 @@ export const routes: Routes = [
     path: 'admin',
     canActivate: [authGuard, adminGuard],
     loadChildren: () => import('./features/admin/admin.routes').then(m => m.ADMIN_ROUTES),
+  },
+  {
+    path: 'cashier',
+    canActivate: [authGuard, cashierGuard],
+    loadChildren: () => import('./features/cashier/cashier.routes').then((m) => m.CASHIER_ROUTES),
   },
   {
     path: '**',

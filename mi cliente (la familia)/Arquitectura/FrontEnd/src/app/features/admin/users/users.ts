@@ -259,18 +259,19 @@ interface AdminOrderRow {
                       <app-icon name="shield" size="18" color="var(--primary)" />
                       <h3>Privilegios Administrativos</h3>
                     </div>
-                    <label class="toggle-switch">
-                      <input
-                        type="checkbox"
-                        [checked]="usr.role === 'admin'"
-                        (change)="toggleRole(usr)"
+                    <label class="role-selector">
+                      <span>Rol de acceso</span>
+                      <select
+                        [ngModel]="usr.role"
+                        (ngModelChange)="changeRole(usr, $event)"
                         [disabled]="isSelf(usr) || saving()"
-                      />
-                      <span class="toggle-slider"></span>
-                      <span class="toggle-label">
-                        <app-icon [name]="usr.role === 'admin' ? 'shield' : 'user'" size="16" color="var(--primary)" />
-                        {{ usr.role === 'admin' ? 'Administrador' : 'Cliente Estándar' }}
-                      </span>
+                      >
+                        <option value="customer">Cliente</option>
+                        <option value="cashier">Cajero / Cobrador</option>
+                        <option value="stock">Almacén</option>
+                        <option value="manager">Gerente</option>
+                        <option value="admin">Administrador</option>
+                      </select>
                     </label>
                     <label class="toggle-switch">
                       <input
@@ -514,10 +515,9 @@ export class UserDirectory {
     return this.authService.user()?.id === user.id;
   }
 
-  toggleRole(user: User): void {
-    if (this.isSelf(user)) return;
-    const newRole = user.role === 'admin' ? 'customer' : 'admin';
-    this.saveUserChange(user, { role: newRole });
+  changeRole(user: User, role: User['role']): void {
+    if (this.isSelf(user) || role === user.role) return;
+    this.saveUserChange(user, { role });
   }
 
   toggleActive(user: User): void {

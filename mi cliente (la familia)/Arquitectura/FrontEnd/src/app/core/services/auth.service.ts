@@ -74,6 +74,13 @@ export class AuthService {
     );
   }
 
+  landingRoute(): string {
+    const role = this.currentUser()?.role;
+    if (role === 'admin') return '/admin';
+    if (role === 'cashier') return '/cashier';
+    return '/home';
+  }
+
   refreshToken(): Observable<{ accessToken: string, refreshToken: string }> {
     const refreshToken = localStorage.getItem('refresh_token');
     return this.http.post<{ accessToken: string, refreshToken: string }>(`${API_BASE_URL}/auth/refresh`, { token: refreshToken }).pipe(

@@ -24,6 +24,13 @@ const create = async (req, res, next) => {
 
 const update = async (req, res, next) => {
   try {
+    const allowedRoles = ['admin', 'manager', 'cashier', 'stock', 'customer'];
+    if (!allowedRoles.includes(req.body.role)) {
+      return res.status(400).json({ error: 'Invalid user role' });
+    }
+    if (req.params.id === req.user.id && (req.body.role !== 'admin' || req.body.active === false)) {
+      return res.status(400).json({ error: 'No puedes quitar tus propios permisos administrativos' });
+    }
     const { rows } = await Users.update(req.params.id, req.body);
     if (!rows.length) return res.status(404).json({ error: 'User not found' });
     res.json(rows[0]);

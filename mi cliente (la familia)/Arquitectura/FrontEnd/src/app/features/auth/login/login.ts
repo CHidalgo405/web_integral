@@ -383,12 +383,7 @@ export class Login {
       this.authService.login({ email: email!, password: password!, remember_me: rememberMe! }).subscribe({
         next: () => {
           this.isLoading.set(false);
-          const user = this.authService.user();
-          if (user?.role === 'admin') {
-            this.router.navigate(['/admin']);
-          } else {
-            this.router.navigate(['/home']);
-          }
+          this.router.navigateByUrl(this.authService.landingRoute());
         },
         error: (err) => {
           this.isLoading.set(false);
@@ -409,12 +404,7 @@ export class Login {
       this.authService.loginWithGoogle(idToken, rememberMe).subscribe({
         next: () => {
           this.isLoading.set(false);
-          const user = this.authService.user();
-          if (user?.role === 'admin') {
-            this.router.navigate(['/admin']);
-          } else {
-            this.router.navigate(['/home']);
-          }
+          this.router.navigateByUrl(this.authService.landingRoute());
         },
         error: (err) => {
           this.isLoading.set(false);
@@ -427,4 +417,3 @@ export class Login {
     }
   }
 }
-

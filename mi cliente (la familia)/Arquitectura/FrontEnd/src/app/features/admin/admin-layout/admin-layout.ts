@@ -42,6 +42,10 @@ import { IconComponent } from '../../../shared/components/icon/icon';
         </nav>
 
         <div class="sidebar-footer">
+          <a routerLink="/cashier" class="btn-return">
+            <app-icon name="shopping-cart" size="16" color="currentColor" />
+            Abrir Punto de Venta
+          </a>
           <a routerLink="/home" class="btn-return">
             <app-icon name="store" size="16" color="currentColor" />
             Volver a Tienda
@@ -111,6 +115,10 @@ import { IconComponent } from '../../../shared/components/icon/icon';
         </nav>
 
         <div class="drawer-footer">
+          <a routerLink="/cashier" class="btn-return">
+            <app-icon name="shopping-cart" size="16" color="currentColor" />
+            Abrir Punto de Venta
+          </a>
           <a routerLink="/home" class="btn-return">
             <app-icon name="store" size="16" color="currentColor" />
             Volver a Tienda
