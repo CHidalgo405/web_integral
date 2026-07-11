@@ -13,7 +13,7 @@ interface ApiUser {
   id: string;
   employee_id: string | null;
   username: string;
-  role: 'admin' | 'manager' | 'cashier' | 'stock';
+  role: 'admin' | 'manager' | 'cashier' | 'stock' | 'customer';
   active: boolean;
   must_change_password: boolean;
   created_at: string;
@@ -516,7 +516,7 @@ export class UserDirectory {
 
   toggleRole(user: User): void {
     if (this.isSelf(user)) return;
-    const newRole = user.role === 'admin' ? 'cashier' : 'admin';
+    const newRole = user.role === 'admin' ? 'customer' : 'admin';
     this.saveUserChange(user, { role: newRole });
   }
 

@@ -21,7 +21,7 @@ CREATE TYPE return_reason    AS ENUM ('defective', 'wrong_item', 'expired', 'cus
 CREATE TYPE po_status        AS ENUM ('draft', 'sent', 'partial', 'received', 'cancelled');
 CREATE TYPE audit_type       AS ENUM ('open', 'close', 'count', 'adjustment');
 CREATE TYPE till_movement_type AS ENUM ('float_in', 'float_out', 'sale', 'refund', 'expense', 'correction');
-CREATE TYPE user_role        AS ENUM ('admin', 'manager', 'cashier', 'stock');
+CREATE TYPE user_role        AS ENUM ('admin', 'manager', 'cashier', 'stock', 'customer');
 CREATE TYPE login_event      AS ENUM ('success', 'failed', 'logout', 'password_changed');
 CREATE TYPE notification_type AS ENUM (
     'expiry_warning', 'expired_removed', 'low_stock',
@@ -298,7 +298,7 @@ CREATE TABLE users (
     username             VARCHAR(60) NOT NULL UNIQUE,
     password_hash        TEXT        NOT NULL,
     google_id            TEXT        UNIQUE,
-    role                 user_role   NOT NULL DEFAULT 'cashier',
+    role                 user_role   NOT NULL DEFAULT 'customer',
     active               BOOLEAN     NOT NULL DEFAULT TRUE,
     must_change_password BOOLEAN     NOT NULL DEFAULT FALSE,
     created_at           TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -1116,4 +1116,3 @@ INSERT INTO users (employee_id, username, role, must_change_password, password_h
      'zahid@gmail.com', 'admin', FALSE, '$2b$10$rtwF4HzCwwywB.wtFJNnpunehPW5ACpkG5BFXDemzBnGqEQfgBQnW'),
     ((SELECT id FROM employees WHERE email='kevin@gmail.com'),
      'kevin@gmail.com', 'admin', FALSE, '$2b$10$uwR6ujIhxhghyxeuvdydYeo28mMfMLUH08pCTY9QOvOaFaNbvOyBy');
-

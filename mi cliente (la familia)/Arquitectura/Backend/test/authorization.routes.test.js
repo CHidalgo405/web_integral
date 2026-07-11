@@ -30,8 +30,8 @@ test.after(async () => {
   });
 });
 
-const cashierToken = jwt.sign(
-  { id: '00000000-0000-0000-0000-000000000001', username: 'customer@test.local', role: 'cashier' },
+const customerToken = jwt.sign(
+  { id: '00000000-0000-0000-0000-000000000001', username: 'customer@test.local', role: 'customer' },
   process.env.JWT_SECRET,
   { expiresIn: '5m' },
 );
@@ -86,19 +86,19 @@ test('business endpoints reject unauthenticated requests', async () => {
 
 test('customer tokens cannot mutate catalog or access internal resources', async () => {
   const cases = [
-    ['/inventory', { method: 'POST', body: {}, token: cashierToken }],
-    ['/categories', { method: 'POST', body: {}, token: cashierToken }],
-    ['/suppliers', { token: cashierToken }],
-    ['/purchase-orders', { token: cashierToken }],
-    ['/stock-receipts', { token: cashierToken }],
-    ['/employees', { token: cashierToken }],
-    ['/customers', { token: cashierToken }],
-    ['/expenses', { token: cashierToken }],
-    ['/cash-audit', { token: cashierToken }],
-    ['/notifications', { token: cashierToken }],
-    ['/price-history', { token: cashierToken }],
-    ['/purchases', { token: cashierToken }],
-    ['/notifications', { method: 'POST', body: {}, token: cashierToken }],
+    ['/inventory', { method: 'POST', body: {}, token: customerToken }],
+    ['/categories', { method: 'POST', body: {}, token: customerToken }],
+    ['/suppliers', { token: customerToken }],
+    ['/purchase-orders', { token: customerToken }],
+    ['/stock-receipts', { token: customerToken }],
+    ['/employees', { token: customerToken }],
+    ['/customers', { token: customerToken }],
+    ['/expenses', { token: customerToken }],
+    ['/cash-audit', { token: customerToken }],
+    ['/notifications', { token: customerToken }],
+    ['/price-history', { token: customerToken }],
+    ['/purchases', { token: customerToken }],
+    ['/notifications', { method: 'POST', body: {}, token: customerToken }],
   ];
 
   for (const [path, options] of cases) {

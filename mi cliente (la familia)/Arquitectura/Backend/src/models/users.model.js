@@ -29,7 +29,7 @@ const create = ({ employee_id, username, password_hash, role, must_change_passwo
   db.query(
     `INSERT INTO users (employee_id, username, password_hash, role, must_change_password, google_id)
      VALUES ($1,$2,$3,$4,$5,$6) RETURNING ${SAFE_COLS}`,
-    [employee_id ?? null, username, password_hash, role ?? 'cashier', must_change_password ?? false, google_id ?? null]
+    [employee_id ?? null, username, password_hash, role ?? 'customer', must_change_password ?? false, google_id ?? null]
   );
 
 const linkGoogleId = (id, google_id) =>

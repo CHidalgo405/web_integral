@@ -4,7 +4,7 @@ export interface User {
   lastName: string;
   email: string;
   phone?: string;
-  role: 'admin' | 'manager' | 'cashier' | 'stock' | 'user';
+  role: 'admin' | 'manager' | 'cashier' | 'stock' | 'customer';
   active?: boolean;
   must_change_password?: boolean;
   isVerified?: boolean;

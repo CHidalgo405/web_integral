@@ -15,7 +15,7 @@ const ACCESS_TOKEN_EXPIRATION = process.env.ACCESS_TOKEN_EXPIRATION || '2h';
 // Helper para generar y guardar los tokens
 const generateTokens = async (user, req, remember_me = false) => {
   const accessToken = jwt.sign(
-    { id: user.id, username: user.username, role: user.role },
+    { id: user.id, employee_id: user.employee_id ?? null, username: user.username, role: user.role },
     JWT_SECRET,
     { expiresIn: ACCESS_TOKEN_EXPIRATION }
   );
@@ -62,13 +62,14 @@ const register = async (req, res, next) => {
       return res.status(409).json({ error: 'El correo ya está registrado' });
     }
 
-    // Creamos primero el registro del Empleado (Usuario Humano)
+    // El perfil público reutiliza la tabla employees para nombre/teléfono,
+    // pero conserva un rol distinto al personal operativo.
     const { rows: employeeRows } = await Employees.create({
       first_name,
       last_name,
       email: username,
       phone,
-      role: 'cashier' // rol por defecto
+      role: 'customer'
     });
     const newEmployee = employeeRows[0];
 
@@ -81,7 +82,7 @@ const register = async (req, res, next) => {
       username,
       password_hash,
       employee_id: newEmployee.id,
-      role: 'cashier'
+      role: 'customer'
     });
 
     const newUser = userRows[0];
@@ -241,7 +242,7 @@ const googleLogin = async (req, res, next) => {
         last_name: payload.family_name || '',
         email: username,
         phone: null,
-        role: 'cashier',
+        role: 'customer',
       });
       const newEmployee = employeeRows[0];
 
@@ -254,7 +255,7 @@ const googleLogin = async (req, res, next) => {
         username,
         password_hash,
         employee_id: newEmployee.id,
-        role: 'cashier',
+        role: 'customer',
         google_id: payload.sub,
       });
       userId = userRows[0].id;
