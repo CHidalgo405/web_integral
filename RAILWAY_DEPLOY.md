@@ -87,6 +87,18 @@ de cada carpeta ya le dice a Railway qué Dockerfile usar.
 
 Guarda esa URL, la necesitas en el siguiente paso.
 
+### Migraciones de una base existente
+
+Después de desplegar una versión que agregue migraciones, ejecútalas en orden
+contra PostgreSQL. Para el módulo de cajero se requiere:
+
+```bash
+psql "<CONNECTION_URL>" -f "mi cliente (la familia)/Arquitectura/Database/migrations/004_customer_cashier_roles.sql"
+```
+
+Las migraciones son idempotentes. Una instalación nueva creada directamente
+desde `Database/init.sql` ya incluye los roles actuales.
+
 ---
 
 ## 3. Servicio Frontend

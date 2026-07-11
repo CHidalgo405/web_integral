@@ -35,6 +35,30 @@ const create = ({ employee_id, username, password_hash, role, must_change_passwo
 const linkGoogleId = (id, google_id) =>
   db.query('UPDATE users SET google_id=$1 WHERE id=$2 RETURNING id', [google_id, id]);
 
+const createCashier = async ({ first_name, last_name, email, phone, pin, password_hash }) => {
+  const client = await db.connect();
+  try {
+    await client.query('BEGIN');
+    const { rows: [employee] } = await client.query(
+      `INSERT INTO employees (first_name, last_name, email, phone, role, pin)
+       VALUES ($1,$2,$3,$4,'cashier',$5) RETURNING *`,
+      [first_name, last_name, email, phone ?? null, pin ?? null],
+    );
+    const { rows: [user] } = await client.query(
+      `INSERT INTO users (employee_id, username, password_hash, role, must_change_password)
+       VALUES ($1,$2,$3,'cashier',FALSE) RETURNING ${SAFE_COLS}`,
+      [employee.id, email, password_hash],
+    );
+    await client.query('COMMIT');
+    return { ...user, first_name, last_name, email, phone: phone ?? null };
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
+  }
+};
+
 const update = async (id, { username, role, active, must_change_password }) => {
   const client = await db.connect();
   try {
@@ -67,4 +91,4 @@ const updatePassword = (id, password_hash) =>
 const remove = (id) =>
   db.query('UPDATE users SET active=FALSE WHERE id=$1 RETURNING id', [id]);
 
-module.exports = { findAll, findById, findByUsername, create, update, updatePassword, remove, linkGoogleId };
+module.exports = { findAll, findById, findByUsername, create, createCashier, update, updatePassword, remove, linkGoogleId };

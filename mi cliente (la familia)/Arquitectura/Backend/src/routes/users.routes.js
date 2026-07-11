@@ -7,6 +7,7 @@ router.use(verifyToken);
 router.use(requireRole('admin'));
 
 router.get('/', ctrl.getAll);
+router.post('/cashiers', ctrl.createCashier);
 router.get('/:id', ctrl.getOne);
 router.get('/:id/addresses', ctrl.getAddresses);
 router.get('/:id/payment-methods', ctrl.getPaymentMethods);

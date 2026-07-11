@@ -83,7 +83,7 @@ export class AuthService {
 
   refreshToken(): Observable<{ accessToken: string, refreshToken: string }> {
     const refreshToken = localStorage.getItem('refresh_token');
-    return this.http.post<{ accessToken: string, refreshToken: string }>(`${API_BASE_URL}/auth/refresh`, { token: refreshToken }).pipe(
+    return this.http.post<{ accessToken: string, refreshToken: string }>(`${API_BASE_URL}/auth/refresh`, { refreshToken }).pipe(
       tap(res => {
         this.accessToken.set(res.accessToken);
         localStorage.setItem('access_token', res.accessToken);
@@ -125,7 +125,7 @@ export class AuthService {
   logout(): void {
     const refreshToken = localStorage.getItem('refresh_token');
     if (refreshToken) {
-      this.http.post(`${API_BASE_URL}/auth/logout`, { token: refreshToken }).subscribe({
+      this.http.post(`${API_BASE_URL}/auth/logout`, { refreshToken }).subscribe({
         next: () => this.clearSession(),
         error: () => this.clearSession()
       });

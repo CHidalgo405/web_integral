@@ -111,6 +111,7 @@ test('customer tokens cannot mutate catalog or access internal resources', async
     ['/price-history', { token: customerToken }],
     ['/purchases', { token: customerToken }],
     ['/purchases/pos', { method: 'POST', body: {}, token: customerToken }],
+    ['/users/cashiers', { method: 'POST', body: {}, token: customerToken }],
     ['/cash-register/status', { token: customerToken }],
     ['/notifications', { method: 'POST', body: {}, token: customerToken }],
   ];

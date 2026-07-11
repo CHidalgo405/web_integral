@@ -73,6 +73,10 @@ interface AdminOrderRow {
           <h1 class="page-title">Directorio de Clientes</h1>
           <p class="page-subtitle">Visualiza perfiles, cambia permisos administrativos y examina historiales de compras</p>
         </div>
+        <button type="button" class="new-cashier-button" (click)="showCashierModal.set(true)">
+          <app-icon name="plus" size="16" color="currentColor" />
+          Nuevo cajero
+        </button>
       </div>
 
       <!-- Search Bar -->
@@ -410,6 +414,34 @@ interface AdminOrderRow {
         </div>
       </div>
     </div>
+
+    @if (showCashierModal()) {
+      <div class="cashier-modal-backdrop">
+        <section class="cashier-modal">
+          <button type="button" class="cashier-modal-close" (click)="showCashierModal.set(false)">×</button>
+          <div class="cashier-modal-icon"><app-icon name="shopping-cart" size="26" color="white" /></div>
+          <span class="cashier-modal-eyebrow">Personal de caja</span>
+          <h2>Crear cuenta de cajero</h2>
+          <p>Esta cuenta entrará directamente al punto de venta.</p>
+          <div class="cashier-fields two-columns">
+            <label><span>Nombre *</span><input [(ngModel)]="cashierDraft.first_name" /></label>
+            <label><span>Apellido *</span><input [(ngModel)]="cashierDraft.last_name" /></label>
+          </div>
+          <div class="cashier-fields">
+            <label><span>Correo de acceso *</span><input type="email" [(ngModel)]="cashierDraft.email" /></label>
+            <label><span>Teléfono</span><input [(ngModel)]="cashierDraft.phone" /></label>
+          </div>
+          <div class="cashier-fields two-columns">
+            <label><span>Contraseña *</span><input type="password" [(ngModel)]="cashierDraft.password" /></label>
+            <label><span>PIN de 4 dígitos</span><input inputmode="numeric" maxlength="4" [(ngModel)]="cashierDraft.pin" /></label>
+          </div>
+          @if (cashierError()) { <div class="cashier-error">{{ cashierError() }}</div> }
+          <button type="button" class="cashier-submit" [disabled]="saving()" (click)="createCashier()">
+            {{ saving() ? 'Creando...' : 'Crear cajero' }}
+          </button>
+        </section>
+      </div>
+    }
   `,
   styleUrl: './users.css',
 })
@@ -426,12 +458,41 @@ export class UserDirectory {
   userPayments = signal<ApiUserPayment[]>([]);
   loadError = signal('');
   saving = signal(false);
+  showCashierModal = signal(false);
+  cashierError = signal('');
+  cashierDraft = { first_name: '', last_name: '', email: '', phone: '', password: '', pin: '' };
   activeTab = 'data';
 
   private apiUsers = new Map<string, ApiUser>();
 
   constructor() {
     this.loadUsers();
+  }
+
+  createCashier(): void {
+    this.cashierError.set('');
+    const draft = this.cashierDraft;
+    if (!draft.first_name.trim() || !draft.last_name.trim() || !draft.email.trim() || draft.password.length < 8) {
+      this.cashierError.set('Completa nombre, apellido, correo y una contraseña de al menos 8 caracteres.');
+      return;
+    }
+    if (draft.pin && !/^\d{4}$/.test(draft.pin)) {
+      this.cashierError.set('El PIN debe contener exactamente 4 dígitos.');
+      return;
+    }
+    this.saving.set(true);
+    this.http.post<ApiUser>(`${API_BASE_URL}/users/cashiers`, draft).subscribe({
+      next: () => {
+        this.saving.set(false);
+        this.showCashierModal.set(false);
+        this.cashierDraft = { first_name: '', last_name: '', email: '', phone: '', password: '', pin: '' };
+        this.loadUsers();
+      },
+      error: (err) => {
+        this.saving.set(false);
+        this.cashierError.set(err?.error?.error || 'No se pudo crear la cuenta de cajero.');
+      },
+    });
   }
 
   private loadUsers(): void {

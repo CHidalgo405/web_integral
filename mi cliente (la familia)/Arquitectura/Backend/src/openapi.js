@@ -159,6 +159,7 @@ const openapi = {
     { name: 'Expenses' },
     { name: 'Till Movements' },
     { name: 'Cash Audit' },
+    { name: 'Cash Register' },
     { name: 'Notifications' },
   ],
   components: {
@@ -1320,6 +1321,25 @@ const openapi = {
       },
     },
     '/users': user.collection,
+    '/users/cashiers': {
+      post: {
+        tags: ['Users'],
+        summary: 'Create a cashier employee and login account (admin only)',
+        requestBody: requestBody({
+          type: 'object',
+          required: ['first_name', 'last_name', 'email', 'password'],
+          properties: {
+            first_name: { type: 'string' },
+            last_name: { type: 'string' },
+            email: { type: 'string', format: 'email' },
+            phone: { type: 'string' },
+            password: { type: 'string', format: 'password', minLength: 8 },
+            pin: { type: 'string', pattern: '^\\d{4}$' },
+          },
+        }),
+        responses: { 201: created({ $ref: '#/components/schemas/User' }) },
+      },
+    },
     '/users/{id}': user.item,
     '/customers': customer.collection,
     '/customers/{id}': customer.item,
@@ -1363,6 +1383,35 @@ const openapi = {
         requestBody: requestBody({ $ref: '#/components/schemas/PurchaseInput' }),
         responses: {
           201: created({ $ref: '#/components/schemas/Purchase' }),
+        },
+      },
+    },
+    '/purchases/pos': {
+      post: {
+        tags: ['Cash Register'],
+        summary: 'Create a point-of-sale purchase using server-side prices',
+        requestBody: requestBody({
+          type: 'object',
+          required: ['items', 'payment_method'],
+          properties: {
+            customer_id: { ...uuid, nullable: true },
+            payment_method: { type: 'string', enum: ['cash', 'card'] },
+            cash_tendered: { ...money, nullable: true },
+            notes: { type: 'string' },
+            items: {
+              type: 'array',
+              minItems: 1,
+              items: {
+                type: 'object',
+                required: ['inventory_id', 'quantity'],
+                properties: { inventory_id: uuid, quantity: { type: 'integer', minimum: 1 } },
+              },
+            },
+          },
+        }),
+        responses: {
+          201: created({ $ref: '#/components/schemas/Purchase' }),
+          409: { description: 'Register closed or insufficient stock' },
         },
       },
     },
@@ -1477,6 +1526,40 @@ const openapi = {
     },
     '/cash-audit': cashAudit.collection,
     '/cash-audit/{id}': cashAudit.item,
+    '/cash-register/status': {
+      get: {
+        tags: ['Cash Register'],
+        summary: 'Get the authenticated cashier register status and daily totals',
+        responses: { 200: ok({ type: 'object' }) },
+      },
+    },
+    '/cash-register/open': {
+      post: {
+        tags: ['Cash Register'],
+        summary: 'Open the authenticated cashier register',
+        requestBody: requestBody({
+          type: 'object',
+          required: ['opening_amount'],
+          properties: {
+            opening_amount: money,
+            shift: { type: 'string', enum: ['morning', 'afternoon'] },
+          },
+        }),
+        responses: { 201: created({ type: 'object' }), 409: { description: 'Register already open' } },
+      },
+    },
+    '/cash-register/close': {
+      post: {
+        tags: ['Cash Register'],
+        summary: 'Close the authenticated cashier register and calculate difference',
+        requestBody: requestBody({
+          type: 'object',
+          required: ['counted_amount'],
+          properties: { counted_amount: money },
+        }),
+        responses: { 201: created({ type: 'object' }), 409: { description: 'No open register' } },
+      },
+    },
     '/notifications': {
       get: {
         tags: ['Notifications'],
