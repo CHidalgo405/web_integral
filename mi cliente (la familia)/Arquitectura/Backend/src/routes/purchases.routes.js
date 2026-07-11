@@ -1,15 +1,17 @@
 const router = require('express').Router();
 const ctrl = require('../controllers/purchases.controller');
-const { verifyToken, requireRole, attachUser } = require('../middleware/auth.middleware');
+const { verifyToken, requireRole } = require('../middleware/auth.middleware');
 
-router.get('/', ctrl.getAll);
+router.use(verifyToken);
+
+router.get('/', requireRole('admin'), ctrl.getAll);
 // /mine y /metrics deben declararse antes de /:id para que no los capture el parámetro
-router.get('/mine', verifyToken, ctrl.getMine);
-router.get('/metrics', verifyToken, requireRole('admin'), ctrl.getMetrics);
+router.get('/mine', ctrl.getMine);
+router.get('/metrics', requireRole('admin'), ctrl.getMetrics);
 router.get('/:id', ctrl.getOne);
 router.get('/:id/items', ctrl.getItems);
-// attachUser: si hay sesión la compra queda ligada al usuario; sin sesión sigue funcionando (POS/invitado)
-router.post('/', attachUser, ctrl.create);
+// El checkout del frontend requiere sesión; la compra siempre queda ligada al usuario autenticado.
+router.post('/', ctrl.create);
 router.patch('/:id/status', ctrl.updateStatus);
 
 module.exports = router;

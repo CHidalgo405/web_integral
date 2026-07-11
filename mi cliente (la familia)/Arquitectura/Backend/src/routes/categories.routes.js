@@ -1,10 +1,11 @@
 const router = require('express').Router();
 const ctrl = require('../controllers/categories.controller');
+const { verifyToken, requireRole } = require('../middleware/auth.middleware');
 
-router.get('/', ctrl.getAll);
-router.get('/:id', ctrl.getOne);
-router.post('/', ctrl.create);
-router.put('/:id', ctrl.update);
-router.delete('/:id', ctrl.remove);
+router.get('/', verifyToken, ctrl.getAll);
+router.get('/:id', verifyToken, ctrl.getOne);
+router.post('/', verifyToken, requireRole('admin'), ctrl.create);
+router.put('/:id', verifyToken, requireRole('admin'), ctrl.update);
+router.delete('/:id', verifyToken, requireRole('admin'), ctrl.remove);
 
 module.exports = router;

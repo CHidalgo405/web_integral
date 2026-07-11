@@ -24,8 +24,7 @@ const create = async (req, res, next) => {
 
 const markSeen = async (req, res, next) => {
   try {
-    const { user_id } = req.body;
-    const { rows } = await Notifications.markSeen(req.params.id, user_id);
+    const { rows } = await Notifications.markSeen(req.params.id, req.user.id);
     if (!rows.length) return res.status(404).json({ error: 'Notification not found' });
     res.json(rows[0]);
   } catch (err) { next(err); }
@@ -33,8 +32,7 @@ const markSeen = async (req, res, next) => {
 
 const markAllSeen = async (req, res, next) => {
   try {
-    const { user_id } = req.body;
-    const { rows } = await Notifications.markAllSeen(user_id);
+    const { rows } = await Notifications.markAllSeen(req.user.id);
     res.json({ marked: rows.length });
   } catch (err) { next(err); }
 };

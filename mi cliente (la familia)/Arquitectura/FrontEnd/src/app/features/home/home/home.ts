@@ -26,10 +26,12 @@ import { IconComponent } from '../../../shared/components/icon/icon';
             </div>
           </div>
           <div class="header-actions">
-            <a routerLink="/home/notifications" class="action-btn">
-              <span class="bell-icon"><app-icon name="bell" size="20" /></span>
-              <span class="badge"></span>
-            </a>
+            @if (authService.user()?.role === 'admin') {
+              <a routerLink="/home/notifications" class="action-btn">
+                <span class="bell-icon"><app-icon name="bell" size="20" /></span>
+                <span class="badge"></span>
+              </a>
+            }
             <a routerLink="/profile" class="user-avatar">
               {{ authService.user()?.firstName?.charAt(0) || 'U' }}
             </a>
@@ -147,4 +149,3 @@ export class Home {
     return this.productService.isFavorite(productId);
   }
 }
-

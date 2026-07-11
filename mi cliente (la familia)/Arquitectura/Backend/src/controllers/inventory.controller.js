@@ -1,9 +1,13 @@
 const Inventory = require('../models/inventory.model');
 
+// El mismo catálogo alimenta la tienda y el panel administrativo. No exponer
+// costos, mínimos de stock ni metadatos internos a cuentas de cliente.
+const toCatalogItem = ({ cost, min_stock, low_stock, created_at, updated_at, ...item }) => item;
+
 const getAll = async (req, res, next) => {
   try {
     const { rows } = await Inventory.findAll(req.query);
-    res.json(rows);
+    res.json(req.user.role === 'admin' ? rows : rows.map(toCatalogItem));
   } catch (err) { next(err); }
 };
 
@@ -11,7 +15,7 @@ const getOne = async (req, res, next) => {
   try {
     const { rows } = await Inventory.findById(req.params.id);
     if (!rows.length) return res.status(404).json({ error: 'Item not found' });
-    res.json(rows[0]);
+    res.json(req.user.role === 'admin' ? rows[0] : toCatalogItem(rows[0]));
   } catch (err) { next(err); }
 };
 
@@ -76,4 +80,3 @@ const removeBarcode = async (req, res, next) => {
 };
 
 module.exports = { getAll, getOne, getLowStock, findByBarcode, create, update, remove, getBarcodes, addBarcode, removeBarcode };
-

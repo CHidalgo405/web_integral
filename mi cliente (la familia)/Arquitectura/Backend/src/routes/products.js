@@ -1,6 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
+const { verifyToken, requireRole } = require('../middleware/auth.middleware');
+
+// Ruta heredada (actualmente no montada): mantenerla cerrada si se reutiliza.
+router.use(verifyToken, requireRole('admin'));
 
 router.get('/', async (req, res) => {
   try {

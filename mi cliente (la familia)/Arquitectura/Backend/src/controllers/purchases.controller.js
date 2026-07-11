@@ -1,5 +1,14 @@
 const Purchases = require('../models/purchases.model');
 
+const canAccess = (purchase, user) =>
+  user.role === 'admin' || purchase.user_id === user.id;
+
+const findAccessiblePurchase = async (id, user) => {
+  const { rows } = await Purchases.findById(id);
+  if (!rows.length || !canAccess(rows[0], user)) return null;
+  return rows[0];
+};
+
 const getAll = async (req, res, next) => {
   try {
     const { rows } = await Purchases.findAll(req.query);
@@ -9,14 +18,16 @@ const getAll = async (req, res, next) => {
 
 const getOne = async (req, res, next) => {
   try {
-    const { rows } = await Purchases.findById(req.params.id);
-    if (!rows.length) return res.status(404).json({ error: 'Purchase not found' });
-    res.json(rows[0]);
+    const purchase = await findAccessiblePurchase(req.params.id, req.user);
+    if (!purchase) return res.status(404).json({ error: 'Purchase not found' });
+    res.json(purchase);
   } catch (err) { next(err); }
 };
 
 const getItems = async (req, res, next) => {
   try {
+    const purchase = await findAccessiblePurchase(req.params.id, req.user);
+    if (!purchase) return res.status(404).json({ error: 'Purchase not found' });
     const { rows } = await Purchases.findItems(req.params.id);
     res.json(rows);
   } catch (err) { next(err); }
@@ -50,6 +61,21 @@ const updateStatus = async (req, res, next) => {
     if (!VALID_STATUSES.includes(status)) {
       return res.status(400).json({ error: `Estado inválido. Usa uno de: ${VALID_STATUSES.join(', ')}` });
     }
+
+    const purchase = await findAccessiblePurchase(req.params.id, req.user);
+    if (!purchase) return res.status(404).json({ error: 'Purchase not found' });
+
+    // Un cliente únicamente puede cancelar su propio pedido mientras todavía
+    // está pendiente o en preparación. Los demás cambios son administrativos.
+    if (req.user.role !== 'admin') {
+      if (status !== 'cancelled') {
+        return res.status(403).json({ error: 'Only administrators can change this order status' });
+      }
+      if (!['pending', 'preparing'].includes(purchase.status)) {
+        return res.status(409).json({ error: 'This order can no longer be cancelled' });
+      }
+    }
+
     const { rows } = await Purchases.updateStatus(req.params.id, status, tracking_number);
     if (!rows.length) return res.status(404).json({ error: 'Purchase not found' });
     res.json(rows[0]);

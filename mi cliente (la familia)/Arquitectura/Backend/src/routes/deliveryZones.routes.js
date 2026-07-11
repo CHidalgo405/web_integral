@@ -1,12 +1,13 @@
 const router = require('express').Router();
 const ctrl = require('../controllers/deliveryZones.controller');
+const { verifyToken, requireRole } = require('../middleware/auth.middleware');
 
-router.get('/', ctrl.getAll);
-router.get('/fee', ctrl.getFee);
-router.get('/:id', ctrl.getOne);
-router.get('/:id/audit', ctrl.getAudit);
-router.post('/', ctrl.create);
-router.put('/:id', ctrl.update);
-router.delete('/:id', ctrl.remove);
+router.get('/', verifyToken, ctrl.getAll);
+router.get('/fee', verifyToken, ctrl.getFee);
+router.get('/:id', verifyToken, ctrl.getOne);
+router.get('/:id/audit', verifyToken, requireRole('admin'), ctrl.getAudit);
+router.post('/', verifyToken, requireRole('admin'), ctrl.create);
+router.put('/:id', verifyToken, requireRole('admin'), ctrl.update);
+router.delete('/:id', verifyToken, requireRole('admin'), ctrl.remove);
 
 module.exports = router;
