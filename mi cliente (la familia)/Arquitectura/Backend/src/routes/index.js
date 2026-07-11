@@ -4,6 +4,7 @@ const { verifyToken, requireRole } = require('../middleware/auth.middleware');
 // Recursos operativos: contienen datos internos de personal, caja, compras
 // y proveedores. El frontend actual solo expone estas funciones al admin.
 const adminOnly = [verifyToken, requireRole('admin')];
+const cashierOrAdmin = [verifyToken, requireRole('admin', 'cashier')];
 
 router.use('/auth',                require('./auth.routes'));
 router.use('/shop-config',         require('./shopConfig.routes'));
@@ -18,7 +19,7 @@ router.use('/employees',           ...adminOnly, require('./employees.routes'));
 router.use('/schedules',           ...adminOnly, require('./schedules.routes'));
 router.use('/shift-covers',        ...adminOnly, require('./shiftCovers.routes'));
 router.use('/users',               require('./users.routes'));
-router.use('/customers',           ...adminOnly, require('./customers.routes'));
+router.use('/customers',           ...cashierOrAdmin, require('./customers.routes'));
 router.use('/delivery-zones',      require('./deliveryZones.routes'));
 router.use('/promotions',          require('./promotions.routes'));
 router.use('/purchases',           require('./purchases.routes'));
@@ -27,6 +28,7 @@ router.use('/expense-categories',  ...adminOnly, require('./expenseCategories.ro
 router.use('/expenses',            ...adminOnly, require('./expenses.routes'));
 router.use('/till-movements',      ...adminOnly, require('./tillMovements.routes'));
 router.use('/cash-audit',          ...adminOnly, require('./cashAudit.routes'));
+router.use('/cash-register',       require('./cashRegister.routes'));
 router.use('/notifications',       ...adminOnly, require('./notifications.routes'));
 router.use('/price-history',       ...adminOnly, require('./priceHistory.routes'));
 router.use('/addresses',           require('./userAddresses.routes'));

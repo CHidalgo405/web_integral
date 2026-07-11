@@ -36,6 +36,17 @@ const customerToken = jwt.sign(
   { expiresIn: '5m' },
 );
 
+const cashierToken = jwt.sign(
+  {
+    id: '00000000-0000-0000-0000-000000000002',
+    employee_id: '00000000-0000-0000-0000-000000000102',
+    username: 'cashier@test.local',
+    role: 'cashier',
+  },
+  process.env.JWT_SECRET,
+  { expiresIn: '5m' },
+);
+
 const request = (path, { method = 'GET', token, body } = {}) =>
   fetch(`${baseUrl}${path}`, {
     method,
@@ -70,6 +81,7 @@ test('business endpoints reject unauthenticated requests', async () => {
     ['/expenses'],
     ['/till-movements'],
     ['/cash-audit'],
+    ['/cash-register/status'],
     ['/notifications'],
     ['/price-history'],
     ['/addresses'],
@@ -98,6 +110,8 @@ test('customer tokens cannot mutate catalog or access internal resources', async
     ['/notifications', { token: customerToken }],
     ['/price-history', { token: customerToken }],
     ['/purchases', { token: customerToken }],
+    ['/purchases/pos', { method: 'POST', body: {}, token: customerToken }],
+    ['/cash-register/status', { token: customerToken }],
     ['/notifications', { method: 'POST', body: {}, token: customerToken }],
   ];
 
@@ -105,4 +119,23 @@ test('customer tokens cannot mutate catalog or access internal resources', async
     const response = await request(path, options);
     assert.equal(response.status, 403, `${path} should require the admin role`);
   }
+});
+
+test('cashier role reaches POS validation but remains blocked from admin resources', async () => {
+  const posResponse = await request('/purchases/pos', {
+    method: 'POST',
+    token: cashierToken,
+    body: { items: [], payment_method: 'cash' },
+  });
+  assert.equal(posResponse.status, 400);
+
+  const openResponse = await request('/cash-register/open', {
+    method: 'POST',
+    token: cashierToken,
+    body: { opening_amount: -1 },
+  });
+  assert.equal(openResponse.status, 400);
+
+  const adminResponse = await request('/suppliers', { token: cashierToken });
+  assert.equal(adminResponse.status, 403);
 });

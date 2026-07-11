@@ -93,6 +93,103 @@ const createWithItems = async (purchase, items) => {
   }
 };
 
+const createPosSale = async (sale, requestedItems) => {
+  const client = await db.connect();
+  try {
+    await client.query('BEGIN');
+
+    const { rows: audits } = await client.query(
+      `SELECT audit_type, shift, created_at FROM cash_audit
+       WHERE employee_id=$1 AND created_at::date=CURRENT_DATE
+       ORDER BY created_at DESC LIMIT 1`,
+      [sale.employee_id],
+    );
+    const register = audits[0];
+    if (!register || register.audit_type !== 'open') {
+      const err = new Error('Debes abrir la caja antes de registrar una venta');
+      err.status = 409;
+      throw err;
+    }
+
+    const ids = requestedItems.map((item) => item.inventory_id);
+    const { rows: inventoryRows } = await client.query(
+      `SELECT id, name, sku, price, stock, active
+       FROM inventory WHERE id=ANY($1::uuid[]) FOR UPDATE`,
+      [ids],
+    );
+    const inventoryById = new Map(inventoryRows.map((item) => [item.id, item]));
+
+    const items = requestedItems.map((requested) => {
+      const product = inventoryById.get(requested.inventory_id);
+      if (!product || !product.active) {
+        const err = new Error('Uno de los productos no existe o está inactivo');
+        err.status = 400;
+        throw err;
+      }
+      if (Number(product.stock) < requested.quantity) {
+        const err = new Error(`Stock insuficiente para ${product.name}`);
+        err.status = 409;
+        throw err;
+      }
+      const unitPrice = Number(product.price);
+      const lineTotal = Math.round(unitPrice * requested.quantity * 100) / 100;
+      return {
+        inventory_id: product.id,
+        inventory_name: product.name,
+        sku: product.sku,
+        quantity: requested.quantity,
+        unit_price: unitPrice,
+        discount_pct: 0,
+        line_total: lineTotal,
+      };
+    });
+
+    const subtotal = Math.round(items.reduce((sum, item) => sum + item.line_total, 0) * 100) / 100;
+    const cashTendered = sale.payment_method === 'cash' ? Number(sale.cash_tendered) : null;
+    if (sale.payment_method === 'cash' && (!Number.isFinite(cashTendered) || cashTendered < subtotal)) {
+      const err = new Error('El efectivo recibido es menor al total');
+      err.status = 400;
+      throw err;
+    }
+
+    const { rows: [purchase] } = await client.query(
+      `INSERT INTO purchases
+         (customer_id, employee_id, delivery_method, delivery_fee, payment_method,
+          status, subtotal, discount_total, total, cash_tendered, paid_at, notes)
+       VALUES ($1,$2,'on_spot',0,$3,'completed',$4,0,$4,$5,NOW(),$6)
+       RETURNING *`,
+      [sale.customer_id ?? null, sale.employee_id, sale.payment_method, subtotal, cashTendered, sale.notes ?? null],
+    );
+
+    for (const item of items) {
+      const { rows: [savedItem] } = await client.query(
+        `INSERT INTO purchase_items
+           (purchase_id, inventory_id, quantity, unit_price, discount_pct, line_total)
+         VALUES ($1,$2,$3,$4,0,$5) RETURNING id`,
+        [purchase.id, item.inventory_id, item.quantity, item.unit_price, item.line_total],
+      );
+      item.id = savedItem.id;
+    }
+
+    if (sale.payment_method === 'cash') {
+      await client.query(
+        `INSERT INTO till_movements
+           (employee_id, shift, movement_type, amount, reference_id, notes)
+         VALUES ($1,$2,'sale',$3,$4,'Venta en punto de venta')`,
+        [sale.employee_id, register.shift, subtotal, purchase.id],
+      );
+    }
+
+    await client.query('COMMIT');
+    return { ...purchase, items };
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
+  }
+};
+
 const updateStatus = (id, status, tracking_number) => {
   if (tracking_number !== undefined) {
     return db.query(
@@ -151,4 +248,4 @@ const metrics = async () => {
   };
 };
 
-module.exports = { findAll, findById, findItems, createWithItems, updateStatus, metrics };
+module.exports = { findAll, findById, findItems, createWithItems, createPosSale, updateStatus, metrics };
