@@ -1,5 +1,5 @@
 import { Component, inject, signal, ViewChildren, QueryList, ElementRef, AfterViewInit } from '@angular/core';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
@@ -8,7 +8,7 @@ import { IconComponent } from '../../../shared/components/icon/icon';
 @Component({
   selector: 'app-verify-otp',
   standalone: true,
-  imports: [FormsModule, IconComponent, RouterLink],
+  imports: [FormsModule, IconComponent],
   template: `
     <div class="verify-page" id="verify-otp-page">
 
@@ -70,10 +70,10 @@ import { IconComponent } from '../../../shared/components/icon/icon';
             class="btn-verify" 
             id="verify-submit" 
             (click)="verify()" 
-            [disabled]="!isComplete()"
+            [disabled]="!isComplete() || isVerifying()"
           >
             <app-icon name="check" size="18" color="#fff" />
-            Verificar código
+            {{ isVerifying() ? 'Verificando...' : 'Verificar código' }}
           </button>
 
           <button 
@@ -539,6 +539,7 @@ export class VerifyOtp implements AfterViewInit {
   errorMessage = signal('');
   successMessage = signal('');
   resendCooldown = signal(0);
+  isVerifying = signal(false);
 
   isComplete = () => this.otpValues().every((v) => v !== '');
 
@@ -581,18 +582,43 @@ export class VerifyOtp implements AfterViewInit {
 
   verify(): void {
     const code = this.otpValues().join('');
-    const success = this.authService.verifyOtp({ email: this.email, code });
-    if (success) {
-      this.successMessage.set('¡Cuenta verificada exitosamente!');
-      this.errorMessage.set('');
-      setTimeout(() => this.router.navigate(['/auth/login']), 1500);
-    } else {
-      this.errorMessage.set('Código incorrecto. Intenta de nuevo.');
-      this.successMessage.set('');
-    }
+    this.errorMessage.set('');
+    this.successMessage.set('');
+    this.isVerifying.set(true);
+
+    this.authService.verifyOtp({ email: this.email, code }).subscribe({
+      next: () => {
+        this.isVerifying.set(false);
+        this.successMessage.set('¡Cuenta verificada exitosamente!');
+        setTimeout(() => this.router.navigateByUrl(this.authService.landingRoute()), 1200);
+      },
+      error: (err) => {
+        this.isVerifying.set(false);
+        const body = err.error || {};
+        if (body.expired) {
+          this.errorMessage.set('El código expiró. Solicita uno nuevo.');
+        } else if (body.locked_until) {
+          this.errorMessage.set('Demasiados intentos. Intenta más tarde.');
+        } else if (body.attempts_remaining !== undefined) {
+          this.errorMessage.set(body.error);
+        } else {
+          this.errorMessage.set(body.error || 'Código incorrecto. Intenta de nuevo.');
+        }
+      }
+    });
   }
 
   resend(): void {
+    this.errorMessage.set('');
+    this.authService.resendVerificationCode(this.email).subscribe({
+      next: () => {
+        this.successMessage.set('Código reenviado. Revisa tu correo.');
+      },
+      error: () => {
+        this.errorMessage.set('No se pudo reenviar el código.');
+      }
+    });
+
     this.resendCooldown.set(60);
     const interval = setInterval(() => {
       this.resendCooldown.update((v) => {

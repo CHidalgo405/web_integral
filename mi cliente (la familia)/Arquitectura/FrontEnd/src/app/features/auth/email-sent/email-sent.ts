@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, OnInit } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Location } from '@angular/common';
 import { IconComponent } from '../../../shared/components/icon/icon';
@@ -496,7 +496,7 @@ import { AuthService } from '../../../core/services/auth.service';
     }
   `],
 })
-export class EmailSent {
+export class EmailSent implements OnInit {
   private route = inject(ActivatedRoute);
   private location = inject(Location);
   private authService = inject(AuthService);
@@ -515,14 +515,17 @@ export class EmailSent {
       this.loading.set(true);
       this.errorMessage.set('');
       this.successMessage.set('');
-      this.authService.forgotPassword({ email: this.email }).subscribe({
+
+      // Usamos resendVerificationCode en lugar de forgotPassword
+      // para reenviar el código de verificación OTP
+      this.authService.resendVerificationCode(this.email).subscribe({
         next: () => {
           this.loading.set(false);
-          this.successMessage.set('¡Enlace de recuperación reenviado exitosamente!');
+          this.successMessage.set('¡Código de verificación reenviado exitosamente!');
         },
         error: (err) => {
           this.loading.set(false);
-          this.errorMessage.set(err.error?.error || 'Ocurrió un error al reenviar el correo.');
+          this.errorMessage.set(err.error?.error || 'Ocurrió un error al reenviar el código.');
         }
       });
     }

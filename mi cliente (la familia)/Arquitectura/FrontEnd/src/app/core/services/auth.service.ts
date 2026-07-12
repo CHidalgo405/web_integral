@@ -5,6 +5,12 @@ import { User, LoginRequest, RegisterRequest, ForgotPasswordRequest, VerifyOtpRe
 import { Observable, tap } from 'rxjs';
 import { API_BASE_URL } from '../api.config';
 
+export interface RegisterResponse {
+  message: string;
+  email: string;
+  requiresVerification: boolean;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private currentUser = signal<User | null>(null);
@@ -40,7 +46,7 @@ export class AuthService {
       active: res.user.active,
       createdAt: res.user.created_at,
     };
-    
+
     this.currentUser.set(mappedUser);
     this.accessToken.set(res.accessToken);
     localStorage.setItem('access_token', res.accessToken);
@@ -60,8 +66,8 @@ export class AuthService {
     );
   }
 
-  register(request: RegisterRequest): Observable<AuthResponse> {
-    // Map RegisterRequest camelCase to snake_case for backend
+  // Ya NO auto-loguea: el backend no manda tokens hasta que se verifica el correo.
+  register(request: RegisterRequest): Observable<RegisterResponse> {
     const payload = {
       first_name: request.firstName,
       last_name: request.lastName,
@@ -69,9 +75,19 @@ export class AuthService {
       phone: request.phone,
       password: request.password
     };
-    return this.http.post<any>(`${API_BASE_URL}/auth/register`, payload).pipe(
+    return this.http.post<RegisterResponse>(`${API_BASE_URL}/auth/register`, payload);
+  }
+
+  // Verifica el código OTP contra el backend real.
+  verifyOtp(request: VerifyOtpRequest): Observable<AuthResponse> {
+    return this.http.post<any>(`${API_BASE_URL}/auth/verify-otp`, request).pipe(
       tap(res => this.handleAuthSuccess(res))
     );
+  }
+
+  // Reenvía el código OTP.
+  resendVerificationCode(email: string): Observable<any> {
+    return this.http.post<any>(`${API_BASE_URL}/auth/resend-verification`, { email });
   }
 
   landingRoute(): string {
@@ -98,10 +114,6 @@ export class AuthService {
 
   resetPassword(request: ResetPasswordRequest): Observable<any> {
     return this.http.post<any>(`${API_BASE_URL}/auth/reset-password`, request);
-  }
-
-  verifyOtp(request: VerifyOtpRequest): boolean {
-    return true; // Unchanged mocked
   }
 
   updateProfile(data: Partial<User>): Observable<{ user: any }> {

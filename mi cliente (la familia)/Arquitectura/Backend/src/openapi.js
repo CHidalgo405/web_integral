@@ -898,7 +898,7 @@ const openapi = {
       get: {
         tags: ['Health'],
         summary: 'API health check',
-        security: [], // Health check no necesita token
+        security: [],
         responses: {
           200: ok({ $ref: '#/components/schemas/Message' }),
         },

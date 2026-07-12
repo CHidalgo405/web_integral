@@ -401,9 +401,10 @@ export class Register {
         firstName: v.firstName!, lastName: v.lastName!, email: v.email!,
         phone: v.phone!, password: v.password!, confirmPassword: v.confirmPassword!,
       }).subscribe({
-        next: () => {
+        next: (res) => {
           this.isLoading.set(false);
-          this.router.navigateByUrl(this.authService.landingRoute());
+          // Ya no hay auto-login: se manda a verificar el código OTP
+          this.router.navigate(['/auth/verify-otp'], { queryParams: { email: res.email } });
         },
         error: (err) => {
           this.isLoading.set(false);

@@ -335,6 +335,22 @@ CREATE TABLE password_reset_tokens (
     expires_at TIMESTAMPTZ NOT NULL DEFAULT NOW() + INTERVAL '1 hour'
 );
 
+-- Códigos OTP de verificación de correo electrónico al registrarse.
+-- Máx 3 intentos; si se agotan, locked_until bloquea por 1 hora.
+CREATE TABLE email_verification_codes (
+    id           UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id      UUID        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    code_hash    TEXT        NOT NULL,
+    attempts     SMALLINT    NOT NULL DEFAULT 0,
+    verified     BOOLEAN     NOT NULL DEFAULT FALSE,
+    locked_until TIMESTAMPTZ,
+    created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    expires_at   TIMESTAMPTZ NOT NULL DEFAULT NOW() + INTERVAL '1 hour',
+    CONSTRAINT unique_pending_user UNIQUE (user_id)
+);
+
+CREATE INDEX idx_evc_user_id ON email_verification_codes(user_id);
+
 CREATE TABLE login_audit (
     id         UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id    UUID        REFERENCES users(id) ON DELETE SET NULL,

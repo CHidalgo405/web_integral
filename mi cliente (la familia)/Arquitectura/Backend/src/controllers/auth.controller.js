@@ -5,7 +5,8 @@ const Users = require('../models/users.model');
 const Employees = require('../models/employees.model');
 const Sessions = require('../models/sessions.model');
 const PasswordResetTokens = require('../models/passwordResetTokens.model');
-const emailService = require('../services/email.service');
+const EmailVerification = require('../models/emailVerification.model');
+const emailService = require('../services/email.service'); // ✅ Ya usa Resend
 const db = require('../db');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecret_jwt_key_please_change';
@@ -32,7 +33,7 @@ const generateTokens = async (user, req, remember_me = false) => {
   );
 
   const tokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
-  
+
   const expiresAt = new Date();
   expiresAt.setDate(expiresAt.getDate() + refreshDays);
 
@@ -46,6 +47,9 @@ const generateTokens = async (user, req, remember_me = false) => {
 
   return { accessToken, refreshToken };
 };
+
+// Genera un código OTP numérico de 6 dígitos
+const generateOtpCode = () => String(Math.floor(100000 + Math.random() * 900000));
 
 const register = async (req, res, next) => {
   try {
@@ -79,7 +83,7 @@ const register = async (req, res, next) => {
     const salt = await bcrypt.genSalt(10);
     const password_hash = await bcrypt.hash(password, salt);
 
-    // Creamos el Usuario vinculado al Empleado
+    // Creamos el Usuario vinculado al Empleado (cuenta inactiva hasta verificación)
     const { rows: userRows } = await Users.create({
       username,
       password_hash,
@@ -88,20 +92,19 @@ const register = async (req, res, next) => {
     });
 
     const newUser = userRows[0];
-    
-    // Generamos tokens de inmediato
-    const tokens = await generateTokens(newUser, req);
 
-    delete newUser.password_hash;
+    // Generar y guardar código de verificación
+    const code = generateOtpCode();
+    const codeHash = crypto.createHash('sha256').update(code).digest('hex');
+    await EmailVerification.upsert({ user_id: newUser.id, code_hash: codeHash });
 
-    res.status(201).json({ 
-      message: 'Usuario registrado exitosamente', 
-      user: {
-        ...newUser,
-        first_name: newEmployee.first_name,
-        last_name: newEmployee.last_name
-      },
-      ...tokens // accessToken, refreshToken
+    // Enviar correo con el código
+    await emailService.sendVerificationEmail(username, code);
+
+    res.status(201).json({
+      message: 'Registro exitoso. Verifica tu correo electrónico.',
+      email: username,
+      requiresVerification: true
     });
   } catch (error) {
     next(error);
@@ -169,7 +172,7 @@ const refresh = async (req, res, next) => {
 
     const tokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
     const session = await Sessions.findByTokenHash(tokenHash);
-    
+
     if (!session) {
       return res.status(403).json({ error: 'Session not found or revoked' });
     }
@@ -495,6 +498,110 @@ const resetPassword = async (req, res, next) => {
   }
 };
 
+// Reenvía el código de verificación al correo del usuario
+const sendVerificationCode = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: 'El correo es requerido' });
+
+    const username = email.toLowerCase();
+    const { rows } = await Users.findByUsername(username);
+    // Responde éxito siempre para evitar enumeración de usuarios
+    if (rows.length === 0) {
+      return res.json({ message: 'Si el correo existe, se enviará un nuevo código' });
+    }
+
+    const user = rows[0];
+    const { rows: evcRows } = await EmailVerification.findPendingByUserId(user.id);
+
+    // Si ya fue verificado, no hay nada que reenviar
+    if (evcRows.length === 0) {
+      return res.json({ message: 'Si el correo existe, se enviará un nuevo código' });
+    }
+
+    // Generar nuevo código y reemplazar el anterior
+    const code = generateOtpCode();
+    const codeHash = crypto.createHash('sha256').update(code).digest('hex');
+    await EmailVerification.upsert({ user_id: user.id, code_hash: codeHash });
+    await emailService.sendVerificationEmail(username, code);
+
+    res.json({ message: 'Código de verificación reenviado' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Verifica el código OTP y, si es correcto, emite tokens de sesión
+const verifyEmail = async (req, res, next) => {
+  try {
+    const { email, code } = req.body;
+    if (!email || !code) {
+      return res.status(400).json({ error: 'El correo y el código son requeridos' });
+    }
+
+    const username = email.toLowerCase();
+    const { rows: userRows } = await Users.findByUsername(username);
+    if (userRows.length === 0) {
+      return res.status(400).json({ error: 'Correo o código inválido' });
+    }
+    const user = userRows[0];
+
+    const { rows: evcRows } = await EmailVerification.findPendingByUserId(user.id);
+    if (evcRows.length === 0) {
+      return res.status(400).json({ error: 'No hay ningún código de verificación pendiente para este correo' });
+    }
+
+    const evc = evcRows[0];
+
+    // Verificar si el código ha expirado
+    if (new Date(evc.expires_at) < new Date()) {
+      return res.status(400).json({ error: 'El código ha expirado. Solicita uno nuevo.', expired: true });
+    }
+
+    // Verificar si está bloqueado por demasiados intentos
+    if (evc.locked_until && new Date(evc.locked_until) > new Date()) {
+      return res.status(429).json({
+        error: 'Demasiados intentos incorrectos. Intenta de nuevo más tarde.',
+        locked_until: evc.locked_until
+      });
+    }
+
+    // Verificar el código
+    const codeHash = crypto.createHash('sha256').update(code).digest('hex');
+    if (codeHash !== evc.code_hash) {
+      const updated = await EmailVerification.incrementAttempts(evc.id, evc.attempts);
+      const remaining = EmailVerification.MAX_ATTEMPTS - updated.rows[0].attempts;
+
+      if (remaining <= 0) {
+        return res.status(429).json({
+          error: 'Demasiados intentos incorrectos. Tu cuenta está bloqueada por 1 hora.',
+          locked_until: updated.rows[0].locked_until
+        });
+      }
+
+      return res.status(400).json({
+        error: `Código incorrecto. Te quedan ${remaining} intento${remaining === 1 ? '' : 's'}.`,
+        attempts_remaining: remaining
+      });
+    }
+
+    // Código correcto: marcar como verificado y generar sesión
+    await EmailVerification.markAsVerified(evc.id);
+
+    const tokens = await generateTokens(user, req);
+    const { rows: fullUserRows } = await Users.findById(user.id);
+    const fullUser = fullUserRows[0];
+
+    res.json({
+      message: '¡Cuenta verificada exitosamente!',
+      user: fullUser,
+      ...tokens
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   register,
   login,
@@ -505,5 +612,7 @@ module.exports = {
   updateMe,
   changePassword,
   forgotPassword,
-  resetPassword
+  resetPassword,
+  sendVerificationCode,
+  verifyEmail
 };
