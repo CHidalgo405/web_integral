@@ -7,6 +7,8 @@ router.post('/login', authCtrl.login);
 router.post('/google', authCtrl.googleLogin);
 router.post('/refresh', authCtrl.refresh);
 router.post('/logout', authCtrl.logout);
+router.post('/forgot-password', authCtrl.forgotPassword);
+router.post('/reset-password', authCtrl.resetPassword);
 
 // Perfil propio (requiere sesión)
 router.get('/me', verifyToken, authCtrl.me);

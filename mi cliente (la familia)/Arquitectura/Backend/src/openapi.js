@@ -1006,6 +1006,54 @@ const openapi = {
         },
       },
     },
+    '/auth/forgot-password': {
+      post: {
+        tags: ['Auth'],
+        summary: 'Request a password reset link',
+        security: [],
+        requestBody: requestBody({
+          type: 'object',
+          required: ['email'],
+          properties: {
+            email: { type: 'string', format: 'email' },
+          },
+        }),
+        responses: {
+          200: ok({
+            type: 'object',
+            properties: {
+              message: { type: 'string' },
+            },
+          }),
+          400: { $ref: '#/components/responses/ValidationError' },
+        },
+      },
+    },
+    '/auth/reset-password': {
+      post: {
+        tags: ['Auth'],
+        summary: 'Reset password using token',
+        security: [],
+        requestBody: requestBody({
+          type: 'object',
+          required: ['email', 'token', 'password'],
+          properties: {
+            email: { type: 'string', format: 'email' },
+            token: { type: 'string' },
+            password: { type: 'string', format: 'password', minLength: 8 },
+          },
+        }),
+        responses: {
+          200: ok({
+            type: 'object',
+            properties: {
+              message: { type: 'string' },
+            },
+          }),
+          400: { description: 'Invalid token or credentials' },
+        },
+      },
+    },
     '/shop-config': {
       get: {
         tags: ['Shop Config'],

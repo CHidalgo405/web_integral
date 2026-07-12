@@ -4,6 +4,8 @@ const crypto = require('crypto');
 const Users = require('../models/users.model');
 const Employees = require('../models/employees.model');
 const Sessions = require('../models/sessions.model');
+const PasswordResetTokens = require('../models/passwordResetTokens.model');
+const emailService = require('../services/email.service');
 const db = require('../db');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecret_jwt_key_please_change';
@@ -401,6 +403,98 @@ const changePassword = async (req, res, next) => {
   }
 };
 
+const forgotPassword = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ error: 'El correo electrónico es requerido' });
+    }
+
+    const username = email.toLowerCase();
+    const { rows } = await Users.findByUsername(username);
+
+    // Responder éxito siempre para evitar enumeración de usuarios
+    if (rows.length === 0) {
+      return res.json({ message: 'Si el correo está registrado, se enviará un enlace de recuperación' });
+    }
+
+    const user = rows[0];
+
+    // Generar token aleatorio
+    const rawToken = crypto.randomBytes(32).toString('hex');
+    const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
+
+    // Invalida tokens anteriores del usuario
+    await PasswordResetTokens.invalidateOldTokens(user.id);
+
+    // Guardar token hash en base de datos
+    await PasswordResetTokens.create({
+      user_id: user.id,
+      token_hash: tokenHash
+    });
+
+    // Enviar correo electrónico
+    await emailService.sendResetPasswordEmail(username, rawToken);
+
+    res.json({ message: 'Si el correo está registrado, se enviará un enlace de recuperación' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const resetPassword = async (req, res, next) => {
+  const client = await db.connect();
+  try {
+    const { email, token, password } = req.body;
+    if (!email || !token || !password) {
+      return res.status(400).json({ error: 'El correo, el token y la nueva contraseña son obligatorios' });
+    }
+    if (password.length < 8) {
+      return res.status(400).json({ error: 'La contraseña debe tener al menos 8 caracteres' });
+    }
+
+    const username = email.toLowerCase();
+    const { rows: userRows } = await Users.findByUsername(username);
+    if (userRows.length === 0) {
+      return res.status(400).json({ error: 'Token o correo inválido' });
+    }
+    const user = userRows[0];
+
+    // Validar token hash
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+    const { rows: tokenRows } = await PasswordResetTokens.findActiveByHash(tokenHash);
+
+    if (tokenRows.length === 0 || tokenRows[0].user_id !== user.id) {
+      return res.status(400).json({ error: 'El token es inválido o ha expirado' });
+    }
+
+    const tokenRecord = tokenRows[0];
+
+    // Hashear nueva contraseña
+    const salt = await bcrypt.genSalt(10);
+    const password_hash = await bcrypt.hash(password, salt);
+
+    // Cambiar contraseña y marcar token como usado en una transacción
+    await client.query('BEGIN');
+    await client.query(
+      'UPDATE users SET password_hash=$1, must_change_password=FALSE WHERE id=$2',
+      [password_hash, user.id]
+    );
+    await client.query(
+      'UPDATE password_reset_tokens SET used=TRUE WHERE id=$1',
+      [tokenRecord.id]
+    );
+    await client.query('COMMIT');
+
+    res.json({ message: 'Contraseña restablecida exitosamente' });
+  } catch (error) {
+    await client.query('ROLLBACK');
+    next(error);
+  } finally {
+    client.release();
+  }
+};
+
 module.exports = {
   register,
   login,
@@ -409,5 +503,7 @@ module.exports = {
   logout,
   me,
   updateMe,
-  changePassword
+  changePassword,
+  forgotPassword,
+  resetPassword
 };

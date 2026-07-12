@@ -1,6 +1,6 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { Location } from '@angular/common';
 import { AuthService } from '../../../core/services/auth.service';
 import { IconComponent } from '../../../shared/components/icon/icon';
@@ -8,7 +8,7 @@ import { IconComponent } from '../../../shared/components/icon/icon';
 @Component({
   selector: 'app-forgot-password',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, IconComponent],
+  imports: [ReactiveFormsModule, IconComponent],
   template: `
     <div class="forgot-page" id="forgot-password-page">
 
@@ -28,6 +28,13 @@ import { IconComponent } from '../../../shared/components/icon/icon';
 
       <!-- Cuerpo del formulario -->
       <div class="forgot-body">
+        @if (errorMessage()) {
+          <div class="message error">
+            <app-icon name="alert-circle" size="18" />
+            {{ errorMessage() }}
+          </div>
+        }
+
         <form [formGroup]="form" (ngSubmit)="onSubmit()" class="forgot-form">
           <div class="form-group">
             <label for="forgot-email">Correo electrónico</label>
@@ -56,10 +63,15 @@ import { IconComponent } from '../../../shared/components/icon/icon';
             type="submit" 
             class="btn-forgot" 
             id="forgot-submit" 
-            [disabled]="form.invalid"
+            [disabled]="form.invalid || loading()"
           >
-            <app-icon name="send" size="18" color="#fff" />
-            Enviar Enlace
+            @if (loading()) {
+              <app-icon name="loader" class="spin" size="18" color="#fff" />
+              Enviando...
+            } @else {
+              <app-icon name="send" size="18" color="#fff" />
+              Enviar Enlace
+            }
           </button>
         </form>
 
@@ -229,6 +241,33 @@ import { IconComponent } from '../../../shared/components/icon/icon';
       animation: slideIn 0.3s ease;
     }
 
+    /* ---- Mensajes ---- */
+    .message {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 18px;
+      border-radius: 12px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      width: 100%;
+      animation: slideIn 0.3s ease;
+    }
+
+    .message.error {
+      background: #fef2f2;
+      color: #dc2626;
+      border: 1px solid #fecaca;
+    }
+
+    .spin {
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
     @keyframes slideIn {
       from {
         opacity: 0;
@@ -348,10 +387,23 @@ export class ForgotPassword {
     email: ['', [Validators.required, Validators.email]],
   });
 
+  loading = signal(false);
+  errorMessage = signal('');
+
   onSubmit(): void {
     if (this.form.valid) {
-      this.authService.forgotPassword({ email: this.form.value.email! });
-      this.router.navigate(['/auth/email-sent'], { queryParams: { email: this.form.value.email } });
+      this.loading.set(true);
+      this.errorMessage.set('');
+      this.authService.forgotPassword({ email: this.form.value.email! }).subscribe({
+        next: () => {
+          this.loading.set(false);
+          this.router.navigate(['/auth/email-sent'], { queryParams: { email: this.form.value.email } });
+        },
+        error: (err) => {
+          this.loading.set(false);
+          this.errorMessage.set(err.error?.error || 'Ocurrió un error al enviar el correo. Por favor intenta de nuevo.');
+        }
+      });
     }
   }
 

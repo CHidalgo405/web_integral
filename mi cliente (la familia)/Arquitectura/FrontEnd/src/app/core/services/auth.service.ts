@@ -1,7 +1,7 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { User, LoginRequest, RegisterRequest, ForgotPasswordRequest, VerifyOtpRequest, AuthResponse } from '../models/user.model';
+import { User, LoginRequest, RegisterRequest, ForgotPasswordRequest, VerifyOtpRequest, AuthResponse, ResetPasswordRequest } from '../models/user.model';
 import { Observable, tap } from 'rxjs';
 import { API_BASE_URL } from '../api.config';
 
@@ -92,8 +92,12 @@ export class AuthService {
     );
   }
 
-  forgotPassword(request: ForgotPasswordRequest): boolean {
-    return true; // Unchanged mocked
+  forgotPassword(request: ForgotPasswordRequest): Observable<any> {
+    return this.http.post<any>(`${API_BASE_URL}/auth/forgot-password`, request);
+  }
+
+  resetPassword(request: ResetPasswordRequest): Observable<any> {
+    return this.http.post<any>(`${API_BASE_URL}/auth/reset-password`, request);
   }
 
   verifyOtp(request: VerifyOtpRequest): boolean {

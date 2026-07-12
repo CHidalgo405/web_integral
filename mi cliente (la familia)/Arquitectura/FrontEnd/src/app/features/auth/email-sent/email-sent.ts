@@ -1,7 +1,8 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Location } from '@angular/common';
 import { IconComponent } from '../../../shared/components/icon/icon';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-email-sent',
@@ -38,10 +39,28 @@ import { IconComponent } from '../../../shared/components/icon/icon';
           </p>
         </div>
 
+        @if (errorMessage()) {
+          <div class="message error">
+            <app-icon name="alert-circle" size="18" />
+            {{ errorMessage() }}
+          </div>
+        }
+        @if (successMessage()) {
+          <div class="message success">
+            <app-icon name="check-circle" size="18" />
+            {{ successMessage() }}
+          </div>
+        }
+
         <div class="email-sent-actions">
-          <button class="btn-resend" id="resend-email-btn" (click)="resend()">
-            <app-icon name="refresh-cw" size="16" color="var(--primary)" />
-            Reenviar correo
+          <button class="btn-resend" id="resend-email-btn" (click)="resend()" [disabled]="loading()">
+            @if (loading()) {
+              <app-icon name="loader" class="spin" size="16" color="var(--primary)" />
+              Reenviando...
+            } @else {
+              <app-icon name="refresh-cw" size="16" color="var(--primary)" />
+              Reenviar correo
+            }
           </button>
 
           <a routerLink="/auth/login" class="btn-login" id="back-to-login-btn">
@@ -447,19 +466,66 @@ import { IconComponent } from '../../../shared/components/icon/icon';
         height: 14px;
       }
     }
+
+    /* ---- Mensajes ---- */
+    .message {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 18px;
+      border-radius: 12px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      width: 100%;
+    }
+    .message.error {
+      background: #fef2f2;
+      color: #dc2626;
+      border: 1px solid #fecaca;
+    }
+    .message.success {
+      background: #f0fdf4;
+      color: #16a34a;
+      border: 1px solid #bbf7d0;
+    }
+    .spin {
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
   `],
 })
 export class EmailSent {
   private route = inject(ActivatedRoute);
   private location = inject(Location);
+  private authService = inject(AuthService);
+
   email = '';
+  loading = signal(false);
+  errorMessage = signal('');
+  successMessage = signal('');
 
   ngOnInit(): void {
     this.route.queryParams.subscribe((p) => (this.email = p['email'] ?? ''));
   }
 
   resend(): void {
-    alert('El backend aun no expone reenvio de correo de recuperacion.');
+    if (this.email) {
+      this.loading.set(true);
+      this.errorMessage.set('');
+      this.successMessage.set('');
+      this.authService.forgotPassword({ email: this.email }).subscribe({
+        next: () => {
+          this.loading.set(false);
+          this.successMessage.set('¡Enlace de recuperación reenviado exitosamente!');
+        },
+        error: (err) => {
+          this.loading.set(false);
+          this.errorMessage.set(err.error?.error || 'Ocurrió un error al reenviar el correo.');
+        }
+      });
+    }
   }
 
   goBack(): void {
