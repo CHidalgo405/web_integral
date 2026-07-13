@@ -8,6 +8,6 @@ export const AUTH_ROUTES: Routes = [
   { path: 'register', loadComponent: () => import('./register/register').then(m => m.Register) },
   { path: 'forgot-password', loadComponent: () => import('./forgot-password/forgot-password').then(m => m.ForgotPassword) },
   { path: 'email-sent', loadComponent: () => import('./email-sent/email-sent').then(m => m.EmailSent) },
-  { path: 'verify', loadComponent: () => import('./verify-otp/verify-otp').then(m => m.VerifyOtp) },
+  { path: 'verify-otp', loadComponent: () => import('./verify-otp/verify-otp').then(m => m.VerifyOtp) },
   { path: 'reset-password', loadComponent: () => import('./reset-password/reset-password').then(m => m.ResetPassword) },
 ];

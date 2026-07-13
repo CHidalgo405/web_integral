@@ -1,9 +1,11 @@
+// core/services/auth.service.ts
 import { Injectable, signal, computed, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { User, LoginRequest, RegisterRequest, ForgotPasswordRequest, VerifyOtpRequest, AuthResponse, ResetPasswordRequest } from '../models/user.model';
-import { Observable, tap } from 'rxjs';
+import { Observable, tap, from } from 'rxjs';
 import { API_BASE_URL } from '../api.config';
+import { EmailService } from './email.service';
 
 export interface RegisterResponse {
   message: string;
@@ -21,6 +23,7 @@ export class AuthService {
 
   private http = inject(HttpClient);
   private router = inject(Router);
+  private emailService = inject(EmailService);
 
   constructor() {
     this.loadFromStorage();
@@ -66,7 +69,6 @@ export class AuthService {
     );
   }
 
-  // Ya NO auto-loguea: el backend no manda tokens hasta que se verifica el correo.
   register(request: RegisterRequest): Observable<RegisterResponse> {
     const payload = {
       first_name: request.firstName,
@@ -78,14 +80,12 @@ export class AuthService {
     return this.http.post<RegisterResponse>(`${API_BASE_URL}/auth/register`, payload);
   }
 
-  // Verifica el código OTP contra el backend real.
   verifyOtp(request: VerifyOtpRequest): Observable<AuthResponse> {
     return this.http.post<any>(`${API_BASE_URL}/auth/verify-otp`, request).pipe(
       tap(res => this.handleAuthSuccess(res))
     );
   }
 
-  // Reenvía el código OTP.
   resendVerificationCode(email: string): Observable<any> {
     return this.http.post<any>(`${API_BASE_URL}/auth/resend-verification`, { email });
   }
@@ -157,5 +157,9 @@ export class AuthService {
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('auth_user');
     this.router.navigate(['/auth/login']);
+  }
+
+  testEmail(email: string): Promise<any> {
+    return this.emailService.sendVerificationEmail(email, '123456');
   }
 }

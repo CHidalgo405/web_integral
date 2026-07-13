@@ -10,6 +10,9 @@ router.post('/logout', authCtrl.logout);
 router.post('/forgot-password', authCtrl.forgotPassword);
 router.post('/reset-password', authCtrl.resetPassword);
 
+router.post('/verify-otp', authCtrl.verifyEmail);
+router.post('/resend-verification', authCtrl.sendVerificationCode);
+
 // Perfil propio (requiere sesión)
 router.get('/me', verifyToken, authCtrl.me);
 router.put('/me', verifyToken, authCtrl.updateMe);
