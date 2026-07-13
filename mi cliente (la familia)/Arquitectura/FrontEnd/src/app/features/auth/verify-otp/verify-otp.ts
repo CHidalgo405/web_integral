@@ -1,4 +1,4 @@
-import { Component, inject, signal, ViewChildren, QueryList, ElementRef, AfterViewInit } from '@angular/core';
+import { Component, inject, signal, ViewChildren, QueryList, ElementRef, AfterViewInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -38,6 +38,7 @@ import { IconComponent } from '../../../shared/components/icon/icon';
               type="text"
               maxlength="1"
               class="otp-input"
+              [class.locked]="isLocked()"
               [id]="'otp-' + i"
               [value]="otpValues()[i]"
               (input)="onInput($event, i)"
@@ -45,10 +46,19 @@ import { IconComponent } from '../../../shared/components/icon/icon';
               (paste)="onPaste($event)"
               inputmode="numeric"
               pattern="[0-9]"
+              [disabled]="isLocked()"
               #otpInput
             />
           }
         </div>
+
+        <!-- Cronómetro de bloqueo -->
+        @if (isLocked()) {
+          <div class="lock-timer">
+            <app-icon name="clock" size="20" color="#dc2626" />
+            <span>Cuenta bloqueada. Tiempo restante: <strong>{{ lockTimeRemaining() }}</strong></span>
+          </div>
+        }
 
         <!-- Mensajes -->
         @if (errorMessage()) {
@@ -70,7 +80,7 @@ import { IconComponent } from '../../../shared/components/icon/icon';
             class="btn-verify" 
             id="verify-submit" 
             (click)="verify()" 
-            [disabled]="!isComplete() || isVerifying()"
+            [disabled]="!isComplete() || isVerifying() || isLocked()"
           >
             <app-icon name="check" size="18" color="#fff" />
             {{ isVerifying() ? 'Verificando...' : 'Verificar código' }}
@@ -80,7 +90,7 @@ import { IconComponent } from '../../../shared/components/icon/icon';
             class="btn-resend" 
             id="resend-otp-btn" 
             (click)="resend()" 
-            [disabled]="resendCooldown() > 0"
+            [disabled]="resendCooldown() > 0 || isLocked()"
           >
             <app-icon name="refresh-cw" size="16" color="var(--primary)" />
             {{ resendCooldown() > 0 ? 'Reenviar en ' + resendCooldown() + 's' : 'Reenviar código' }}
@@ -259,6 +269,33 @@ import { IconComponent } from '../../../shared/components/icon/icon';
     .otp-input:not(:placeholder-shown) {
       border-color: var(--primary);
       background: rgba(27,61,50,0.04);
+    }
+
+    .otp-input.locked {
+      border-color: #dc2626;
+      background: #fef2f2;
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    /* ---- Cronómetro de bloqueo ---- */
+    .lock-timer {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 18px;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: 12px;
+      color: #dc2626;
+      font-size: 0.9rem;
+      font-weight: 600;
+      width: 100%;
+      animation: slideIn 0.3s ease;
+    }
+
+    .lock-timer strong {
+      font-weight: 800;
     }
 
     /* ---- Mensajes ---- */
@@ -451,6 +488,11 @@ import { IconComponent } from '../../../shared/components/icon/icon';
         padding: 12px;
         font-size: 0.85rem;
       }
+
+      .lock-timer {
+        font-size: 0.8rem;
+        padding: 10px 14px;
+      }
     }
 
     @media (max-width: 380px) {
@@ -522,10 +564,15 @@ import { IconComponent } from '../../../shared/components/icon/icon';
       .email-badge span {
         font-size: 0.75rem;
       }
+
+      .lock-timer {
+        font-size: 0.75rem;
+        padding: 8px 12px;
+      }
     }
   `],
 })
-export class VerifyOtp implements AfterViewInit {
+export class VerifyOtp implements AfterViewInit, OnDestroy {
   @ViewChildren('otpInput') otpInputs!: QueryList<ElementRef<HTMLInputElement>>;
 
   private route = inject(ActivatedRoute);
@@ -541,10 +588,23 @@ export class VerifyOtp implements AfterViewInit {
   resendCooldown = signal(0);
   isVerifying = signal(false);
 
+  // ⏱️ Estado de bloqueo
+  isLocked = signal(false);
+  lockTimeRemaining = signal('--:--:--');
+  private lockInterval: any = null;
+  private lockEndTime: Date | null = null;
+
   isComplete = () => this.otpValues().every((v) => v !== '');
 
   ngOnInit(): void {
     this.route.queryParams.subscribe((p) => (this.email = p['email'] ?? ''));
+  }
+
+  ngOnDestroy(): void {
+    if (this.lockInterval) {
+      clearInterval(this.lockInterval);
+      this.lockInterval = null;
+    }
   }
 
   ngAfterViewInit(): void {
@@ -580,6 +640,56 @@ export class VerifyOtp implements AfterViewInit {
     if (paste.length >= 6) this.otpInputs.last?.nativeElement.focus();
   }
 
+  /**
+   * Inicia el cronómetro de bloqueo con el tiempo proporcionado por el backend
+   */
+  startLockTimer(lockedUntil: string): void {
+    this.isLocked.set(true);
+    this.lockEndTime = new Date(lockedUntil);
+
+    // Limpiar interval anterior si existe
+    if (this.lockInterval) {
+      clearInterval(this.lockInterval);
+    }
+
+    this.updateLockTimer();
+    this.lockInterval = setInterval(() => {
+      this.updateLockTimer();
+    }, 1000);
+  }
+
+  /**
+   * Actualiza el tiempo restante del bloqueo
+   */
+  updateLockTimer(): void {
+    if (!this.lockEndTime) return;
+
+    const now = new Date();
+    const diff = this.lockEndTime.getTime() - now.getTime();
+
+    if (diff <= 0) {
+      // El bloqueo ha terminado
+      this.isLocked.set(false);
+      this.lockTimeRemaining.set('--:--:--');
+      if (this.lockInterval) {
+        clearInterval(this.lockInterval);
+        this.lockInterval = null;
+      }
+      // Habilita los inputs
+      this.otpInputs.forEach((ref) => ref.nativeElement.disabled = false);
+      return;
+    }
+
+    // Calcular horas, minutos y segundos
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+    this.lockTimeRemaining.set(
+      `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+    );
+  }
+
   verify(): void {
     const code = this.otpValues().join('');
     this.errorMessage.set('');
@@ -598,7 +708,11 @@ export class VerifyOtp implements AfterViewInit {
         if (body.expired) {
           this.errorMessage.set('El código expiró. Solicita uno nuevo.');
         } else if (body.locked_until) {
-          this.errorMessage.set('Demasiados intentos. Intenta más tarde.');
+          // 🔒 Inicia el cronómetro con el tiempo de bloqueo
+          this.errorMessage.set('Demasiados intentos. Cuenta bloqueada por 1 hora.');
+          this.startLockTimer(body.locked_until);
+          // Deshabilita los inputs
+          this.otpInputs.forEach((ref) => ref.nativeElement.disabled = true);
         } else if (body.attempts_remaining !== undefined) {
           this.errorMessage.set(body.error);
         } else {
@@ -613,6 +727,9 @@ export class VerifyOtp implements AfterViewInit {
     this.authService.resendVerificationCode(this.email).subscribe({
       next: () => {
         this.successMessage.set('Código reenviado. Revisa tu correo.');
+        // Reiniciar valores OTP
+        this.otpValues.set(['', '', '', '', '', '']);
+        this.otpInputs.first?.nativeElement.focus();
       },
       error: () => {
         this.errorMessage.set('No se pudo reenviar el código.');
