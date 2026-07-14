@@ -1,11 +1,9 @@
-// core/services/auth.service.ts
 import { Injectable, signal, computed, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { User, LoginRequest, RegisterRequest, ForgotPasswordRequest, VerifyOtpRequest, AuthResponse, ResetPasswordRequest } from '../models/user.model';
-import { Observable, tap, from } from 'rxjs';
+import { Observable, tap } from 'rxjs';
 import { API_BASE_URL } from '../api.config';
-import { EmailService } from './email.service';
 
 export interface RegisterResponse {
   message: string;
@@ -23,7 +21,8 @@ export class AuthService {
 
   private http = inject(HttpClient);
   private router = inject(Router);
-  private emailService = inject(EmailService);
+
+  private pendingEmail = signal<string | null>(null);
 
   constructor() {
     this.loadFromStorage();
@@ -69,6 +68,11 @@ export class AuthService {
     );
   }
 
+  /**
+   * Registra al usuario. El backend es responsable de generar el código OTP,
+   * guardarlo (hasheado) y enviarlo por correo. El frontend NO genera ni
+   * envía códigos — solo recibe la confirmación de que el registro inició.
+   */
   register(request: RegisterRequest): Observable<RegisterResponse> {
     const payload = {
       first_name: request.firstName,
@@ -77,17 +81,51 @@ export class AuthService {
       phone: request.phone,
       password: request.password
     };
-    return this.http.post<RegisterResponse>(`${API_BASE_URL}/auth/register`, payload);
+
+    return this.http.post<RegisterResponse>(`${API_BASE_URL}/auth/register`, payload).pipe(
+      tap({
+        next: (response) => {
+          this.pendingEmail.set(request.email);
+          localStorage.setItem('pending_email', request.email);
+          console.log('Registro completado. Código enviado por el backend a', request.email);
+        },
+        error: (error) => {
+          console.error('Error en registro:', error);
+        }
+      })
+    );
+  }
+
+  getPendingEmail(): string | null {
+    return this.pendingEmail() || localStorage.getItem('pending_email');
   }
 
   verifyOtp(request: VerifyOtpRequest): Observable<AuthResponse> {
     return this.http.post<any>(`${API_BASE_URL}/auth/verify-otp`, request).pipe(
-      tap(res => this.handleAuthSuccess(res))
+      tap({
+        next: (res) => {
+          localStorage.removeItem('pending_email');
+          this.pendingEmail.set(null);
+          this.handleAuthSuccess(res);
+        },
+        error: (error) => {
+          console.error('Error en verificacion:', error);
+        }
+      })
     );
   }
 
+  /**
+   * Le pide al backend que genere un nuevo código, lo guarde y lo reenvíe
+   * por correo. El backend es la única fuente de verdad del código.
+   */
   resendVerificationCode(email: string): Observable<any> {
-    return this.http.post<any>(`${API_BASE_URL}/auth/resend-verification`, { email });
+    return this.http.post<any>(`${API_BASE_URL}/auth/resend-otp`, { email }).pipe(
+      tap({
+        next: () => console.log('Código reenviado correctamente'),
+        error: (error) => console.error('Error al reenviar email:', error)
+      })
+    );
   }
 
   landingRoute(): string {
@@ -157,10 +195,7 @@ export class AuthService {
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('auth_user');
+    localStorage.removeItem('pending_email');
     this.router.navigate(['/auth/login']);
-  }
-
-  testEmail(email: string): Promise<any> {
-    return this.emailService.sendVerificationEmail(email, '123456');
   }
 }

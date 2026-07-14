@@ -13,7 +13,7 @@ import { IconComponent } from '../../../shared/components/icon/icon';
     <div class="register-container">
       <div class="register-card">
         <div class="card-header">
-          <h1>Regístrate</h1>
+          <h1>Registrate</h1>
           <p>La Familia</p>
         </div>
 
@@ -33,7 +33,7 @@ import { IconComponent } from '../../../shared/components/icon/icon';
                 <span class="error-msg">Solo letras y espacios</span>
               }
               @if (form.get('firstName')?.touched && form.get('firstName')?.hasError('minlength')) {
-                <span class="error-msg">Mínimo 2 caracteres</span>
+                <span class="error-msg">Minimo 2 caracteres</span>
               }
             </div>
             
@@ -50,13 +50,13 @@ import { IconComponent } from '../../../shared/components/icon/icon';
                 <span class="error-msg">Solo letras y espacios</span>
               }
               @if (form.get('lastName')?.touched && form.get('lastName')?.hasError('minlength')) {
-                <span class="error-msg">Mínimo 2 caracteres</span>
+                <span class="error-msg">Minimo 2 caracteres</span>
               }
             </div>
           </div>
 
           <div class="input-group">
-            <label>Correo electrónico</label>
+            <label>Correo electronico</label>
             <div class="input-wrapper">
               <span class="input-icon" style="display: flex; align-items: center;"><app-icon name="mail" size="18" /></span>
               <input type="email" formControlName="email" placeholder="tu@email.com" />
@@ -65,12 +65,12 @@ import { IconComponent } from '../../../shared/components/icon/icon';
               <span class="error-msg">Requerido</span>
             }
             @if (form.get('email')?.touched && form.get('email')?.hasError('email')) {
-              <span class="error-msg">Correo inválido</span>
+              <span class="error-msg">Correo invalido</span>
             }
           </div>
 
           <div class="input-group">
-            <label>Teléfono</label>
+            <label>Telefono</label>
             <div class="input-wrapper">
               <span class="input-icon" style="display: flex; align-items: center;"><app-icon name="phone" size="18" /></span>
               <input type="tel" formControlName="phone" placeholder="5551234567" maxlength="15" (input)="onPhoneInput($event)" />
@@ -79,36 +79,36 @@ import { IconComponent } from '../../../shared/components/icon/icon';
               <span class="error-msg">Requerido</span>
             }
             @if (form.get('phone')?.touched && form.get('phone')?.hasError('pattern')) {
-              <span class="error-msg">Debe tener entre 8 y 15 números</span>
+              <span class="error-msg">Debe tener entre 8 y 15 numeros</span>
             }
           </div>
 
           <div class="input-group">
-            <label>Contraseña</label>
+            <label>Contrasena</label>
             <div class="input-wrapper">
               <span class="input-icon" style="display: flex; align-items: center;"><app-icon name="lock" size="18" /></span>
-              <input [type]="showPassword() ? 'text' : 'password'" formControlName="password" placeholder="••••••••" />
+              <input [type]="showPassword() ? 'text' : 'password'" formControlName="password" placeholder="********" />
               <button type="button" class="input-icon-right" (click)="togglePasswordVisibility()" [attr.aria-label]="showPassword() ? 'Ocultar contrasena' : 'Mostrar contrasena'" style="display: flex; align-items: center;"><app-icon [name]="showPassword() ? 'eye-off' : 'eye'" size="18" /></button>
             </div>
             @if (form.get('password')?.touched && form.get('password')?.hasError('required')) {
               <span class="error-msg">Requerido</span>
             }
             @if (form.get('password')?.touched && form.get('password')?.hasError('minlength')) {
-              <span class="error-msg">Mínimo 6 caracteres</span>
+              <span class="error-msg">Minimo 6 caracteres</span>
             }
           </div>
 
           <div class="input-group">
-            <label>Confirmar contraseña</label>
+            <label>Confirmar contrasena</label>
             <div class="input-wrapper">
               <span class="input-icon" style="display: flex; align-items: center;"><app-icon name="lock" size="18" /></span>
-              <input type="password" formControlName="confirmPassword" placeholder="••••••••" />
+              <input type="password" formControlName="confirmPassword" placeholder="********" />
             </div>
             @if (form.get('confirmPassword')?.touched && form.get('confirmPassword')?.hasError('required')) {
               <span class="error-msg">Requerido</span>
             }
             @if (form.get('confirmPassword')?.touched && form.hasError('mismatch')) {
-              <span class="error-msg">Las contraseñas no coinciden</span>
+              <span class="error-msg">Las contrasenas no coinciden</span>
             }
           </div>
 
@@ -116,8 +116,12 @@ import { IconComponent } from '../../../shared/components/icon/icon';
             <div class="auth-error">{{ errorMessage }}</div>
           }
 
+          @if (successMessage) {
+            <div class="auth-success">{{ successMessage }}</div>
+          }
+
           <button type="submit" class="btn-main" [disabled]="form.invalid || isLoading()">
-            {{ isLoading() ? 'Registrando...' : 'Regístrate' }}
+            {{ isLoading() ? 'Registrando...' : 'Registrate' }}
           </button>
 
           <div class="divider">
@@ -132,7 +136,7 @@ import { IconComponent } from '../../../shared/components/icon/icon';
           ></div>
 
           <div class="login-prompt">
-            ¿Ya tienes una cuenta? <a routerLink="/auth/login">Inicia sesión</a>
+            Ya tienes una cuenta? <a routerLink="/auth/login">Inicia sesion</a>
           </div>
 
         </form>
@@ -364,6 +368,16 @@ import { IconComponent } from '../../../shared/components/icon/icon';
       font-weight: 600;
     }
 
+    .auth-success {
+      padding: 12px;
+      background: var(--success-alpha, rgba(76, 175, 80, 0.1));
+      color: var(--success, #4CAF50);
+      border-radius: 12px;
+      font-size: 0.85rem;
+      text-align: center;
+      font-weight: 600;
+    }
+
     @media (min-width: 768px) {
       .register-card {
         padding: 48px;
@@ -410,6 +424,7 @@ export class Register implements AfterViewInit {
   }
 
   errorMessage = '';
+  successMessage = '';
   isLoading = signal(false);
 
   ngAfterViewInit(): void {
@@ -419,14 +434,13 @@ export class Register implements AfterViewInit {
       'signup_with',
     ).catch(() => {
       this.zone.run(() => {
-        this.errorMessage = 'No se pudo cargar el botón de Google. También puedes registrarte con correo.';
+        this.errorMessage = 'No se pudo cargar el boton de Google. Tambien puedes registrarte con correo.';
       });
     });
   }
 
   onNameInput(event: Event): void {
     const input = event.target as HTMLInputElement;
-    // Solo permitir letras, espacios, acentos y ñ
     const sanitized = input.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
     this.form.patchValue({
       [input.getAttribute('formControlName')!]: sanitized
@@ -445,19 +459,39 @@ export class Register implements AfterViewInit {
     if (this.form.valid) {
       this.isLoading.set(true);
       this.errorMessage = '';
+      this.successMessage = '';
       const v = this.form.value;
+
       this.authService.register({
-        firstName: v.firstName!, lastName: v.lastName!, email: v.email!,
-        phone: v.phone!, password: v.password!, confirmPassword: v.confirmPassword!,
+        firstName: v.firstName!,
+        lastName: v.lastName!,
+        email: v.email!,
+        phone: v.phone!,
+        password: v.password!,
+        confirmPassword: v.confirmPassword!,
       }).subscribe({
         next: (res) => {
           this.isLoading.set(false);
-          this.router.navigate(['/auth/verify-otp'], { queryParams: { email: res.email } });
+          this.successMessage = 'Código de verificación enviado a ' + v.email;
+
+          setTimeout(() => {
+            this.successMessage = '';
+          }, 5000);
+
+          this.router.navigate(['/auth/verify-otp'], {
+            queryParams: { email: v.email }
+          });
         },
         error: (err) => {
           this.isLoading.set(false);
           this.errorMessage = err.error?.error || 'Error al registrar usuario';
+          console.error('Error en registro:', err);
         }
+      });
+    } else {
+      Object.keys(this.form.controls).forEach(key => {
+        const control = this.form.get(key);
+        control?.markAsTouched();
       });
     }
   }
@@ -465,6 +499,7 @@ export class Register implements AfterViewInit {
   private registerWithGoogleCredential(idToken: string): void {
     if (this.isLoading()) return;
     this.errorMessage = '';
+    this.successMessage = '';
     this.isLoading.set(true);
 
     this.authService.loginWithGoogle(idToken).subscribe({
