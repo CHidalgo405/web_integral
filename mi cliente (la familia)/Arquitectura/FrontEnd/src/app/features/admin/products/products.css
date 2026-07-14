@@ -237,7 +237,7 @@
 
 .product-cell-emoji {
   width: 48px;
-  height: 48px;
+  aspect-ratio: 1 / 1;
   border-radius: 12px;
   background: var(--bg);
   overflow: hidden;
@@ -246,9 +246,7 @@
 }
 
 .product-cell-emoji img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  padding: 4px;
 }
 
 .product-cell-name {
@@ -663,9 +661,11 @@
 
 .upload-preview-img {
   width: 64px;
-  height: 64px;
+  aspect-ratio: 1 / 1;
   border-radius: 12px;
-  object-fit: cover;
+  object-fit: contain;
+  background: var(--surface);
+  padding: 4px;
   border: 2px solid var(--primary);
   flex-shrink: 0;
 }

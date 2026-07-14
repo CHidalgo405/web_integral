@@ -44,7 +44,13 @@ import { Product } from '../../../core/models/product.model';
 
               <a [routerLink]="['/product', product.id]" class="card-link">
                 <div class="card-image-sec" style="overflow: hidden;">
-                  <img [src]="product.images[0] || 'assets/images/productos/placeholder.png'" [alt]="product.name" style="width:100%;height:100%;object-fit:cover;" />
+                  <img
+                    [src]="product.images[0] || 'assets/images/productos/placeholder.png'"
+                    [alt]="product.name"
+                    class="product-media-img"
+                    loading="lazy"
+                    decoding="async"
+                  />
                   @if (!product.inStock) {
                     <span class="out-badge">Agotado</span>
                   }
@@ -84,6 +90,8 @@ import { Product } from '../../../core/models/product.model';
   `,
   styles: [`
     .favorites-page {
+      width: min(100%, 1400px);
+      margin: 0 auto;
       padding: 16px;
       padding-bottom: 80px;
       background-color: var(--bg);
@@ -149,13 +157,15 @@ import { Product } from '../../../core/models/product.model';
 
     /* Image section */
     .card-image-sec {
-      height: 100px;
+      width: 100%;
+      aspect-ratio: 1 / 1;
       background: var(--surface);
       display: flex;
       align-items: center;
       justify-content: center;
       position: relative;
       border-bottom: 1px solid var(--border);
+      padding: 10px;
     }
     .category-icon-bg {
       font-size: 2.2rem;
@@ -347,9 +357,19 @@ import { Product } from '../../../core/models/product.model';
     }
 
     @media (min-width: 768px) {
+      .favorites-page { padding: 32px clamp(28px, 5vw, 72px) 130px; }
       .favorites-grid {
-        grid-template-columns: repeat(4, 1fr);
+        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
         gap: 20px;
+      }
+      .card-image-sec { padding: 16px; }
+      .card-info-sec { padding: 16px; }
+      .card-info-sec h3 { font-size: 1rem; }
+      .empty-favorites-state {
+        min-height: 520px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 28px;
       }
     }
   `],
@@ -362,4 +382,3 @@ export class Favorites {
     return this.productService.getCategories().find(c => c.id === categoryId)?.icon ?? 'package';
   }
 }
-

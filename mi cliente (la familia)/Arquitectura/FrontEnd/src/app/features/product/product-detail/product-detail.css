@@ -239,14 +239,103 @@
 
 @media (min-width: 768px) {
   .product-detail-page {
-    max-width: 600px;
-    margin: 0 auto;
-    box-shadow: 0 0 40px rgba(0,0,0,0.1);
+    width: 100%;
+    max-width: none;
+    margin: 0;
   }
+
   .bottom-action-bar {
-    max-width: 600px;
-    margin: 0 auto;
+    max-width: none;
   }
+}
+
+@media (min-width: 900px) {
+  .product-detail-page {
+    width: min(100%, 1440px);
+    margin: 0 auto;
+    padding: clamp(24px, 3vw, 48px);
+    display: grid;
+    grid-template-columns: minmax(400px, 0.92fr) minmax(480px, 1.08fr);
+    grid-template-rows: auto auto;
+    gap: 20px clamp(28px, 4vw, 64px);
+    align-items: start;
+    background: transparent;
+  }
+
+  .product-hero-section {
+    position: sticky;
+    top: clamp(24px, 3vw, 48px);
+    grid-column: 1;
+    grid-row: 1 / 3;
+    width: 100%;
+    height: calc(100dvh - clamp(48px, 6vw, 96px));
+    min-height: 600px;
+    max-height: 820px;
+    border: 1px solid var(--border);
+    border-radius: 32px;
+    background: color-mix(in srgb, var(--surface) 42%, var(--bg));
+    overflow: hidden;
+  }
+
+  .hero-image {
+    width: 70%;
+    max-width: 440px;
+    max-height: 68%;
+  }
+
+  .back-btn,
+  .fav-detail-toggle-btn {
+    top: 24px;
+    width: 48px;
+    height: 48px;
+  }
+
+  .back-btn { left: 24px; }
+  .fav-detail-toggle-btn { right: 24px; }
+  .gallery-link-btn { right: 24px; bottom: 24px; }
+  .gallery-dots { bottom: 32px; }
+
+  .product-content {
+    grid-column: 2;
+    grid-row: 1;
+    min-width: 0;
+    margin: 0;
+    padding: clamp(32px, 4vw, 56px);
+    border: 1px solid var(--border);
+    border-radius: 32px;
+    box-shadow: 0 18px 60px rgba(15, 42, 32, 0.07);
+  }
+
+  .title-info h1 { font-size: clamp(2rem, 3vw, 3.2rem); line-height: 1.05; }
+  .section-block { margin-bottom: 36px; }
+  .section-block h3 { font-size: 1.25rem; }
+  .section-block p { font-size: 1rem; }
+  .rating-summary-row { padding: 20px; }
+
+  .bottom-action-bar {
+    position: sticky;
+    bottom: 24px;
+    grid-column: 2;
+    grid-row: 2;
+    width: 100%;
+    margin: 0;
+    padding: 18px 22px;
+    border-radius: 24px;
+    box-shadow: 0 18px 50px rgba(15, 42, 32, 0.22);
+  }
+
+  .add-to-cart-btn { min-width: 210px; }
+}
+
+@media (min-width: 900px) and (max-width: 1080px) {
+  .product-detail-page {
+    grid-template-columns: minmax(340px, 0.85fr) minmax(430px, 1.15fr);
+    gap: 24px;
+    padding: 24px;
+  }
+
+  .product-content { padding: 32px; }
+  .add-to-cart-btn { min-width: 0; padding-inline: 24px; }
 }
 
 .fav-detail-toggle-btn {

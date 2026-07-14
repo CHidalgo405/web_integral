@@ -69,7 +69,7 @@ import { IconComponent } from '../../../shared/components/icon/icon';
     </div>
   `,
   styles: [`
-    .history-page { padding: 16px; padding-bottom: 80px; }
+    .history-page { width: min(100%, 1240px); margin: 0 auto; padding: 16px; padding-bottom: 100px; }
     .order-card-v2 {
       display: flex;
       flex-direction: column;
@@ -209,6 +209,27 @@ import { IconComponent } from '../../../shared/components/icon/icon';
     .empty-state p { color: var(--text-secondary); font-size: 0.85rem; margin: 0 0 16px; }
     .btn-shop { display: inline-block; padding: 12px 32px; background: var(--secondary); color: #fff; border-radius: 9999px; text-decoration: none; font-weight: 700; font-size: 0.9rem; transition: background 0.2s; box-shadow: 0 4px 12px rgba(225, 75, 50, 0.2); }
     .btn-shop:hover { background: var(--secondary-dark); }
+    @media (min-width: 900px) {
+      .history-page {
+        padding: 36px clamp(28px, 5vw, 64px) 130px;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 18px;
+      }
+      .order-card-v2 { min-height: 190px; margin-bottom: 0; padding: 22px; }
+      .order-items-preview { flex: 1; align-content: flex-start; }
+      .empty-state {
+        grid-column: 1 / -1;
+        min-height: 520px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 28px;
+      }
+    }
   `],
 })
 export class OrderHistory {
@@ -219,4 +240,3 @@ export class OrderHistory {
     return this.productService.getCategories().find(c => c.id === categoryId)?.icon ?? 'package';
   }
 }
-

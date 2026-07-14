@@ -10,14 +10,15 @@ import { MxnCurrencyPipe } from '../../../shared/pipes/currency.pipe';
 import { Header } from '../../../shared/components/header/header';
 import { IconComponent } from '../../../shared/components/icon/icon';
 import { ShippingMethod, PaymentMethod } from '../../../core/models/order.model';
+import { CheckoutOrderSummary } from '../checkout-order-summary/checkout-order-summary';
 
 @Component({
   selector: 'app-checkout-summary',
   standalone: true,
-  imports: [RouterLink, FormsModule, MxnCurrencyPipe, Header, IconComponent],
+  imports: [RouterLink, FormsModule, MxnCurrencyPipe, Header, IconComponent, CheckoutOrderSummary],
   template: `
     <app-header title="Resumen del Pedido" [showBack]="true"></app-header>
-    <div class="checkout-page" id="checkout-summary-page">
+    <div class="checkout-layout"><main class="checkout-page" id="checkout-summary-page">
 
       <!-- Productos -->
       <div class="summary-section">
@@ -170,7 +171,7 @@ import { ShippingMethod, PaymentMethod } from '../../../core/models/order.model'
         </button>
       }
 
-    </div>
+    </main><app-checkout-order-summary /></div>
   `,
   styleUrl: '../checkout-shared.css',
 })
@@ -299,6 +300,5 @@ export class CheckoutSummary implements AfterViewInit {
     }
   }
 }
-
 
 

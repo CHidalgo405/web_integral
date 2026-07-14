@@ -25,7 +25,13 @@ import { IconComponent } from '../../../shared/components/icon/icon';
           @for (product of products; track product.id) {
             <a [routerLink]="['/product', product.id]" class="product-row" [id]="'prod-row-' + product.id">
               <div class="prod-thumb" style="overflow: hidden;">
-                <img [src]="product.images[0] || 'assets/images/productos/placeholder.png'" [alt]="product.name" style="width:100%;height:100%;object-fit:cover;" />
+                <img
+                  [src]="product.images[0] || 'assets/images/productos/placeholder.png'"
+                  [alt]="product.name"
+                  class="product-media-img"
+                  loading="lazy"
+                  decoding="async"
+                />
               </div>
               <div class="prod-info">
                 <h3>{{ product.name }}</h3>
@@ -51,7 +57,7 @@ import { IconComponent } from '../../../shared/components/icon/icon';
     .products-list { display: flex; flex-direction: column; gap: 10px; }
     .product-row { display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--surface-raised); border-radius: 12px; text-decoration: none; transition: transform 0.2s; }
     .product-row:hover { transform: translateX(4px); }
-    .prod-thumb { width: 48px; height: 48px; border-radius: 10px; background: var(--surface); display: flex; align-items: center; justify-content: center; }
+    .prod-thumb { width: 48px; aspect-ratio: 1 / 1; border-radius: 10px; background: var(--surface); border: 1px solid var(--border); padding: 4px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
     .prod-info { flex: 1; }
     .prod-info h3 { font-size: 0.85rem; font-weight: 600; color: var(--text-primary); margin: 0 0 4px; }
     .prod-rating { font-size: 0.7rem; }
@@ -83,4 +89,3 @@ export class CategoryDetail implements OnInit {
     return this.category?.icon ?? 'package';
   }
 }
-

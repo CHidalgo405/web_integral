@@ -159,15 +159,33 @@ import { CartService } from '../../../core/services/cart.service';
       border-color: var(--primary);
     }
 
-    /* Desktop Hide */
     @media (min-width: 768px) {
       .bottom-nav {
-        /* You might want to hide it or keep it depending on your desktop design */
-        /* display: none; */
-        max-width: 600px;
-        margin: 0 auto;
+        left: 50%;
+        right: auto;
+        width: min(900px, calc(100% - 48px));
+        max-width: none;
+        transform: translateX(-50%);
         bottom: 24px;
+        padding: 8px;
         border-radius: 9999px;
+        border: 1px solid var(--border);
+        box-shadow: 0 14px 45px rgba(15, 42, 32, 0.14);
+      }
+
+      .nav-pill {
+        gap: 9px;
+        padding: 11px 16px;
+      }
+
+      .nav-label {
+        max-width: 120px;
+        opacity: 1;
+        font-size: 0.85rem;
+      }
+
+      .nav-item.active .nav-pill {
+        padding: 11px 18px;
       }
     }
   `],

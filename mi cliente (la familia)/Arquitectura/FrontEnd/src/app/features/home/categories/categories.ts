@@ -30,7 +30,7 @@ import { IconComponent } from '../../../shared/components/icon/icon';
     </div>
   `,
   styles: [`
-    .categories-page { padding: 16px; padding-bottom: 80px; }
+    .categories-page { width: min(100%, 1400px); margin: 0 auto; padding: 16px; padding-bottom: 100px; }
     .categories-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
     .category-card {
       display: flex; flex-direction: column; align-items: center; gap: 8px;
@@ -52,7 +52,12 @@ import { IconComponent } from '../../../shared/components/icon/icon';
     .cat-icon { font-size: 2.5rem; display: flex; align-items: center; justify-content: center; }
     .category-card h3 { font-size: 0.9rem; font-weight: 700; color: var(--text-primary); margin: 0; text-align: center; }
     .category-card p { font-size: 0.75rem; color: var(--text-secondary); margin: 0; }
-    @media (min-width: 768px) { .categories-grid { grid-template-columns: repeat(4, 1fr); } }
+    @media (min-width: 768px) {
+      .categories-page { padding: 32px clamp(28px, 5vw, 72px) 130px; }
+      .categories-grid { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 20px; }
+      .category-card { min-height: 180px; justify-content: center; }
+      .category-card h3 { font-size: 1rem; }
+    }
   `],
 })
 export class Categories {

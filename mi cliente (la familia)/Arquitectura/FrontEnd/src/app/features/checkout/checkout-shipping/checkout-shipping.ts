@@ -6,8 +6,9 @@ import { CheckoutStateService } from '../../../core/services/checkout-state.serv
 import { AdminOperationsService } from '../../../core/services/admin-operations.service';
 import { CartService } from '../../../core/services/cart.service';
 import { IconComponent } from '../../../shared/components/icon/icon';
+import { CheckoutOrderSummary } from '../checkout-order-summary/checkout-order-summary';
 
-@Component({selector:'app-checkout-shipping',standalone:true,imports:[Header,IconComponent],templateUrl:'./checkout-shipping.html',styleUrl:'../checkout-shared.css'})
+@Component({selector:'app-checkout-shipping',standalone:true,imports:[Header,IconComponent,CheckoutOrderSummary],templateUrl:'./checkout-shipping.html',styleUrl:'../checkout-shared.css'})
 export class CheckoutShipping {
   private router=inject(Router); private checkoutState=inject(CheckoutStateService); private api=inject(AdminOperationsService); private cartService=inject(CartService);
   selected=signal<ShippingMethod|''>(this.checkoutState.selectedShipping()); loadingQuote=signal(false); deliveryError=signal('');

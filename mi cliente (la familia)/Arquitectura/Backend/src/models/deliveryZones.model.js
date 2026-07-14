@@ -1,4 +1,5 @@
 const db = require('../db');
+const { prepareZoneUpdate } = require('../utils/deliveryZones');
 
 const findAll = () =>
   db.query('SELECT * FROM delivery_zones WHERE active=TRUE ORDER BY min_km');
@@ -38,7 +39,44 @@ const update = (id, { name, min_km, max_km, base_fee, fee_per_km, active, update
     [name, min_km, max_km, base_fee, fee_per_km, active ?? true, updated_by ?? null, id]
   );
 
+const updateWithAdjacent = async (id, changes) => {
+  const client = await db.connect();
+  try {
+    await client.query('BEGIN');
+    const { rows } = await client.query(
+      'SELECT * FROM delivery_zones WHERE active=TRUE ORDER BY min_km FOR UPDATE'
+    );
+    const { target, previous, next } = prepareZoneUpdate(rows, id, changes);
+
+    if (previous) {
+      await client.query(
+        'UPDATE delivery_zones SET max_km=$1, updated_by=$2 WHERE id=$3',
+        [previous.max_km, changes.updated_by ?? null, previous.id]
+      );
+    }
+    if (next) {
+      await client.query(
+        'UPDATE delivery_zones SET min_km=$1, updated_by=$2 WHERE id=$3',
+        [next.min_km, changes.updated_by ?? null, next.id]
+      );
+    }
+    const { rows: saved } = await client.query(
+      `UPDATE delivery_zones
+       SET name=$1, min_km=$2, max_km=$3, base_fee=$4, fee_per_km=$5, active=$6, updated_by=$7
+       WHERE id=$8 RETURNING *`,
+      [target.name, target.min_km, target.max_km, target.base_fee, target.fee_per_km,
+        target.active ?? true, target.updated_by ?? null, id]
+    );
+    await client.query('COMMIT');
+    return saved[0];
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+};
 const remove = (id) =>
   db.query('UPDATE delivery_zones SET active=FALSE WHERE id=$1 RETURNING id', [id]);
 
-module.exports = { findAll, findById, calculateFee, getCoverageData, findAudit, create, update, remove };
+module.exports = { findAll, findById, calculateFee, getCoverageData, findAudit, create, update, updateWithAdjacent, remove };

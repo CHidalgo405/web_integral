@@ -4,6 +4,7 @@
   "main": "src/index.js",
   "scripts": {
     "migrate": "node scripts/migrate.js",
+    "seed:catalog": "node scripts/seed-product-catalog.js",
     "start": "npm run migrate && node src/index.js",
     "dev": "nodemon src/index.js",
     "test": "node --test --test-isolation=none"

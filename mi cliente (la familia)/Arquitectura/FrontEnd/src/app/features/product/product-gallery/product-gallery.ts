@@ -20,7 +20,7 @@ import { Product } from '../../../core/models/product.model';
           <img
             [src]="product.images[activeIndex()] || 'assets/images/productos/placeholder.png'"
             [alt]="product.name"
-            class="featured-img"
+            class="featured-img product-media-img"
             (click)="toggleFullscreen()"
           />
 
@@ -46,7 +46,7 @@ import { Product } from '../../../core/models/product.model';
                 (click)="activeIndex.set($index)"
                 [attr.aria-label]="'Imagen ' + ($index + 1)"
               >
-                <img [src]="img || 'assets/images/productos/placeholder.png'" [alt]="'Miniatura ' + ($index + 1)" />
+                <img [src]="img || 'assets/images/productos/placeholder.png'" [alt]="'Miniatura ' + ($index + 1)" class="product-media-img" />
               </button>
             }
           </div>
@@ -90,20 +90,21 @@ import { Product } from '../../../core/models/product.model';
     /* Imagen principal */
     .gallery-featured {
       position: relative;
+      width: min(100%, 720px);
+      aspect-ratio: 1 / 1;
+      margin: 24px auto 0;
       background: var(--surface-raised);
       display: flex;
       align-items: center;
       justify-content: center;
-      min-height: 320px;
+      border: 1px solid var(--border);
+      border-radius: 24px;
       overflow: hidden;
     }
     .featured-img {
-      width: 100%;
-      max-height: 420px;
-      object-fit: contain;
       cursor: zoom-in;
       filter: drop-shadow(0 12px 24px rgba(0,0,0,0.08));
-      padding: 24px;
+      padding: clamp(24px, 6vw, 56px);
       box-sizing: border-box;
     }
 
@@ -149,6 +150,8 @@ import { Product } from '../../../core/models/product.model';
       display: flex;
       gap: 10px;
       padding: 16px;
+      width: min(100%, 752px);
+      margin: 0 auto;
       overflow-x: auto;
       scrollbar-width: none;
     }
@@ -156,21 +159,23 @@ import { Product } from '../../../core/models/product.model';
     .thumb-btn {
       flex-shrink: 0;
       width: 72px;
-      height: 72px;
+      aspect-ratio: 1 / 1;
       border-radius: 12px;
       overflow: hidden;
       border: 2.5px solid transparent;
       cursor: pointer;
       background: var(--surface-raised);
-      padding: 0;
+      padding: 5px;
       transition: border-color 0.2s;
     }
     .thumb-btn.active { border-color: var(--primary); }
-    .thumb-btn img { width: 100%; height: 100%; object-fit: cover; }
+    .thumb-btn img { border-radius: 7px; }
 
     /* Pie de galería */
     .gallery-footer {
       padding: 16px 20px;
+      width: min(100%, 752px);
+      margin: 0 auto;
       border-top: 1px solid var(--border);
     }
     .gallery-footer h2 {
@@ -199,7 +204,12 @@ import { Product } from '../../../core/models/product.model';
     .fullscreen-img {
       max-width: 95vw;
       max-height: 90dvh;
+      aspect-ratio: 1 / 1;
       object-fit: contain;
+    }
+
+    @media (max-width: 767px) {
+      .gallery-featured { margin-top: 0; border-radius: 0; border-inline: 0; }
     }
     .fullscreen-close {
       position: fixed;

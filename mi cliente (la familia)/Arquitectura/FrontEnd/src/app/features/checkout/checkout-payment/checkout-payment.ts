@@ -4,14 +4,15 @@ import { Header } from '../../../shared/components/header/header';
 import { PaymentMethod } from '../../../core/models/order.model';
 import { CheckoutStateService } from '../../../core/services/checkout-state.service';
 import { IconComponent } from '../../../shared/components/icon/icon';
+import { CheckoutOrderSummary } from '../checkout-order-summary/checkout-order-summary';
 
 @Component({
   selector: 'app-checkout-payment',
   standalone: true,
-  imports: [Header, IconComponent],
+  imports: [Header, IconComponent, CheckoutOrderSummary],
   template: `
     <app-header title="Método de Pago" [showBack]="true"></app-header>
-    <div class="checkout-page" id="checkout-payment-page">
+    <div class="checkout-layout"><main class="checkout-page" id="checkout-payment-page">
       <div class="step-indicator"><span class="step done">✓</span><span class="step done">✓</span><span class="step done">✓</span><span class="step active">4</span></div>
       <div class="options-list" role="radiogroup">
         @for (opt of paymentOptions; track opt.key) {
@@ -29,7 +30,7 @@ import { IconComponent } from '../../../shared/components/icon/icon';
       </div>
 
       <button class="btn-continue" [disabled]="!selected()" (click)="next()" id="payment-next-btn">Continuar</button>
-    </div>
+    </main><app-checkout-order-summary /></div>
   `,
   styleUrl: '../checkout-shared.css',
 })

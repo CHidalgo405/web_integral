@@ -38,7 +38,13 @@ import { IconComponent } from '../../../shared/components/icon/icon';
             <a [routerLink]="['/product', product.id]" class="result-row">
               <div style="display: flex; align-items: center;">
                 <div class="prod-thumb" style="width: 48px; height: 48px; border-radius: 10px; background: var(--surface); display: flex; align-items: center; justify-content: center; overflow: hidden; margin-right: 12px; flex-shrink: 0;">
-                  <img [src]="product.images[0] || 'assets/images/productos/placeholder.png'" [alt]="product.name" style="width:100%;height:100%;object-fit:cover;" />
+                  <img
+                    [src]="product.images[0] || 'assets/images/productos/placeholder.png'"
+                    [alt]="product.name"
+                    class="product-media-img"
+                    loading="lazy"
+                    decoding="async"
+                  />
                 </div>
                 <div class="result-info">
                   <h3>{{ product.name }}</h3>
@@ -59,7 +65,7 @@ import { IconComponent } from '../../../shared/components/icon/icon';
     </div>
   `,
   styles: [`
-    .search-page { padding: 16px; padding-bottom: 80px; }
+    .search-page { width: min(100%, 1200px); margin: 0 auto; padding: 16px; padding-bottom: 100px; }
     .search-bar { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: var(--surface-raised); border-radius: 12px; border: 1.5px solid var(--border); margin-bottom: 20px; }
     .search-icon { display: flex; align-items: center; }
     .search-bar input { flex: 1; border: none; background: transparent; font-size: 0.95rem; color: var(--text-primary); outline: none; }
@@ -71,6 +77,7 @@ import { IconComponent } from '../../../shared/components/icon/icon';
     .result-count { font-size: 0.8rem; color: var(--text-secondary); margin: 0 0 12px; }
     .results-list { display: flex; flex-direction: column; gap: 8px; }
     .result-row { display: flex; align-items: center; justify-content: space-between; padding: 12px; background: var(--surface-raised); border-radius: 12px; text-decoration: none; transition: transform 0.2s; }
+    .prod-thumb { padding: 4px; border: 1px solid var(--border); }
     .result-row:hover { transform: translateX(4px); }
     .result-info h3 { font-size: 0.85rem; font-weight: 600; color: var(--text-primary); margin: 0 0 2px; }
     .result-cat { font-size: 0.7rem; color: var(--text-muted); }
@@ -79,6 +86,15 @@ import { IconComponent } from '../../../shared/components/icon/icon';
     .empty-icon { font-size: 3rem; display: block; margin-bottom: 12px; }
     .no-results h3 { color: var(--text-primary); margin: 12px 0 6px; }
     .no-results p { color: var(--text-secondary); font-size: 0.85rem; }
+    @media (min-width: 900px) {
+      .search-page { padding: 36px clamp(28px, 5vw, 64px) 130px; }
+      .search-bar { padding: 15px 18px; border-radius: 16px; margin-bottom: 28px; }
+      .search-bar input { font-size: 1.05rem; }
+      .results-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+      .result-row { min-height: 82px; padding: 16px; border: 1px solid var(--border); }
+      .suggestions { padding: 28px; background: var(--surface); border: 1px solid var(--border); border-radius: 20px; }
+      .suggestions h3 { font-size: 1rem; }
+    }
   `],
 })
 export class Search {

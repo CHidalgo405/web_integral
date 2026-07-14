@@ -5,14 +5,17 @@ import { UserService } from '../../../core/services/user.service';
 import { Header } from '../../../shared/components/header/header';
 import { IconComponent } from '../../../shared/components/icon/icon';
 import { signal } from '@angular/core';
+import { LocationPicker } from '../../../shared/components/location-picker/location-picker';
+import { CartService } from '../../../core/services/cart.service';
+import { CheckoutOrderSummary } from '../checkout-order-summary/checkout-order-summary';
 
 @Component({
   selector: 'app-address-form',
   standalone: true,
-  imports: [ReactiveFormsModule, Header, IconComponent],
+  imports: [ReactiveFormsModule, Header, IconComponent, LocationPicker, CheckoutOrderSummary],
   template: `
     <app-header title="Nueva Dirección" [showBack]="true"></app-header>
-    <div class="checkout-page" id="address-form-page">
+    <div class="checkout-layout"><main class="checkout-page" id="address-form-page">
       <form [formGroup]="form" (ngSubmit)="onSubmit()" class="form-layout">
         <div class="form-group">
           <label for="label">Etiqueta</label>
@@ -73,6 +76,17 @@ import { signal } from '@angular/core';
           <label for="notes">Notas (opc.)</label>
           <input id="notes" formControlName="notes" placeholder="Referencias de entrega" />
         </div>
+        <div class="form-group location-group">
+          <app-location-picker
+            [latitude]="form.controls.latitude.value ?? undefined"
+            [longitude]="form.controls.longitude.value ?? undefined"
+            [subtotal]="cartService.cart().subtotal"
+            (locationChange)="setLocation($event)"
+          />
+          @if ((form.controls.latitude.invalid || form.controls.longitude.invalid) && locationTouched()) {
+            <span class="error-text">Selecciona en el mapa la entrada del domicilio.</span>
+          }
+        </div>
         <label class="checkbox-row"><input type="checkbox" formControlName="isDefault" /> Usar como dirección principal</label>
         
         <button type="submit" class="btn-continue" [disabled]="form.invalid || isSaving()" id="save-address-btn">
@@ -84,7 +98,7 @@ import { signal } from '@angular/core';
           }
         </button>
       </form>
-    </div>
+    </main><app-checkout-order-summary /></div>
   `,
   styleUrl: '../checkout-shared.css',
 })
@@ -92,17 +106,30 @@ export class AddressForm {
   private fb = inject(FormBuilder);
   private userService = inject(UserService);
   private router = inject(Router);
+  protected cartService = inject(CartService);
 
   isSaving = signal(false);
+  locationTouched = signal(false);
 
   form = this.fb.group({
     label: ['', Validators.required], fullName: ['', Validators.required], street: ['', Validators.required],
     exteriorNumber: ['', Validators.required], interiorNumber: [''], neighborhood: ['', Validators.required],
     city: ['', Validators.required], state: ['', Validators.required], zipCode: ['', Validators.required],
     phone: ['', Validators.required], notes: [''], isDefault: [false],
+    latitude: [null as number | null, Validators.required],
+    longitude: [null as number | null, Validators.required],
   });
 
+  setLocation(location: { latitude: number; longitude: number }): void {
+    this.locationTouched.set(true);
+    this.form.patchValue(location);
+    this.form.controls.latitude.markAsTouched();
+    this.form.controls.longitude.markAsTouched();
+  }
+
   onSubmit(): void {
+    this.locationTouched.set(true);
+    this.form.markAllAsTouched();
     if (this.form.valid && !this.isSaving()) {
       this.isSaving.set(true);
       setTimeout(() => {
