@@ -32,6 +32,7 @@ export class AdminOperationsService {
   receiveOrder(id: string, value: object) { return this.http.post(this.url('/purchase-orders/' + id + '/receive'), value); }
   inventory() { return this.http.get<InventoryItem[]>(this.url('/inventory')); }
   batches(includeRemoved = false) { return this.http.get<ExpirationBatch[]>(this.url('/expiration-batches?include_removed=' + includeRemoved)); }
+  updateBatch(id: string, value: Partial<ExpirationBatch>) { return this.http.put<ExpirationBatch>(this.url('/expiration-batches/' + id), value); }
   removeBatch(id: string, reason: string) { return this.http.post(this.url('/expiration-batches/' + id + '/remove'), { reason }); }
   expenses() { return this.http.get<Expense[]>(this.url('/expenses')); }
   createExpense(value: object) { return this.http.post<Expense>(this.url('/expenses'), value); }

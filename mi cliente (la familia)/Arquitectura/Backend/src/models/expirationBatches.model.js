@@ -25,13 +25,24 @@ const create = ({ inventory_id, receipt_id, quantity, expiration_date }) =>
     [inventory_id, receipt_id ?? null, quantity, expiration_date]
   );
 
-const update = (id, { quantity, notified, removed }) =>
+const update = (id, { quantity, notified, removed, expiration_date }) =>
   db.query(
-    `UPDATE expiration_batches
-     SET quantity=$1, notified=$2, removed=$3,
-         removed_at = CASE WHEN $3=TRUE THEN NOW() ELSE removed_at END
-     WHERE id=$4 RETURNING *`,
-    [quantity, notified, removed, id]
+    `WITH updated AS (
+       UPDATE expiration_batches
+       SET quantity=COALESCE($1,quantity),
+           notified=COALESCE($2,notified),
+           removed=COALESCE($3,removed),
+           expiration_date=COALESCE($4,expiration_date),
+           removed_at = CASE WHEN $3=TRUE THEN COALESCE(removed_at,NOW()) ELSE removed_at END
+       WHERE id=$5 RETURNING *
+     ), synced_receipt AS (
+       UPDATE stock_receipts sr
+       SET expiration_date=updated.expiration_date
+       FROM updated
+       WHERE sr.id=updated.receipt_id
+     )
+     SELECT * FROM updated`,
+    [quantity, notified, removed, expiration_date, id]
   );
 
 const removeBatch = async (id, reason) => {

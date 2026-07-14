@@ -25,13 +25,15 @@ export function daysUntilExpiration(expirationDate: string, today = new Date()):
 @Component({selector:'app-admin-expirations',standalone:true,imports:[CommonModule,FormsModule,IconComponent],templateUrl:'./expirations.html',styleUrl:'../admin-operations.css'})
 export class AdminExpirations implements OnInit {
   private api=inject(AdminOperationsService); private router=inject(Router);
-  batches=signal<ExpirationBatch[]>([]); filter=signal<'all'|'expired'|'critical'|'soon'>('all'); error=signal(''); selected=signal<ExpirationBatch|null>(null); reason='expired';
+  batches=signal<ExpirationBatch[]>([]); filter=signal<'all'|'expired'|'critical'|'soon'>('all'); error=signal(''); selected=signal<ExpirationBatch|null>(null); editing=signal<ExpirationBatch|null>(null); reason='expired'; editDate='';
   visible=computed(()=>this.batches().filter(batch=>this.filter()==='all'||this.state(batch)===this.filter()));
   ngOnInit(){this.load();}
   load(){this.api.batches().subscribe({next:value=>this.batches.set(value),error:e=>this.error.set(e.error?.error||'No se pudieron cargar los lotes.')});}
   days(batch:ExpirationBatch){return daysUntilExpiration(batch.expiration_date) ?? 0;}
-  state(batch:ExpirationBatch):'expired'|'critical'|'soon'|'ok'{const d=this.days(batch);return d===null?'ok':d<0?'expired':d<=3?'critical':d<=7?'soon':'ok';}
+  state(batch:ExpirationBatch):'expired'|'critical'|'soon'|'ok'{const d=this.days(batch);return d<0?'expired':d<=3?'critical':d<=7?'soon':'ok';}
   count(state:string){return this.batches().filter(item=>this.state(item)===state).length;}
+  openEdit(batch:ExpirationBatch){this.editing.set(batch);this.editDate=batch.expiration_date.slice(0,10);}
+  saveDate(){const batch=this.editing();if(!batch||!this.editDate)return;this.api.updateBatch(batch.id,{expiration_date:this.editDate}).subscribe({next:()=>{this.editing.set(null);this.load();},error:e=>this.error.set(e.error?.error||'No se pudo actualizar la caducidad.')});}
   remove(){const batch=this.selected();if(!batch)return;this.api.removeBatch(batch.id,this.reason).subscribe({next:()=>{this.selected.set(null);this.load();},error:e=>this.error.set(e.error?.error||'No se pudo retirar el lote.')});}
   suggest(batch:ExpirationBatch){this.router.navigate(['/admin/promotions'],{queryParams:{inventoryId:batch.inventory_id,until:batch.expiration_date,suggested:'1'}});}
 }
