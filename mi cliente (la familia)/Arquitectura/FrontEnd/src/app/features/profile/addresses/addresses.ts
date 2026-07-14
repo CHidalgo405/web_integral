@@ -13,7 +13,17 @@ import { LocationPicker } from '../../../shared/components/location-picker/locat
   template: `
     <app-header title="Mis Direcciones" [showBack]="true"></app-header>
     
-    <div class="addresses-page" id="addresses-page">
+    <main class="addresses-page profile-workspace" id="addresses-page">
+      <div class="profile-section-intro">
+        <span class="profile-section-icon"><app-icon name="map-pin" size="24" /></span>
+        <div class="profile-section-copy">
+          <p class="profile-section-eyebrow">Mi cuenta</p>
+          <h1 class="profile-section-title">Direcciones de entrega</h1>
+          <p class="profile-section-description">Administra los lugares donde deseas recibir tus compras y elige una dirección principal.</p>
+        </div>
+      </div>
+
+      <section class="profile-content-surface addresses-content">
       
       <!-- Dashed Add Button -->
       <button class="add-address-dashed-btn" (click)="openAddModal()" id="add-address-btn">
@@ -73,7 +83,9 @@ import { LocationPicker } from '../../../shared/components/location-picker/locat
         </div>
       }
 
-    </div>
+      </section>
+
+    </main>
 
     <!-- Inline Add/Edit Drawer Modal -->
     @if (showFormModal) {
@@ -199,6 +211,7 @@ import { LocationPicker } from '../../../shared/components/location-picker/locat
       </div>
     }
   `,
+  styleUrls: ['../profile-forms-shared.css'],
   styles: [`
     .addresses-page { padding: 16px; padding-bottom: 80px; background-color: var(--bg); min-height: 100dvh; }
     
@@ -640,6 +653,42 @@ import { LocationPicker } from '../../../shared/components/location-picker/locat
     @keyframes slideUpToast {
       from { transform: translateY(100%); opacity: 0; }
       to { transform: translateY(0); opacity: 1; }
+    }
+
+    @media (min-width: 900px) {
+      .addresses-page {
+        background: var(--bg);
+      }
+
+      .addresses-content {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 18px;
+        padding: 28px;
+      }
+
+      .add-address-dashed-btn {
+        grid-column: 1 / -1;
+        min-height: 64px;
+        margin-bottom: 0;
+        border-radius: 18px;
+      }
+
+      .address-card {
+        display: flex;
+        flex-direction: column;
+        min-height: 260px;
+        margin-bottom: 0;
+        border-radius: 20px;
+      }
+
+      .card-body {
+        flex: 1;
+      }
+
+      .form-row-2:first-of-type {
+        grid-template-columns: minmax(0, 1.4fr) minmax(240px, 0.8fr);
+      }
     }
   `],
 })

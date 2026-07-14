@@ -12,7 +12,17 @@ import { IconComponent } from '../../../shared/components/icon/icon';
   template: `
     <app-header title="Editar perfil" [showBack]="true"></app-header>
 
-    <div class="edit-page" id="profile-edit-page">
+    <main class="edit-page profile-workspace" id="profile-edit-page">
+      <div class="profile-section-intro">
+        <span class="profile-section-icon"><app-icon name="user" size="24" /></span>
+        <div class="profile-section-copy">
+          <p class="profile-section-eyebrow">Mi cuenta</p>
+          <h1 class="profile-section-title">Información personal</h1>
+          <p class="profile-section-description">Mantén actualizados tus datos de contacto para recibir información sobre tus pedidos.</p>
+        </div>
+      </div>
+
+      <section class="profile-content-surface profile-edit-surface">
 
       <!-- Avatar -->
       <div class="avatar-section">
@@ -24,7 +34,7 @@ import { IconComponent } from '../../../shared/components/icon/icon';
             <app-icon name="camera" size="16" color="#fff" />
           </button>
         </div>
-        <p class="avatar-hint">Toca para cambiar tu foto</p>
+        <p class="avatar-hint">Selecciona para cambiar tu foto</p>
       </div>
 
       <!-- Formulario -->
@@ -122,8 +132,10 @@ import { IconComponent } from '../../../shared/components/icon/icon';
         </button>
       </div>
 
-    </div>
+      </section>
+    </main>
   `,
+  styleUrls: ['../profile-forms-shared.css'],
   styles: [`
     .edit-page {
       padding-bottom: 100px;
@@ -321,6 +333,74 @@ import { IconComponent } from '../../../shared/components/icon/icon';
       transition: color 0.2s;
     }
     .btn-cancel:hover { color: var(--text-secondary); }
+
+    @media (min-width: 900px) {
+      .edit-page {
+        background: var(--bg);
+        padding-bottom: 72px;
+      }
+
+      .profile-edit-surface {
+        display: grid;
+        grid-template-columns: minmax(250px, 320px) minmax(0, 1fr);
+        overflow: hidden;
+      }
+
+      .avatar-section {
+        justify-content: center;
+        min-height: 520px;
+        padding: 48px 32px;
+      }
+
+      .avatar-initials {
+        width: 116px;
+        height: 116px;
+        font-size: 2.65rem;
+      }
+
+      .avatar-edit-btn {
+        width: 36px;
+        height: 36px;
+      }
+
+      .form-card {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 22px;
+        margin: 0;
+        padding: 42px 42px 24px;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+      }
+
+      .input-wrap {
+        background: var(--bg);
+      }
+
+      .actions {
+        flex-direction: row-reverse;
+        flex-wrap: wrap;
+        align-items: center;
+        padding: 0 42px 42px;
+      }
+
+      .save-error {
+        flex: 1 1 100%;
+        text-align: left;
+      }
+
+      .btn-save {
+        width: auto;
+        min-width: 210px;
+        padding-inline: 28px;
+      }
+
+      .btn-cancel {
+        width: auto;
+        min-width: 120px;
+      }
+    }
   `],
 })
 export class ProfileEdit implements OnInit {

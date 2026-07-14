@@ -12,7 +12,17 @@ import { SavedPaymentMethod, PaymentMethod } from '../../../core/models/order.mo
   template: `
     <app-header title="Métodos de Pago" [showBack]="true"></app-header>
     
-    <div class="payments-page" id="payment-methods-page">
+    <main class="payments-page profile-workspace" id="payment-methods-page">
+      <div class="profile-section-intro">
+        <span class="profile-section-icon"><app-icon name="credit-card" size="24" /></span>
+        <div class="profile-section-copy">
+          <p class="profile-section-eyebrow">Mi cuenta</p>
+          <h1 class="profile-section-title">Métodos de pago</h1>
+          <p class="profile-section-description">Organiza tus opciones de pago guardadas y selecciona cuál quieres usar de forma predeterminada.</p>
+        </div>
+      </div>
+
+      <section class="profile-content-surface payments-content">
       
       <!-- Dashed Add Button -->
       <button class="add-payment-dashed-btn" (click)="openAddModal()" id="add-payment-btn">
@@ -75,7 +85,8 @@ import { SavedPaymentMethod, PaymentMethod } from '../../../core/models/order.mo
 
         </div>
       }
-    </div>
+      </section>
+    </main>
 
     <!-- Slide-up Add Drawer Modal -->
     @if (showFormModal) {
@@ -86,7 +97,7 @@ import { SavedPaymentMethod, PaymentMethod } from '../../../core/models/order.mo
             <button class="modal-close-btn" (click)="showFormModal = false" id="close-modal-btn">&times;</button>
           </div>
 
-          <div class="modal-content-scroll">
+          <div class="modal-content-scroll" [class.no-card-preview]="formModel.type !== 'card'">
             
             <!-- Interactive Credit Card Preview -->
             @if (formModel.type === 'card') {
@@ -222,6 +233,7 @@ import { SavedPaymentMethod, PaymentMethod } from '../../../core/models/order.mo
       </div>
     }
   `,
+  styleUrls: ['../profile-forms-shared.css'],
   styles: [`
     .payments-page {
       padding: 16px;
@@ -843,6 +855,76 @@ import { SavedPaymentMethod, PaymentMethod } from '../../../core/models/order.mo
     @keyframes slideUpToast {
       from { transform: translateY(100%); opacity: 0; }
       to { transform: translateY(0); opacity: 1; }
+    }
+
+    @media (min-width: 900px) {
+      .payments-page {
+        display: block;
+        background: var(--bg);
+      }
+
+      .payments-content {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 20px;
+        padding: 28px;
+      }
+
+      .add-payment-dashed-btn {
+        grid-column: 1 / -1;
+        min-height: 64px;
+        margin-bottom: 0;
+        border-radius: 18px;
+      }
+
+      .payment-method-card {
+        height: 220px;
+        border-radius: 20px;
+      }
+
+      .modal-drawer {
+        width: min(100%, 940px);
+        max-width: 940px;
+      }
+
+      .modal-content-scroll {
+        display: grid;
+        grid-template-columns: minmax(280px, 0.85fr) minmax(360px, 1.15fr);
+        gap: 24px 32px;
+        align-items: start;
+      }
+
+      .card-preview-container {
+        grid-column: 1;
+        grid-row: 1 / span 2;
+        position: sticky;
+        top: 0;
+        margin: 0;
+        padding: 24px;
+        border-radius: 20px;
+        background: var(--bg);
+      }
+
+      .tabs-selector,
+      .modal-form {
+        grid-column: 2;
+      }
+
+      .tabs-selector {
+        margin-bottom: 0;
+      }
+
+      .virtual-card {
+        max-width: 340px;
+        height: 192px;
+      }
+
+      .modal-content-scroll.no-card-preview .tabs-selector,
+      .modal-content-scroll.no-card-preview .modal-form {
+        grid-column: 1 / -1;
+        width: min(100%, 640px);
+        margin-inline: auto;
+      }
     }
   `],
 })
