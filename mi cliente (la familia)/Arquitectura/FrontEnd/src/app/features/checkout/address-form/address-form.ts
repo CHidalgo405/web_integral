@@ -105,17 +105,30 @@ export class AddressForm {
   private fb = inject(FormBuilder);
   private userService = inject(UserService);
   private router = inject(Router);
+  protected cartService = inject(CartService);
 
   isSaving = signal(false);
+  locationTouched = signal(false);
 
   form = this.fb.group({
     label: ['', Validators.required], fullName: ['', Validators.required], street: ['', Validators.required],
     exteriorNumber: ['', Validators.required], interiorNumber: [''], neighborhood: ['', Validators.required],
     city: ['', Validators.required], state: ['', Validators.required], zipCode: ['', Validators.required],
     phone: ['', Validators.required], notes: [''], isDefault: [false],
+    latitude: [null as number | null, Validators.required],
+    longitude: [null as number | null, Validators.required],
   });
 
+  setLocation(location: { latitude: number; longitude: number }): void {
+    this.locationTouched.set(true);
+    this.form.patchValue(location);
+    this.form.controls.latitude.markAsTouched();
+    this.form.controls.longitude.markAsTouched();
+  }
+
   onSubmit(): void {
+    this.locationTouched.set(true);
+    this.form.markAllAsTouched();
     if (this.form.valid && !this.isSaving()) {
       this.isSaving.set(true);
       setTimeout(() => {
