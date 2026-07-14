@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, inject, NgZone, signal, ViewChild } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
@@ -65,15 +65,12 @@ import { IconComponent } from '../../../shared/components/icon/icon';
             <span>O</span>
           </div>
 
-          <button type="button" class="btn-google" [disabled]="isLoading()" (click)="loginWithGoogle()">
-            <svg viewBox="0 0 24 24" width="20" height="20">
-              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-              <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-            </svg>
-            <span>Google</span>
-          </button>
+          <div
+            #googleButton
+            class="google-button-host"
+            [class.google-button-disabled]="isLoading()"
+            aria-label="Iniciar sesión con Google"
+          ></div>
 
           <div class="register-prompt">
             ¿No tienes una cuenta? <a routerLink="/auth/register">Regístrate</a>
@@ -281,31 +278,18 @@ import { IconComponent } from '../../../shared/components/icon/icon';
       padding: 0 16px;
     }
 
-    .btn-google {
+    .google-button-host {
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 12px;
       width: 100%;
-      height: 60px;
-      border-radius: 9999px;
-      background-color: var(--surface-raised);
-      color: var(--text-primary);
-      font-size: 1.05rem;
-      font-weight: 700;
-      border: 1.5px solid transparent;
-      cursor: pointer;
-      transition: background-color 0.2s, border-color 0.2s;
+      min-height: 44px;
+      transition: opacity 0.2s;
     }
 
-    .btn-google:hover:not(:disabled) {
-      background-color: var(--surface);
-      border-color: var(--border);
-    }
-
-    .btn-google:disabled {
+    .google-button-disabled {
       opacity: 0.6;
-      cursor: not-allowed;
+      pointer-events: none;
     }
 
     .register-prompt {
@@ -353,11 +337,15 @@ import { IconComponent } from '../../../shared/components/icon/icon';
     }
   `]
 })
-export class Login {
+export class Login implements AfterViewInit {
+  @ViewChild('googleButton', { static: true })
+  private googleButton!: ElementRef<HTMLElement>;
+
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
   private googleAuthService = inject(GoogleAuthService);
   private router = inject(Router);
+  private zone = inject(NgZone);
 
   errorMessage = '';
   showPassword = signal(false);
@@ -373,6 +361,18 @@ export class Login {
   });
 
   isLoading = signal(false);
+
+  ngAfterViewInit(): void {
+    this.googleAuthService.renderButton(
+      this.googleButton.nativeElement,
+      (idToken) => this.zone.run(() => this.loginWithGoogleCredential(idToken)),
+      'signin_with',
+    ).catch(() => {
+      this.zone.run(() => {
+        this.errorMessage = 'No se pudo cargar el botón de Google. También puedes iniciar sesión con correo.';
+      });
+    });
+  }
 
   onSubmit(): void {
     if (this.form.valid) {
@@ -393,27 +393,21 @@ export class Login {
     }
   }
 
-  async loginWithGoogle(): Promise<void> {
+  private loginWithGoogleCredential(idToken: string): void {
     if (this.isLoading()) return;
     this.errorMessage = '';
     this.isLoading.set(true);
 
-    try {
-      const idToken = await this.googleAuthService.signIn();
-      const rememberMe = !!this.form.value.rememberMe;
-      this.authService.loginWithGoogle(idToken, rememberMe).subscribe({
-        next: () => {
-          this.isLoading.set(false);
-          this.router.navigateByUrl(this.authService.landingRoute());
-        },
-        error: (err) => {
-          this.isLoading.set(false);
-          this.errorMessage = err.error?.error || 'No se pudo iniciar sesión con Google';
-        },
-      });
-    } catch (err) {
-      this.isLoading.set(false);
-      this.errorMessage = err instanceof Error ? err.message : 'No se pudo iniciar sesión con Google';
-    }
+    const rememberMe = !!this.form.value.rememberMe;
+    this.authService.loginWithGoogle(idToken, rememberMe).subscribe({
+      next: () => {
+        this.isLoading.set(false);
+        this.router.navigateByUrl(this.authService.landingRoute());
+      },
+      error: (err) => {
+        this.isLoading.set(false);
+        this.errorMessage = err.error?.error || 'No se pudo iniciar sesión con Google';
+      },
+    });
   }
 }
