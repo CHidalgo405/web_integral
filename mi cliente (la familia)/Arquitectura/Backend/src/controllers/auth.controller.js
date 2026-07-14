@@ -59,6 +59,11 @@ const register = async (req, res, next) => {
       return res.status(400).json({ error: 'Faltan campos obligatorios (Nombre, Apellido, Correo, Contraseña)' });
     }
 
+    if (password.length < 6) {
+      return res.status(400).json({ error: 'La contraseña debe tener al menos 6 caracteres' });
+    }
+
+
     // Usaremos el email como username del sistema
     const username = email.toLowerCase();
 
