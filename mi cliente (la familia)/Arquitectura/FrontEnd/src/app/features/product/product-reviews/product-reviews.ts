@@ -33,6 +33,8 @@ const EMPTY_SUMMARY: ReviewSummary = {
           <p>Cargando reseñas...</p>
         </div>
       } @else {
+        <div class="reviews-layout">
+        <aside class="reviews-sidebar">
         <section class="reviews-summary" aria-label="Resumen de calificaciones">
           <div class="average-block">
             <strong>{{ summary.average.toFixed(1) }}</strong>
@@ -63,9 +65,25 @@ const EMPTY_SUMMARY: ReviewSummary = {
           </div>
         </section>
 
-        @if (errorMessage) {
-          <div class="feedback error" role="alert">{{ errorMessage }}</div>
-        }
+        <section class="review-filters" aria-label="Filtrar reseñas por calificación">
+          <div class="filter-heading">
+            <span class="eyebrow">Filtrar opiniones</span>
+            @if (ratingFilter !== null) {
+              <button type="button" (click)="ratingFilter = null">Limpiar</button>
+            }
+          </div>
+          <div class="filter-options">
+            <button type="button" [class.active]="ratingFilter === null" [attr.aria-pressed]="ratingFilter === null" (click)="ratingFilter = null">
+              Todas <span>{{ summary.total }}</span>
+            </button>
+            @for (level of ratingLevels; track level) {
+              <button type="button" [class.active]="ratingFilter === level" [attr.aria-pressed]="ratingFilter === level" (click)="ratingFilter = level">
+                {{ level }} <app-icon name="star" size="11" fill="currentColor" />
+                <span>{{ summary.distribution[level] }}</span>
+              </button>
+            }
+          </div>
+        </section>
 
         @if (eligibility?.canReview && !formOpen) {
           <section class="review-invitation">
@@ -164,18 +182,25 @@ const EMPTY_SUMMARY: ReviewSummary = {
           </section>
         }
 
+        </aside>
+
+        <div class="reviews-content">
+        @if (errorMessage) {
+          <div class="feedback error" role="alert">{{ errorMessage }}</div>
+        }
+
         <section class="reviews-section">
           <div class="list-heading">
             <div>
               <span class="eyebrow">Opiniones de clientes</span>
               <h2>Todas las reseñas</h2>
             </div>
-            <span class="review-total">{{ summary.total }}</span>
+            <span class="review-total">{{ filteredReviews.length }}</span>
           </div>
 
-          @if (reviews.length) {
+          @if (filteredReviews.length) {
             <div class="reviews-list">
-              @for (review of reviews; track review.id) {
+              @for (review of filteredReviews; track review.id) {
                 <article class="review-card" [class.own-review]="review.isMine">
                   <div class="review-header">
                     <div class="reviewer-avatar" aria-hidden="true">{{ reviewerInitial(review) }}</div>
@@ -238,11 +263,13 @@ const EMPTY_SUMMARY: ReviewSummary = {
           } @else {
             <div class="empty-state">
               <div class="empty-icon"><app-icon name="star" size="30" /></div>
-              <h3>Aún no hay reseñas</h3>
-              <p>Sé la primera persona en compartir su experiencia con este producto.</p>
+              <h3>{{ ratingFilter === null ? 'Aún no hay reseñas' : 'No hay reseñas con esta calificación' }}</h3>
+              <p>{{ ratingFilter === null ? 'Sé la primera persona en compartir su experiencia con este producto.' : 'Prueba con otra cantidad de estrellas o muestra todas las opiniones.' }}</p>
             </div>
           }
         </section>
+        </div>
+        </div>
       }
     </main>
   `,
@@ -261,6 +288,13 @@ const EMPTY_SUMMARY: ReviewSummary = {
     .distribution-row small { text-align: right; color: var(--text-muted); }
     .distribution-track { height: 7px; overflow: hidden; border-radius: 99px; background: var(--border); }
     .distribution-track span { display: block; height: 100%; border-radius: inherit; background: var(--warning); transition: width .25s ease; }
+    .review-filters { margin-top: 14px; padding: 16px; border: 1px solid var(--border); border-radius: 18px; background: var(--surface-raised); }
+    .filter-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+    .filter-heading button { border: 0; background: none; color: var(--primary); font-size: .7rem; font-weight: 900; cursor: pointer; }
+    .filter-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
+    .filter-options button { min-height: 38px; display: flex; align-items: center; justify-content: center; gap: 4px; border: 1px solid var(--border); border-radius: 11px; background: var(--surface); color: var(--text-secondary); font-size: .72rem; font-weight: 900; cursor: pointer; }
+    .filter-options button span { color: var(--text-muted); font-size: .64rem; }
+    .filter-options button.active { border-color: var(--primary); background: var(--primary-alpha); color: var(--primary); }
     .feedback { margin-top: 14px; padding: 12px 14px; border-radius: 12px; font-size: .82rem; font-weight: 700; }
     .feedback.error { color: var(--danger); background: var(--danger-alpha); }
     .review-invitation, .eligibility-note, .review-form { margin-top: 18px; border-radius: 20px; }
@@ -316,6 +350,28 @@ const EMPTY_SUMMARY: ReviewSummary = {
     .empty-state h3 { margin: 14px 0 5px; color: var(--text-primary); font-size: 1rem; }
     .empty-state p { max-width: 350px; margin: 0; color: var(--text-secondary); font-size: .8rem; line-height: 1.5; }
 
+    @media (min-width: 1024px) {
+      :host { background: var(--bg); }
+      .reviews-page { width: min(1180px, 100%); padding: 36px 28px 110px; }
+      .reviews-layout { display: grid; grid-template-columns: minmax(320px, 360px) minmax(0, 760px); justify-content: center; align-items: start; gap: 32px; }
+      .reviews-sidebar { display: flex; flex-direction: column; min-width: 0; }
+      .reviews-summary { grid-template-columns: 112px minmax(0, 1fr); gap: 18px; padding: 22px 18px; border-radius: 20px; box-shadow: var(--shadow-sm, 0 8px 24px rgba(25, 58, 43, .06)); }
+      .average-block > strong { font-size: 2.6rem; }
+      .review-filters { margin-top: 14px; }
+      .review-invitation { align-items: stretch; flex-direction: column; margin-top: 14px; }
+      .review-invitation .primary-button { width: 100%; }
+      .eligibility-note, .review-form { margin-top: 14px; }
+      .review-form { padding: 20px; }
+      .rating-picker { flex-wrap: wrap; }
+      .rating-picker button { width: 40px; }
+      .rating-picker > span { flex-basis: 100%; margin: 4px 0 0; }
+      .form-actions { display: grid; grid-template-columns: 1fr 1fr; }
+      .reviews-content { min-width: 0; }
+      .reviews-section { margin-top: 0; }
+      .feedback { margin: 0 0 14px; }
+      .review-card { padding: 22px; }
+    }
+
     @media (max-width: 560px) {
       .reviews-page { padding-inline: 12px; }
       .reviews-summary { grid-template-columns: 112px 1fr; gap: 16px; padding: 18px 14px; border-radius: 18px; }
@@ -355,6 +411,7 @@ export class ProductReviews implements OnInit {
   rating = 5;
   hoveredRating = 0;
   comment = '';
+  ratingFilter: 1 | 2 | 3 | 4 | 5 | null = null;
 
   get roundedAverage(): number {
     return Math.round(this.summary.average);
@@ -366,6 +423,12 @@ export class ProductReviews implements OnInit {
 
   get ratingLabel(): string {
     return ['', 'Muy malo', 'Malo', 'Regular', 'Bueno', 'Excelente'][this.rating] ?? '';
+  }
+
+  get filteredReviews(): ProductReview[] {
+    return this.ratingFilter === null
+      ? this.reviews
+      : this.reviews.filter((review) => review.rating === this.ratingFilter);
   }
 
   ngOnInit(): void {
