@@ -1,0 +1,12 @@
+/* Estilos locales para desarrollo (no versionar en producción) */
+:root {
+  --debug-border: 2px dashed rgba(255,0,0,0.08);
+}
+
+.debug-outline {
+  outline: var(--debug-border);
+}
+
+.skeleton-debug {
+  background: linear-gradient(90deg, rgba(0,0,0,0.06), rgba(0,0,0,0.02));
+}
