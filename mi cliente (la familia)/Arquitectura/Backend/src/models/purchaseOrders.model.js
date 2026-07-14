@@ -64,4 +64,62 @@ const updateItem = (item_id, { quantity_ordered, quantity_received, unit_cost })
 const removeItem = (item_id) =>
   db.query('DELETE FROM purchase_order_items WHERE id=$1 RETURNING id', [item_id]);
 
-module.exports = { findAll, findById, findItems, create, update, remove, addItem, updateItem, removeItem };
+const receiveAll = async (orderId, receiptItems, notes) => {
+  const client = await db.connect();
+  try {
+    await client.query('BEGIN');
+    const { rows: orders } = await client.query(
+      `SELECT * FROM purchase_orders WHERE id=$1 FOR UPDATE`, [orderId]
+    );
+    const order = orders[0];
+    if (!order) throw Object.assign(new Error('Orden de compra no encontrada'), { status: 404 });
+    if (!['sent', 'partial'].includes(order.status)) {
+      throw Object.assign(new Error('La orden ya no se puede recibir'), { status: 409 });
+    }
+    const { rows: lines } = await client.query(
+      `SELECT poi.*, i.has_expiration, i.name AS inventory_name
+       FROM purchase_order_items poi JOIN inventory i ON i.id=poi.inventory_id
+       WHERE poi.order_id=$1 ORDER BY poi.id FOR UPDATE`, [orderId]
+    );
+    if (!lines.length) throw Object.assign(new Error('La orden no contiene productos'), { status: 409 });
+    const input = new Map((receiptItems || []).map((item) => [item.inventory_id, item]));
+    const receipts = [];
+    for (const line of lines) {
+      const quantity = line.quantity_ordered - line.quantity_received;
+      if (quantity <= 0) continue;
+      const supplied = input.get(line.inventory_id) || {};
+      if (line.has_expiration && !supplied.expiration_date) {
+        throw Object.assign(new Error(`Indica la caducidad de ${line.inventory_name}`), { status: 400 });
+      }
+      const { rows: saved } = await client.query(
+        `INSERT INTO stock_receipts
+          (inventory_id,supplier_id,purchase_order_id,quantity,cost_per_unit,expiration_date,notes)
+         VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
+        [line.inventory_id, order.supplier_id, orderId, quantity, line.unit_cost,
+          supplied.expiration_date || null, notes || null]
+      );
+      const receipt = saved[0];
+      receipts.push(receipt);
+      if (line.has_expiration) {
+        await client.query(
+          `INSERT INTO expiration_batches (inventory_id,receipt_id,quantity,expiration_date)
+           VALUES ($1,$2,$3,$4)`,
+          [line.inventory_id, receipt.id, quantity, supplied.expiration_date]
+        );
+      }
+      await client.query(
+        `UPDATE purchase_order_items SET quantity_received=quantity_ordered WHERE id=$1`, [line.id]
+      );
+    }
+    await client.query(`UPDATE purchase_orders SET status='received' WHERE id=$1`, [orderId]);
+    await client.query('COMMIT');
+    return { order_id: orderId, status: 'received', receipts };
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+};
+
+module.exports = { findAll, findById, findItems, create, update, remove, addItem, updateItem, removeItem, receiveAll };

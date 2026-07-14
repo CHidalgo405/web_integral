@@ -3,7 +3,7 @@ const db = require('../db');
 const findAll = ({ inventory_id, include_removed } = {}) => {
   const conditions = [];
   const params = [];
-  if (!include_removed) conditions.push('eb.removed=FALSE');
+  if (include_removed !== 'true' && include_removed !== true) conditions.push('eb.removed=FALSE');
   if (inventory_id) conditions.push(`eb.inventory_id=$${params.push(inventory_id)}`);
   const where = conditions.length ? 'WHERE ' + conditions.join(' AND ') : '';
   return db.query(
@@ -34,4 +34,34 @@ const update = (id, { quantity, notified, removed }) =>
     [quantity, notified, removed, id]
   );
 
-module.exports = { findAll, findById, create, update };
+const removeBatch = async (id, reason) => {
+  const client = await db.connect();
+  try {
+    await client.query('BEGIN');
+    const { rows } = await client.query(
+      'SELECT * FROM expiration_batches WHERE id=$1 FOR UPDATE', [id]
+    );
+    const batch = rows[0];
+    if (!batch) throw Object.assign(new Error('Lote no encontrado'), { status: 404 });
+    if (batch.removed) throw Object.assign(new Error('El lote ya fue retirado'), { status: 409 });
+    await client.query(
+      'UPDATE inventory SET stock=GREATEST(stock-$1,0) WHERE id=$2',
+      [batch.quantity, batch.inventory_id]
+    );
+    await client.query(
+      'UPDATE expiration_batches SET removed=TRUE,removed_at=NOW() WHERE id=$1', [id]
+    );
+    await client.query(
+      `INSERT INTO expired_log (inventory_id,batch_id,quantity_removed,expiration_date,reason)
+       VALUES ($1,$2,$3,$4,$5)`,
+      [batch.inventory_id, id, batch.quantity, batch.expiration_date, reason || 'expired']
+    );
+    await client.query('COMMIT');
+    return { ...batch, removed: true, reason: reason || 'expired' };
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally { client.release(); }
+};
+
+module.exports = { findAll, findById, create, update, removeBatch };

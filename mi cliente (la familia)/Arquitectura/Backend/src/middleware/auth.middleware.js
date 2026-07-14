@@ -41,6 +41,12 @@ const requireRole = (...roles) => {
   };
 };
 
+const requireExactRole = (...roles) => (req, res, next) => {
+  if (!req.user?.role) return res.status(401).json({ error: 'Unauthorized: No user role found' });
+  if (!roles.includes(req.user.role)) return res.status(403).json({ error: `Forbidden: Requires one of these exact roles: ${roles.join(', ')}` });
+  next();
+};
+
 // Auth opcional: si viene un token válido pobla req.user, si no, continúa sin él.
 // Útil en endpoints públicos que se enriquecen cuando hay sesión (ej. POST /purchases).
 const attachUser = (req, res, next) => {
@@ -59,5 +65,6 @@ const attachUser = (req, res, next) => {
 module.exports = {
   verifyToken,
   requireRole,
+  requireExactRole,
   attachUser
 };

@@ -68,4 +68,11 @@ const removeItem = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
-module.exports = { getAll, getOne, getItems, create, update, remove, addItem, updateItem, removeItem };
+const receiveAll = async (req, res, next) => {
+  try {
+    const result = await PurchaseOrders.receiveAll(req.params.id, req.body.items, req.body.notes);
+    res.status(201).json(result);
+  } catch (err) { next(err); }
+};
+
+module.exports = { getAll, getOne, getItems, create, update, remove, addItem, updateItem, removeItem, receiveAll };

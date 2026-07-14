@@ -30,4 +30,10 @@ const update = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
-module.exports = { getAll, getOne, create, update };
+const removeBatch = async (req, res, next) => {
+  try {
+    res.json(await ExpirationBatches.removeBatch(req.params.id, req.body.reason));
+  } catch (err) { next(err); }
+};
+
+module.exports = { getAll, getOne, create, update, removeBatch };

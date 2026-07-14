@@ -17,8 +17,8 @@ const create = async (userId, data) => {
   return db.query(
     `INSERT INTO user_addresses
        (user_id, label, full_name, phone, street, exterior_number, interior_number,
-        neighborhood, city, state, zip_code, notes, is_default)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
+        neighborhood, city, state, zip_code, notes, is_default, latitude, longitude)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
      RETURNING *`,
     [
       userId,
@@ -34,6 +34,8 @@ const create = async (userId, data) => {
       data.zip_code ?? null,
       data.notes ?? null,
       data.is_default ?? false,
+      data.latitude ?? null,
+      data.longitude ?? null,
     ]
   );
 };
@@ -44,8 +46,8 @@ const update = async (id, userId, data) => {
     `UPDATE user_addresses
      SET label=$1, full_name=$2, phone=$3, street=$4, exterior_number=$5,
          interior_number=$6, neighborhood=$7, city=$8, state=$9, zip_code=$10,
-         notes=$11, is_default=$12
-     WHERE id=$13 AND user_id=$14
+         notes=$11, is_default=$12, latitude=$13, longitude=$14
+     WHERE id=$15 AND user_id=$16
      RETURNING *`,
     [
       data.label ?? 'Casa',
@@ -60,6 +62,8 @@ const update = async (id, userId, data) => {
       data.zip_code ?? null,
       data.notes ?? null,
       data.is_default ?? false,
+      data.latitude ?? null,
+      data.longitude ?? null,
       id,
       userId,
     ]

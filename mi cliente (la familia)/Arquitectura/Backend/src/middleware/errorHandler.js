@@ -11,7 +11,7 @@ const errorHandler = (err, req, res, next) => {
   if (err.code === '23514') {
     return res.status(400).json({ error: 'Constraint violation', detail: err.detail });
   }
-  res.status(err.status || 500).json({ error: err.message || 'Internal server error' });
+  res.status(err.status || 500).json({ error: err.message || 'Internal server error', ...(err.appCode ? { code: err.appCode } : {}) });
 };
 
 module.exports = errorHandler;

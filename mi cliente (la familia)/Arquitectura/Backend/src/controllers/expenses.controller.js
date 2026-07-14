@@ -38,4 +38,14 @@ const remove = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
-module.exports = { getAll, getOne, create, update, remove };
+const reverse = async (req, res, next) => {
+  try {
+    const row = await Expenses.reverse(req.params.id, {
+      reason: req.body.reason,
+      created_by: req.user.id,
+    });
+    res.status(201).json(row);
+  } catch (err) { next(err); }
+};
+
+module.exports = { getAll, getOne, create, update, remove, reverse };

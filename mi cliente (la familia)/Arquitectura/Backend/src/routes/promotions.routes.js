@@ -4,8 +4,8 @@ const { verifyToken, requireRole } = require('../middleware/auth.middleware');
 
 router.get('/', verifyToken, ctrl.getAll);
 router.get('/:id', verifyToken, ctrl.getOne);
-router.post('/', verifyToken, requireRole('admin'), ctrl.create);
-router.put('/:id', verifyToken, requireRole('admin'), ctrl.update);
-router.delete('/:id', verifyToken, requireRole('admin'), ctrl.remove);
+router.post('/', verifyToken, requireRole('admin', 'manager'), ctrl.create);
+router.put('/:id', verifyToken, requireRole('admin', 'manager'), ctrl.update);
+router.delete('/:id', verifyToken, requireRole('admin', 'manager'), ctrl.remove);
 
 module.exports = router;

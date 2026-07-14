@@ -1,4 +1,5 @@
 const db = require('../db');
+const { distanceKm, selectZone, feeFor } = require('../utils/delivery');
 
 const findAll = ({ date, employee_id, status, user_id } = {}) => {
   const conditions = [];
@@ -45,6 +46,30 @@ const createWithItems = async (purchase, items) => {
   const client = await db.connect();
   try {
     await client.query('BEGIN');
+
+    const quantities = new Map();
+    for (const item of items) { const quantity=Number(item.quantity); if(!item.inventory_id||!Number.isInteger(quantity)||quantity<=0) throw Object.assign(new Error('Productos o cantidades inválidos'),{status:400}); quantities.set(item.inventory_id,(quantities.get(item.inventory_id)||0)+quantity); }
+    const ids=[...quantities.keys()];
+    const { rows: products } = await client.query(
+      `SELECT i.id,i.name,i.price,i.stock,i.active,p.id AS promotion_id,p.discount_pct,p.discount_fixed
+       FROM inventory i LEFT JOIN LATERAL (SELECT * FROM promotions p WHERE p.inventory_id=i.id AND p.active=TRUE AND (p.valid_from IS NULL OR p.valid_from<=CURRENT_DATE) AND (p.valid_until IS NULL OR p.valid_until>=CURRENT_DATE) ORDER BY p.created_at DESC LIMIT 1) p ON TRUE
+       WHERE i.id=ANY($1::uuid[]) FOR UPDATE OF i`, [ids]
+    );
+    if(products.length!==ids.length)throw Object.assign(new Error('Uno de los productos no existe'),{status:400});
+    const byId=new Map(products.map(product=>[product.id,product]));
+    items=ids.map(id=>{const product=byId.get(id);const quantity=quantities.get(id);if(!product.active)throw Object.assign(new Error(`${product.name} no está disponible`),{status:409});if(Number(product.stock)<quantity)throw Object.assign(new Error(`Stock insuficiente para ${product.name}`),{status:409});const price=Number(product.price);const unitDiscount=product.discount_pct!=null?price*Number(product.discount_pct)/100:Math.min(price,Number(product.discount_fixed||0));return{inventory_id:id,quantity,unit_price:price,promotion_id:product.promotion_id||null,discount_pct:price?unitDiscount/price*100:0,line_total:Number(((price-unitDiscount)*quantity).toFixed(2)),discount_total:Number((unitDiscount*quantity).toFixed(2))};});
+    purchase.subtotal=Number(items.reduce((sum,item)=>sum+item.unit_price*item.quantity,0).toFixed(2));purchase.discount_total=Number(items.reduce((sum,item)=>sum+item.discount_total,0).toFixed(2));
+    let deliveryFee=0;
+    if(purchase.delivery_method==='home_delivery'){
+      const {rows:addresses}=await client.query('SELECT * FROM user_addresses WHERE id=$1 AND user_id=$2',[purchase.address_id,purchase.user_id]);const address=addresses[0];
+      if(!address||address.latitude==null||address.longitude==null)throw Object.assign(new Error('Confirma la ubicación de la dirección'),{status:409,appCode:'ADDRESS_LOCATION_REQUIRED'});
+      const {rows:configs}=await client.query('SELECT * FROM shop_config WHERE id=1');const config=configs[0];if(!config||config.latitude==null||config.longitude==null)throw Object.assign(new Error('La ubicación de tienda no está configurada'),{status:409,appCode:'SHOP_LOCATION_REQUIRED'});
+      const distance=distanceKm(Number(config.latitude),Number(config.longitude),Number(address.latitude),Number(address.longitude));const {rows:zones}=await client.query('SELECT * FROM delivery_zones WHERE active=TRUE ORDER BY min_km');const zone=selectZone(zones,distance);
+      if(!zone)throw Object.assign(new Error('La dirección está fuera del área de entrega'),{status:409,appCode:'DELIVERY_OUT_OF_RANGE'});
+      deliveryFee=feeFor(zone,distance);if(purchase.shipping_method==='standard'&&config.free_shipping_threshold!=null&&purchase.subtotal>=Number(config.free_shipping_threshold))deliveryFee=0;if(purchase.shipping_method==='express')deliveryFee+=Number(config.express_surcharge||0);
+      purchase.delivery_distance_km=Number(distance.toFixed(2));purchase.delivery_zone_id=zone.id;purchase.delivery_address=[address.street,address.exterior_number,address.neighborhood,address.city,address.state,address.zip_code].filter(Boolean).join(', ');
+    }
+    purchase.delivery_fee=Number(deliveryFee.toFixed(2));purchase.total=Number((purchase.subtotal-purchase.discount_total+purchase.delivery_fee).toFixed(2));
 
     const { rows: [p] } = await client.query(
       `INSERT INTO purchases
