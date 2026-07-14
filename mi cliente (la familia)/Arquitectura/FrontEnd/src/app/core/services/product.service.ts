@@ -1,7 +1,15 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { API_BASE_URL } from '../api.config';
-import { Product, ProductCategory, ProductReview, SearchFilters } from '../models/product.model';
+import {
+  Product,
+  ProductCategory,
+  ProductReview,
+  ProductReviewsResult,
+  ReviewInput,
+  SearchFilters,
+} from '../models/product.model';
+import { map, Observable, tap } from 'rxjs';
 
 interface ApiCategory {
   id: string;
@@ -25,6 +33,34 @@ interface ApiInventoryItem {
   active?: boolean | null;
   has_expiration?: boolean | null;
   image_url?: string | null;
+  rating?: string | number | null;
+  review_count?: number | null;
+}
+
+interface ApiProductReview {
+  id: string;
+  user_id: string;
+  user_name: string;
+  rating: number;
+  comment: string;
+  verified_purchase: boolean;
+  is_mine: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+interface ApiProductReviewsResult {
+  reviews: ApiProductReview[];
+  summary: {
+    average: number;
+    total: number;
+    distribution: Record<'1' | '2' | '3' | '4' | '5', number>;
+  };
+  eligibility: {
+    can_review: boolean;
+    reason: ProductReviewsResult['eligibility']['reason'];
+    review_id?: string;
+  };
 }
 
 const CATEGORY_ICONS: Record<string, string> = {
@@ -110,6 +146,18 @@ export class ProductService {
     return this.productsSignal().find((p) => p.id === id);
   }
 
+  loadProduct(id: string): Observable<Product> {
+    return this.http.get<ApiInventoryItem>(`${API_BASE_URL}/inventory/${id}`).pipe(
+      map((item) => this.mapInventoryItem(item)),
+      tap((product) => {
+        const exists = this.productsSignal().some((current) => current.id === product.id);
+        this.productsSignal.update((products) => exists
+          ? products.map((current) => current.id === product.id ? product : current)
+          : [...products, product]);
+      }),
+    );
+  }
+
   searchProducts(filters: SearchFilters): Product[] {
     let results = [...this.productsSignal()];
     if (filters.query) {
@@ -129,8 +177,44 @@ export class ProductService {
     return results;
   }
 
-  getReviews(productId: string): ProductReview[] {
-    return [];
+  getReviews(productId: string): Observable<ProductReviewsResult> {
+    return this.http.get<ApiProductReviewsResult>(`${API_BASE_URL}/reviews/products/${productId}`).pipe(
+      map((result) => ({
+        reviews: result.reviews.map((review) => this.mapReview(review)),
+        summary: {
+          average: Number(result.summary.average),
+          total: result.summary.total,
+          distribution: {
+            1: result.summary.distribution['1'] ?? 0,
+            2: result.summary.distribution['2'] ?? 0,
+            3: result.summary.distribution['3'] ?? 0,
+            4: result.summary.distribution['4'] ?? 0,
+            5: result.summary.distribution['5'] ?? 0,
+          },
+        },
+        eligibility: {
+          canReview: result.eligibility.can_review,
+          reason: result.eligibility.reason,
+          reviewId: result.eligibility.review_id,
+        },
+      })),
+      tap((result) => this.applyReviewSummary(productId, result.summary.average, result.summary.total)),
+    );
+  }
+
+  createReview(productId: string, input: ReviewInput): Observable<void> {
+    return this.http.post<unknown>(`${API_BASE_URL}/reviews`, {
+      inventory_id: productId,
+      ...input,
+    }).pipe(map(() => undefined));
+  }
+
+  updateReview(reviewId: string, input: ReviewInput): Observable<void> {
+    return this.http.put<unknown>(`${API_BASE_URL}/reviews/${reviewId}`, input).pipe(map(() => undefined));
+  }
+
+  deleteReview(reviewId: string): Observable<void> {
+    return this.http.delete<void>(`${API_BASE_URL}/reviews/${reviewId}`);
   }
 
   toggleFavorite(productId: string): void {
@@ -258,8 +342,8 @@ export class ProductService {
       images: [item.image_url || 'https://placehold.co/400x400?text=Sin+Imagen'],
       category,
       categoryId,
-      rating: 5,
-      reviewCount: 0,
+      rating: Number(item.rating ?? 0),
+      reviewCount: Number(item.review_count ?? 0),
       inStock: (item.active ?? true) && stock > 0,
       stockQuantity: stock,
     };
@@ -290,6 +374,26 @@ export class ProductService {
     this.categoriesSignal.set(this.categoriesSignal().map((c) => ({ ...c, productCount: counts[c.id] || 0 })));
   }
 
+  private mapReview(review: ApiProductReview): ProductReview {
+    return {
+      id: review.id,
+      userId: review.user_id,
+      userName: review.user_name,
+      rating: Number(review.rating),
+      comment: review.comment,
+      date: new Date(review.created_at),
+      updatedAt: new Date(review.updated_at),
+      verifiedPurchase: review.verified_purchase,
+      isMine: review.is_mine,
+    };
+  }
+
+  private applyReviewSummary(productId: string, rating: number, reviewCount: number): void {
+    this.productsSignal.update((products) => products.map((product) => (
+      product.id === productId ? { ...product, rating, reviewCount } : product
+    )));
+  }
+
   private iconForCategory(name: string, slug?: string): string {
     const key = this.normalize(slug || name);
     return CATEGORY_ICONS[key] ?? 'package';
@@ -303,8 +407,6 @@ export class ProductService {
     return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
   }
 }
-
-
 
 
 

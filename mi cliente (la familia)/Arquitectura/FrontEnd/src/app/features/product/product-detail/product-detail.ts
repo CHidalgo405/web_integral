@@ -1,10 +1,10 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Location } from '@angular/common';
 import { ProductService } from '../../../core/services/product.service';
 import { CartService } from '../../../core/services/cart.service';
 import { MxnCurrencyPipe } from '../../../shared/pipes/currency.pipe';
-import { Product, ProductVariant } from '../../../core/models/product.model';
+import { Product, ProductReview, ProductVariant } from '../../../core/models/product.model';
 import { IconComponent } from '../../../shared/components/icon/icon';
 
 @Component({
@@ -175,6 +175,7 @@ export class ProductDetail implements OnInit {
   private cartService = inject(CartService);
   private route = inject(ActivatedRoute);
   private location = inject(Location);
+  private changeDetector = inject(ChangeDetectorRef);
 
   protected Math = Math;
 
@@ -182,25 +183,40 @@ export class ProductDetail implements OnInit {
   selectedVariant = signal<ProductVariant | undefined>(undefined);
   quantity = signal(1);
   activeImageIndex = signal(0);
+  firstReview = signal<ProductReview | null>(null);
 
   ngOnInit(): void {
     this.route.params.subscribe(p => {
-      this.product = this.productService.getProductById(p['id']);
+      const productId = p['id'];
+      this.product = this.productService.getProductById(productId);
       this.activeImageIndex.set(0);
       this.quantity.set(1);
-      if (this.product?.variants?.length) {
-        const firstInStock = this.product.variants.find(v => v.inStock);
-        this.selectedVariant.set(firstInStock);
-      } else {
-        this.selectedVariant.set(undefined);
-      }
-    });
-  }
+      this.configureVariants();
+      this.firstReview.set(null);
 
-  firstReview() {
-    if (!this.product) return null;
-    const reviews = this.productService.getReviews(this.product.id);
-    return reviews[0] ?? null;
+      this.productService.loadProduct(productId).subscribe({
+        next: (product) => {
+          this.product = product;
+          this.configureVariants();
+          this.changeDetector.markForCheck();
+        },
+      });
+
+      this.productService.getReviews(productId).subscribe({
+        next: (result) => {
+          this.firstReview.set(result.reviews[0] ?? null);
+          const currentProduct = this.product;
+          if (currentProduct && currentProduct.id === productId) {
+            this.product = {
+              ...currentProduct,
+              rating: result.summary.average,
+              reviewCount: result.summary.total,
+            };
+          }
+          this.changeDetector.markForCheck();
+        },
+      });
+    });
   }
 
   formatDate(date: Date): string {
@@ -235,5 +251,13 @@ export class ProductDetail implements OnInit {
 
   isFav(): boolean {
     return this.product ? this.productService.isFavorite(this.product.id) : false;
+  }
+
+  private configureVariants(): void {
+    if (this.product?.variants?.length) {
+      this.selectedVariant.set(this.product.variants.find((variant) => variant.inStock));
+    } else {
+      this.selectedVariant.set(undefined);
+    }
   }
 }
