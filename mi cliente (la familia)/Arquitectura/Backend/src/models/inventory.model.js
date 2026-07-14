@@ -16,6 +16,7 @@ const findAll = ({ active, category_id, low_stock } = {}) => {
        i.id, i.name, i.sku, i.description, i.category_id, c.name AS category,
        u.abbreviation AS unit, i.uom_id, i.price, i.cost, i.stock, i.min_stock,
        i.stock <= i.min_stock AS low_stock, i.has_expiration, i.active,
+       i.image_url, i.image_public_id,
        i.created_at, i.updated_at
      FROM inventory i
      LEFT JOIN categories c ON c.id = i.category_id
@@ -41,22 +42,22 @@ const findByBarcode = (barcode) =>
     [barcode]
   );
 
-const create = ({ name, sku, description, category_id, uom_id, price, cost, stock, min_stock, has_expiration }) =>
+const create = ({ name, sku, description, category_id, uom_id, price, cost, stock, min_stock, has_expiration, image_url, image_public_id }) =>
   db.query(
     `INSERT INTO inventory
-       (name, sku, description, category_id, uom_id, price, cost, stock, min_stock, has_expiration)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *`,
+       (name, sku, description, category_id, uom_id, price, cost, stock, min_stock, has_expiration, image_url, image_public_id)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *`,
     [name, sku ?? null, description ?? null, category_id ?? null, uom_id ?? null,
-     price, cost ?? null, stock ?? 0, min_stock ?? 0, has_expiration ?? false]
+     price, cost ?? null, stock ?? 0, min_stock ?? 0, has_expiration ?? false, image_url ?? null, image_public_id ?? null]
   );
 
-const update = (id, { name, sku, description, category_id, uom_id, price, cost, stock, min_stock, has_expiration, active }) =>
+const update = (id, { name, sku, description, category_id, uom_id, price, cost, stock, min_stock, has_expiration, active, image_url, image_public_id }) =>
   db.query(
     `UPDATE inventory
      SET name=$1, sku=$2, description=$3, category_id=$4, uom_id=$5,
-         price=$6, cost=$7, stock=$8, min_stock=$9, has_expiration=$10, active=$11
+         price=$6, cost=$7, stock=$8, min_stock=$9, has_expiration=$10, active=$11, image_url=$13, image_public_id=$14
      WHERE id=$12 RETURNING *`,
-    [name, sku, description, category_id, uom_id, price, cost, stock ?? 0, min_stock ?? 0, has_expiration ?? false, active ?? true, id]
+    [name, sku, description, category_id, uom_id, price, cost, stock ?? 0, min_stock ?? 0, has_expiration ?? false, active ?? true, id, image_url ?? null, image_public_id ?? null]
   );
 
 const remove = (id) =>

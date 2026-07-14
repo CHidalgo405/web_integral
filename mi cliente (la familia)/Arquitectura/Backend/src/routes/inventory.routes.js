@@ -12,6 +12,9 @@ router.post('/:id/adjustments', verifyToken, requireRole('admin', 'stock'), ctrl
 router.put('/:id', verifyToken, requireRole('admin'), ctrl.update);
 router.delete('/:id', verifyToken, requireRole('admin'), ctrl.remove);
 
+const upload = require('../middleware/upload.middleware');
+router.post('/:id/image', verifyToken, requireRole('admin', 'manager'), upload.single('image'), ctrl.uploadImage);
+
 router.get('/:id/barcodes', verifyToken, requireRole('admin', 'stock'), ctrl.getBarcodes);
 router.post('/:id/barcodes', verifyToken, requireRole('admin'), ctrl.addBarcode);
 router.delete('/:id/barcodes/:barcode', verifyToken, requireRole('admin'), ctrl.removeBarcode);
