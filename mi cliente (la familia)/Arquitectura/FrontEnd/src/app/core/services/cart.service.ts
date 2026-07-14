@@ -22,6 +22,7 @@ export class CartService {
   private http = inject(HttpClient);
   private cartItems = signal<CartItem[]>([]);
   private appliedCoupon = signal<CouponValidation | null>(null);
+  private shippingQuote = signal(0);
   private alertService = inject(AlertService);
 
   readonly items = computed(() => this.cartItems());
@@ -44,7 +45,7 @@ export class CartService {
         : coupon.discountAmount ?? 0
       : 0;
 
-    const shipping = subtotal > 500 ? 0 : 49.99;
+    const shipping = this.shippingQuote();
     const total = subtotal - discount + shipping;
 
     return {
@@ -135,7 +136,12 @@ export class CartService {
   clearCart(): void {
     this.cartItems.set([]);
     this.appliedCoupon.set(null);
+    this.shippingQuote.set(0);
     this.alertService.show('info', 'Carrito Vaciado', 'Se han eliminado todos los productos.');
+  }
+
+  setShipping(amount: number): void {
+    this.shippingQuote.set(Math.max(0, Number(amount) || 0));
   }
 
   private isPromotionValid(promotion: ApiPromotion): boolean {

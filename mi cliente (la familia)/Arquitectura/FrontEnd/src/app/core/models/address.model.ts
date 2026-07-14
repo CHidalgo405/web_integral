@@ -12,4 +12,6 @@ export interface Address {
   phone: string;
   isDefault: boolean;
   notes?: string;
+  latitude?: number;
+  longitude?: number;
 }

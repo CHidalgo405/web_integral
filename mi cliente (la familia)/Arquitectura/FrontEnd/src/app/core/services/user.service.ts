@@ -19,6 +19,8 @@ interface ApiAddress {
   zip_code: string | null;
   notes: string | null;
   is_default: boolean;
+  latitude: number | null;
+  longitude: number | null;
 }
 
 interface ApiPaymentMethod {
@@ -149,6 +151,8 @@ export class UserService {
       zipCode: r.zip_code ?? '',
       notes: r.notes ?? undefined,
       isDefault: r.is_default,
+      latitude: r.latitude == null ? undefined : Number(r.latitude),
+      longitude: r.longitude == null ? undefined : Number(r.longitude),
     };
   }
 
@@ -166,6 +170,8 @@ export class UserService {
       zip_code: a.zipCode || null,
       notes: a.notes || null,
       is_default: a.isDefault,
+      latitude: a.latitude ?? null,
+      longitude: a.longitude ?? null,
     };
   }
 

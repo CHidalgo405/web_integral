@@ -124,6 +124,8 @@ export class OrderService {
     }
 
     const payload = {
+      address_id: address.id,
+      shipping_method: shippingMethod,
       delivery_method: this.toApiShippingMethod(shippingMethod),
       delivery_address: this.formatAddress(address),
       delivery_fee: shippingCost,
