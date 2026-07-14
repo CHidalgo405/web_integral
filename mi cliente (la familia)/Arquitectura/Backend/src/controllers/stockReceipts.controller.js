@@ -10,7 +10,7 @@ const getAll = async (req, res, next) => {
 const getOne = async (req, res, next) => {
   try {
     const { rows } = await StockReceipts.findById(req.params.id);
-    if (!rows.length) return res.status(404).json({ error: 'Stock receipt not found' });
+    if (!rows.length) return res.status(404).json({ error: 'Recepción de existencias no encontrada' });
     res.json(rows[0]);
   } catch (err) { next(err); }
 };

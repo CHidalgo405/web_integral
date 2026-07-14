@@ -15,6 +15,7 @@ export class AdminPromotions implements OnInit {
   ngOnInit(){this.load();}
   load(){forkJoin({promos:this.api.promotions(),inventory:this.api.inventory()}).subscribe({next:value=>{this.promotions.set(value.promos);this.inventory.set(value.inventory);const q=this.route.snapshot.queryParamMap;if(q.get('suggested'))this.open(undefined,q.get('inventoryId')||'',q.get('until')||'');},error:e=>this.error.set(e.error?.error||'No se pudieron cargar las promociones.')});}
   state(item:Promotion):'active'|'scheduled'|'expired'{const today=new Date().toISOString().slice(0,10);if(!item.active||!!item.valid_until&&item.valid_until<today)return'expired';if(!!item.valid_from&&item.valid_from>today)return'scheduled';return'active';}
+  stateLabel(item:Promotion){return {active:'Activa',scheduled:'Programada',expired:'Finalizada'}[this.state(item)];}
   count(value:string){return this.promotions().filter(item=>this.state(item)===value).length;}
   product(id:string){return this.inventory().find(item=>item.id===id)?.name||'Producto';}
   open(value?:Promotion,inventoryId='',until=''){const today=new Date().toISOString().slice(0,10);this.draft=value?{...value}:{name:'',description:'',inventory_id:inventoryId,discount_pct:20,active:true,valid_from:today,valid_until:until};this.mode=this.draft.discount_fixed!=null?'fixed':'percent';this.modal.set(true);}

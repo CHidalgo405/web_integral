@@ -666,7 +666,7 @@ export class Help {
     },
     { 
       q: '¿Cuánto tiempo tarda en llegar mi pedido?', 
-      a: 'El envío estándar tarda de 3 a 5 días hábiles, mientras que nuestro servicio Express entrega en 1 o 2 días hábiles. Si tu pedido es con entrega "Rapidito", te llegará el mismo día en cuestión de minutos.', 
+      a: 'El envío estándar tarda de 3 a 5 días hábiles, mientras que nuestro servicio exprés entrega en 1 o 2 días hábiles. Si tu pedido es con entrega "Rapidito", te llegará el mismo día en cuestión de minutos.',
       category: 'shipping',
       icon: 'truck'
     },

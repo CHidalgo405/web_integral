@@ -438,7 +438,7 @@ export class OrderConfirmation implements OnInit {
   deliveryLabel(): string {
     const map: Record<ShippingMethod, string> = {
       standard: 'Envío Estándar · 3-5 días hábiles',
-      express: 'Envío Express · 1-2 días hábiles',
+      express: 'Envío exprés · 1-2 días hábiles',
       pickup: 'Recoger en tienda · ~2 horas',
     };
     return this.order ? map[this.order.shippingMethod] : 'En camino';

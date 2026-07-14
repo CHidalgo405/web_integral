@@ -47,5 +47,8 @@ export class AdminSupply implements OnInit {
     this.api.receiveOrder(order.id,{items,notes:this.receiptNotes}).subscribe({next:()=>{this.modal.set(null);this.reload();},error:e=>this.error.set(e.error?.error||'No se pudo recibir la orden.')});
   }
   product(id:string){return this.inventory().find(item=>item.id===id);}
+  statusLabel(status:string){
+    return ({draft:'Borrador',sent:'Enviada',partial:'Recepción parcial',received:'Recibida',cancelled:'Cancelada'} as Record<string,string>)[status]||status;
+  }
   money(value:number|string|undefined){return Number(value||0).toLocaleString('es-MX',{style:'currency',currency:'MXN'});}
 }

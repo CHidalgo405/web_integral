@@ -146,7 +146,7 @@ const login = async (req, res, next) => {
     delete user.password_hash;
 
     res.json({
-      message: 'Login successful',
+      message: 'Inicio de sesión exitoso',
       user,
       ...tokens // accessToken, refreshToken
     });
@@ -160,26 +160,26 @@ const refresh = async (req, res, next) => {
     const { refreshToken } = req.body;
 
     if (!refreshToken) {
-      return res.status(401).json({ error: 'Refresh token is required' });
+      return res.status(401).json({ error: 'Se requiere el token de renovación' });
     }
 
     let decoded;
     try {
       decoded = jwt.verify(refreshToken, JWT_REFRESH_SECRET);
     } catch (err) {
-      return res.status(403).json({ error: 'Invalid or expired refresh token' });
+      return res.status(403).json({ error: 'El token de renovación no es válido o ha expirado' });
     }
 
     const tokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
     const session = await Sessions.findByTokenHash(tokenHash);
 
     if (!session) {
-      return res.status(403).json({ error: 'Session not found or revoked' });
+      return res.status(403).json({ error: 'La sesión no existe o fue revocada' });
     }
 
     const { rows } = await Users.findById(decoded.id);
     if (rows.length === 0 || !rows[0].active) {
-      return res.status(403).json({ error: 'User not found or deactivated' });
+      return res.status(403).json({ error: 'El usuario no existe o está desactivado' });
     }
 
     const user = rows[0];
@@ -272,7 +272,7 @@ const googleLogin = async (req, res, next) => {
     const tokens = await generateTokens(user, req, remember_me);
 
     res.json({
-      message: 'Login con Google exitoso',
+      message: 'Inicio de sesión con Google exitoso',
       user,
       ...tokens,
     });

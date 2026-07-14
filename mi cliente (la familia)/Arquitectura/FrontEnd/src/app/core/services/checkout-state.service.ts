@@ -23,7 +23,7 @@ export class CheckoutStateService {
   getShippingLabel(method: ShippingMethod | ''): string {
     const map: Record<ShippingMethod, string> = {
       standard: 'Envío Estándar',
-      express: 'Envío Express',
+      express: 'Envío exprés',
       pickup: 'Recoger en tienda',
     };
     return method ? map[method] : '';

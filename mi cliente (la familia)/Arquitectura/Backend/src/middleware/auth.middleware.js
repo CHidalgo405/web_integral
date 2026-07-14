@@ -5,12 +5,12 @@ const JWT_SECRET = process.env.JWT_SECRET || 'supersecret_jwt_key_please_change'
 const verifyToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
   if (!authHeader) {
-    return res.status(403).json({ error: 'No token provided' });
+    return res.status(403).json({ error: 'No se proporcionó un token' });
   }
 
   const token = authHeader.split(' ')[1]; // Format: Bearer <token>
   if (!token) {
-    return res.status(403).json({ error: 'Token format is invalid' });
+    return res.status(403).json({ error: 'El formato del token no es válido' });
   }
 
   try {
@@ -18,14 +18,14 @@ const verifyToken = (req, res, next) => {
     req.user = decoded; // { id, username, role, iat, exp }
     next();
   } catch (err) {
-    return res.status(401).json({ error: 'Unauthorized: Invalid or expired token' });
+    return res.status(401).json({ error: 'No autorizado: el token no es válido o ha expirado' });
   }
 };
 
 const requireRole = (...roles) => {
   return (req, res, next) => {
     if (!req.user || !req.user.role) {
-      return res.status(401).json({ error: 'Unauthorized: No user role found' });
+      return res.status(401).json({ error: 'No autorizado: no se encontró el rol del usuario' });
     }
 
     // Manager conserva su rol para auditoría, pero comparte el alcance de admin.
@@ -42,7 +42,7 @@ const requireRole = (...roles) => {
 };
 
 const requireExactRole = (...roles) => (req, res, next) => {
-  if (!req.user?.role) return res.status(401).json({ error: 'Unauthorized: No user role found' });
+  if (!req.user?.role) return res.status(401).json({ error: 'No autorizado: no se encontró el rol del usuario' });
   if (!roles.includes(req.user.role)) return res.status(403).json({ error: `Forbidden: Requires one of these exact roles: ${roles.join(', ')}` });
   next();
 };

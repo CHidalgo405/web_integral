@@ -20,5 +20,8 @@ export class AdminFinance implements OnInit {
   reverse(){const item=this.selected();if(!item)return;this.api.reverseExpense(item.id,this.reason).subscribe({next:()=>{this.modal.set(null);this.load();},error:e=>this.error.set(e.error?.error||'No se pudo revertir.')});}
   saveCategory(){this.api.createExpenseCategory(this.categoryName).subscribe({next:()=>{this.categoryName='';this.modal.set(null);this.load();},error:e=>this.error.set(e.error?.error||'No se pudo crear la categoría.')});}
   isReversed(item:Expense){return this.expenses().some(row=>row.reverses_expense_id===item.id);}
+  paymentLabel(method:string){return ({cash:'Efectivo',card:'Tarjeta',paypal:'PayPal',transfer:'Transferencia'} as Record<string,string>)[method]||method;}
+  shiftLabel(shift:string|undefined){return shift?({morning:'Matutino',afternoon:'Vespertino'} as Record<string,string>)[shift]||shift:'—';}
+  auditLabel(type:string){return ({opening:'Apertura',closing:'Cierre',spot_check:'Revisión extraordinaria'} as Record<string,string>)[type]||type;}
   money(value:number|string|undefined){return Number(value||0).toLocaleString('es-MX',{style:'currency',currency:'MXN'});}
 }

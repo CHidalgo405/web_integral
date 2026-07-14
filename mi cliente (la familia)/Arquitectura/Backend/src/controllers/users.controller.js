@@ -11,7 +11,7 @@ const getAll = async (req, res, next) => {
 const getOne = async (req, res, next) => {
   try {
     const { rows } = await Users.findById(req.params.id);
-    if (!rows.length) return res.status(404).json({ error: 'User not found' });
+    if (!rows.length) return res.status(404).json({ error: 'Usuario no encontrado' });
     res.json(rows[0]);
   } catch (err) { next(err); }
 };
@@ -59,13 +59,13 @@ const update = async (req, res, next) => {
   try {
     const allowedRoles = ['admin', 'manager', 'cashier', 'stock', 'customer'];
     if (!allowedRoles.includes(req.body.role)) {
-      return res.status(400).json({ error: 'Invalid user role' });
+      return res.status(400).json({ error: 'El rol del usuario no es válido' });
     }
     if (req.params.id === req.user.id && (!['admin', 'manager'].includes(req.body.role) || req.body.active === false)) {
       return res.status(400).json({ error: 'No puedes quitar tus propios permisos administrativos' });
     }
     const { rows } = await Users.update(req.params.id, req.body);
-    if (!rows.length) return res.status(404).json({ error: 'User not found' });
+    if (!rows.length) return res.status(404).json({ error: 'Usuario no encontrado' });
     res.json(rows[0]);
   } catch (err) { next(err); }
 };
@@ -73,7 +73,7 @@ const update = async (req, res, next) => {
 const remove = async (req, res, next) => {
   try {
     const { rows } = await Users.remove(req.params.id);
-    if (!rows.length) return res.status(404).json({ error: 'User not found' });
+    if (!rows.length) return res.status(404).json({ error: 'Usuario no encontrado' });
     res.status(204).send();
   } catch (err) { next(err); }
 };

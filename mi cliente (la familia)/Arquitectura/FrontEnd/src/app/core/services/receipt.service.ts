@@ -154,7 +154,7 @@ export class ReceiptService {
   private shippingLabel(order: Order): string {
     const labels: Record<string, string> = {
       standard: 'Estándar (3-5 días)',
-      express: 'Express (1-2 días)',
+      express: 'Exprés (1-2 días)',
       pickup: 'Recoger en tienda',
     };
     return labels[order.shippingMethod] ?? order.shippingMethod;

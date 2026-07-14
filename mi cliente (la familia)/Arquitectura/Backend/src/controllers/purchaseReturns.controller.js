@@ -10,7 +10,7 @@ const getAll = async (req, res, next) => {
 const getOne = async (req, res, next) => {
   try {
     const { rows } = await PurchaseReturns.findById(req.params.id);
-    if (!rows.length) return res.status(404).json({ error: 'Return not found' });
+    if (!rows.length) return res.status(404).json({ error: 'Devolución no encontrada' });
     res.json(rows[0]);
   } catch (err) { next(err); }
 };
@@ -26,7 +26,7 @@ const create = async (req, res, next) => {
   try {
     const { items, ...ret } = req.body;
     if (!items || !items.length) {
-      return res.status(400).json({ error: 'At least one item is required' });
+      return res.status(400).json({ error: 'Se requiere al menos un producto' });
     }
     const row = await PurchaseReturns.createWithItems(ret, items);
     res.status(201).json(row);

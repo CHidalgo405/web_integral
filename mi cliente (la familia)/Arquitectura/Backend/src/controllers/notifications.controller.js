@@ -10,7 +10,7 @@ const getAll = async (req, res, next) => {
 const getOne = async (req, res, next) => {
   try {
     const { rows } = await Notifications.findById(req.params.id);
-    if (!rows.length) return res.status(404).json({ error: 'Notification not found' });
+    if (!rows.length) return res.status(404).json({ error: 'Notificación no encontrada' });
     res.json(rows[0]);
   } catch (err) { next(err); }
 };
@@ -25,7 +25,7 @@ const create = async (req, res, next) => {
 const markSeen = async (req, res, next) => {
   try {
     const { rows } = await Notifications.markSeen(req.params.id, req.user.id);
-    if (!rows.length) return res.status(404).json({ error: 'Notification not found' });
+    if (!rows.length) return res.status(404).json({ error: 'Notificación no encontrada' });
     res.json(rows[0]);
   } catch (err) { next(err); }
 };

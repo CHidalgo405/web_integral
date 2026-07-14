@@ -14,7 +14,7 @@ const getAll = async (req, res, next) => {
 const getOne = async (req, res, next) => {
   try {
     const { rows } = await Inventory.findById(req.params.id);
-    if (!rows.length) return res.status(404).json({ error: 'Item not found' });
+    if (!rows.length) return res.status(404).json({ error: 'Artículo no encontrado' });
     res.json(['admin', 'manager', 'stock'].includes(req.user.role) ? rows[0] : toCatalogItem(rows[0]));
   } catch (err) { next(err); }
 };
@@ -29,7 +29,7 @@ const getLowStock = async (req, res, next) => {
 const findByBarcode = async (req, res, next) => {
   try {
     const { rows } = await Inventory.findByBarcode(req.params.barcode);
-    if (!rows.length) return res.status(404).json({ error: 'Barcode not found' });
+    if (!rows.length) return res.status(404).json({ error: 'Código de barras no encontrado' });
     res.json(rows[0]);
   } catch (err) { next(err); }
 };
@@ -44,7 +44,7 @@ const create = async (req, res, next) => {
 const update = async (req, res, next) => {
   try {
     const { rows } = await Inventory.update(req.params.id, req.body);
-    if (!rows.length) return res.status(404).json({ error: 'Item not found' });
+    if (!rows.length) return res.status(404).json({ error: 'Artículo no encontrado' });
     res.json(rows[0]);
   } catch (err) { next(err); }
 };
@@ -52,7 +52,7 @@ const update = async (req, res, next) => {
 const remove = async (req, res, next) => {
   try {
     const { rows } = await Inventory.remove(req.params.id);
-    if (!rows.length) return res.status(404).json({ error: 'Item not found' });
+    if (!rows.length) return res.status(404).json({ error: 'Artículo no encontrado' });
     res.status(204).send();
   } catch (err) { next(err); }
 };
@@ -74,7 +74,7 @@ const addBarcode = async (req, res, next) => {
 const removeBarcode = async (req, res, next) => {
   try {
     const { rows } = await Inventory.removeBarcode(req.params.barcode);
-    if (!rows.length) return res.status(404).json({ error: 'Barcode not found' });
+    if (!rows.length) return res.status(404).json({ error: 'Código de barras no encontrado' });
     res.status(204).send();
   } catch (err) { next(err); }
 };

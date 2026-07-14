@@ -21,7 +21,7 @@ const getAll = async (req, res, next) => {
 const getOne = async (req, res, next) => {
   try {
     const { rows } = await DeliveryZones.findById(req.params.id);
-    if (!rows.length) return res.status(404).json({ error: 'Delivery zone not found' });
+    if (!rows.length) return res.status(404).json({ error: 'Zona de entrega no encontrada' });
     res.json(rows[0]);
   } catch (err) { next(err); }
 };
@@ -30,7 +30,7 @@ const getFee = async (req, res, next) => {
   try {
     const distance = parseFloat(req.query.distance);
     if (isNaN(distance) || distance < 0) {
-      return res.status(400).json({ error: 'Invalid distance value' });
+      return res.status(400).json({ error: 'La distancia no es válida' });
     }
     const { rows } = await DeliveryZones.calculateFee(distance);
     res.json({ distance_km: distance, fee: rows[0].fee });
@@ -84,7 +84,7 @@ const update = async (req, res, next) => {
   try {
     const current = await DeliveryZones.findAll(); assertContiguous(current.rows.map(zone=>zone.id===req.params.id?{...zone,...req.body}:zone));
     const { rows } = await DeliveryZones.update(req.params.id, req.body);
-    if (!rows.length) return res.status(404).json({ error: 'Delivery zone not found' });
+    if (!rows.length) return res.status(404).json({ error: 'Zona de entrega no encontrada' });
     res.json(rows[0]);
   } catch (err) { next(err); }
 };
@@ -93,7 +93,7 @@ const remove = async (req, res, next) => {
   try {
     const current = await DeliveryZones.findAll(); const target=current.rows.find(zone=>zone.id===req.params.id); const outer=Math.max(...current.rows.map(zone=>Number(zone.max_km))); if(target&&Number(target.max_km)!==outer) return res.status(409).json({error:'Solo puedes retirar la zona exterior para conservar cobertura continua'});
     const { rows } = await DeliveryZones.remove(req.params.id);
-    if (!rows.length) return res.status(404).json({ error: 'Delivery zone not found' });
+    if (!rows.length) return res.status(404).json({ error: 'Zona de entrega no encontrada' });
     res.status(204).send();
   } catch (err) { next(err); }
 };

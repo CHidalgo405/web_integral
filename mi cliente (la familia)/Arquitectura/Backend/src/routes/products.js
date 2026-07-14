@@ -18,7 +18,7 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const result = await db.query('SELECT * FROM products WHERE id = $1', [req.params.id]);
-    if (!result.rows.length) return res.status(404).json({ error: 'Product not found' });
+    if (!result.rows.length) return res.status(404).json({ error: 'Producto no encontrado' });
     res.json(result.rows[0]);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -45,7 +45,7 @@ router.put('/:id', async (req, res) => {
       'UPDATE products SET name=$1, price=$2, stock=$3 WHERE id=$4 RETURNING *',
       [name, price, stock, req.params.id]
     );
-    if (!result.rows.length) return res.status(404).json({ error: 'Product not found' });
+    if (!result.rows.length) return res.status(404).json({ error: 'Producto no encontrado' });
     res.json(result.rows[0]);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -55,8 +55,8 @@ router.put('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     const result = await db.query('DELETE FROM products WHERE id=$1 RETURNING *', [req.params.id]);
-    if (!result.rows.length) return res.status(404).json({ error: 'Product not found' });
-    res.json({ message: 'Product deleted' });
+    if (!result.rows.length) return res.status(404).json({ error: 'Producto no encontrado' });
+    res.json({ message: 'Producto eliminado' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

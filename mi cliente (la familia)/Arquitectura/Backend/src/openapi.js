@@ -8,17 +8,17 @@ const json = (schema) => ({
 });
 
 const ok = (schema) => ({
-  description: 'OK',
+  description: 'Correcto',
   content: json(schema),
 });
 
 const created = (schema) => ({
-  description: 'Created',
+  description: 'Creado',
   content: json(schema),
 });
 
 const deleted = {
-  description: 'Deleted',
+  description: 'Eliminado',
 };
 
 const idParam = {
@@ -37,14 +37,14 @@ const crud = ({ tag, schema, createSchema = schema, updateSchema = schema, delet
   collection: {
     get: {
       tags: [tag],
-      summary: `List ${tag.toLowerCase()}`,
+      summary: `Listar ${tag.toLowerCase()}`,
       responses: {
         200: ok({ type: 'array', items: { $ref: `#/components/schemas/${schema}` } }),
       },
     },
     post: {
       tags: [tag],
-      summary: `Create ${tag.toLowerCase()}`,
+      summary: `Crear ${tag.toLowerCase()}`,
       requestBody: requestBody({ $ref: `#/components/schemas/${createSchema}` }),
       responses: {
         201: created({ $ref: `#/components/schemas/${schema}` }),
@@ -55,7 +55,7 @@ const crud = ({ tag, schema, createSchema = schema, updateSchema = schema, delet
     parameters: [idParam],
     get: {
       tags: [tag],
-      summary: `Get ${tag.toLowerCase()} by ID`,
+      summary: `Obtener ${tag.toLowerCase()} por ID`,
       responses: {
         200: ok({ $ref: `#/components/schemas/${schema}` }),
         404: { $ref: '#/components/responses/NotFound' },
@@ -63,7 +63,7 @@ const crud = ({ tag, schema, createSchema = schema, updateSchema = schema, delet
     },
     put: {
       tags: [tag],
-      summary: `Update ${tag.toLowerCase()}`,
+      summary: `Actualizar ${tag.toLowerCase()}`,
       requestBody: requestBody({ $ref: `#/components/schemas/${updateSchema}` }),
       responses: {
         200: ok({ $ref: `#/components/schemas/${schema}` }),
@@ -72,7 +72,7 @@ const crud = ({ tag, schema, createSchema = schema, updateSchema = schema, delet
     },
     delete: {
       tags: [tag],
-      summary: `Delete ${tag.toLowerCase()}`,
+      summary: `Eliminar ${tag.toLowerCase()}`,
       responses: {
         200: { description: deleteDescription },
         204: deleted,
@@ -89,43 +89,43 @@ const noDeleteCrud = ({ tag, schema, createSchema = schema }) => {
   return docs;
 };
 
-const category = crud({ tag: 'Categories', schema: 'Category', createSchema: 'CategoryInput' });
-const unit = crud({ tag: 'Units', schema: 'UnitOfMeasure', createSchema: 'UnitOfMeasureInput' });
-const supplier = crud({ tag: 'Suppliers', schema: 'Supplier', createSchema: 'SupplierInput', deleteDescription: 'Supplier deactivated' });
-const employee = crud({ tag: 'Employees', schema: 'Employee', createSchema: 'EmployeeInput', deleteDescription: 'Employee deactivated' });
-const schedule = crud({ tag: 'Schedules', schema: 'Schedule', createSchema: 'ScheduleInput' });
-const user = crud({ tag: 'Users', schema: 'User', createSchema: 'UserInput', deleteDescription: 'User deactivated' });
-const customer = crud({ tag: 'Customers', schema: 'Customer', createSchema: 'CustomerInput' });
-const deliveryZone = crud({ tag: 'Delivery Zones', schema: 'DeliveryZone', createSchema: 'DeliveryZoneInput', deleteDescription: 'Delivery zone deactivated' });
-const promotion = crud({ tag: 'Promotions', schema: 'Promotion', createSchema: 'PromotionInput', deleteDescription: 'Promotion deactivated' });
-const expenseCategory = crud({ tag: 'Expense Categories', schema: 'ExpenseCategory', createSchema: 'ExpenseCategoryInput' });
-const expense = crud({ tag: 'Expenses', schema: 'Expense', createSchema: 'ExpenseInput' });
-const expirationBatch = noDeleteCrud({ tag: 'Expiration Batches', schema: 'ExpirationBatch', createSchema: 'ExpirationBatchInput' });
+const category = crud({ tag: 'Categorías', schema: 'Category', createSchema: 'CategoryInput' });
+const unit = crud({ tag: 'Unidades', schema: 'UnitOfMeasure', createSchema: 'UnitOfMeasureInput' });
+const supplier = crud({ tag: 'Proveedores', schema: 'Supplier', createSchema: 'SupplierInput', deleteDescription: 'Proveedor desactivado' });
+const employee = crud({ tag: 'Empleados', schema: 'Employee', createSchema: 'EmployeeInput', deleteDescription: 'Empleado desactivado' });
+const schedule = crud({ tag: 'Horarios', schema: 'Schedule', createSchema: 'ScheduleInput' });
+const user = crud({ tag: 'Usuarios', schema: 'User', createSchema: 'UserInput', deleteDescription: 'Usuario desactivado' });
+const customer = crud({ tag: 'Clientes', schema: 'Customer', createSchema: 'CustomerInput' });
+const deliveryZone = crud({ tag: 'Zonas de entrega', schema: 'DeliveryZone', createSchema: 'DeliveryZoneInput', deleteDescription: 'Zona de entrega desactivada' });
+const promotion = crud({ tag: 'Promociones', schema: 'Promotion', createSchema: 'PromotionInput', deleteDescription: 'Promoción desactivada' });
+const expenseCategory = crud({ tag: 'Categorías de gasto', schema: 'ExpenseCategory', createSchema: 'ExpenseCategoryInput' });
+const expense = crud({ tag: 'Gastos', schema: 'Expense', createSchema: 'ExpenseInput' });
+const expirationBatch = noDeleteCrud({ tag: 'Lotes de caducidad', schema: 'ExpirationBatch', createSchema: 'ExpirationBatchInput' });
 expirationBatch.item.put = {
-  tags: ['Expiration Batches'],
-  summary: 'Update expiration batch',
+  tags: ['Lotes de caducidad'],
+  summary: 'Actualizar lote de caducidad',
   requestBody: requestBody({ $ref: '#/components/schemas/ExpirationBatchInput' }),
   responses: {
     200: ok({ $ref: '#/components/schemas/ExpirationBatch' }),
     404: { $ref: '#/components/responses/NotFound' },
   },
 };
-const stockReceipt = noDeleteCrud({ tag: 'Stock Receipts', schema: 'StockReceipt', createSchema: 'StockReceiptInput' });
+const stockReceipt = noDeleteCrud({ tag: 'Recepciones de existencias', schema: 'StockReceipt', createSchema: 'StockReceiptInput' });
 delete stockReceipt.item.put;
-const cashAudit = noDeleteCrud({ tag: 'Cash Audit', schema: 'CashAudit', createSchema: 'CashAuditInput' });
+const cashAudit = noDeleteCrud({ tag: 'Auditoría de caja', schema: 'CashAudit', createSchema: 'CashAuditInput' });
 delete cashAudit.item.put;
 
 const openapi = {
   openapi: '3.0.3',
   info: {
     title: 'Tiendita Maday API',
-    description: 'Swagger/OpenAPI documentation for Tiendita Maday. The manager role shares the administrative permission scope.',
+    description: 'Documentación Swagger/OpenAPI de Tiendita Maday. El rol de gerente comparte el alcance de permisos administrativos.',
     version: '1.0.0',
   },
   servers: [
     {
       url: process.env.BACKEND_URL || 'http://localhost:3000/api',
-      description: 'API Server',
+      description: 'Servidor de la API',
     },
   ],
   security: [
@@ -134,33 +134,33 @@ const openapi = {
     },
   ],
   tags: [
-    { name: 'Auth' },
-    { name: 'Health' },
-    { name: 'Shop Config' },
-    { name: 'Categories' },
-    { name: 'Units' },
-    { name: 'Inventory' },
-    { name: 'Barcodes' },
-    { name: 'Price History' },
-    { name: 'Suppliers' },
-    { name: 'Purchase Orders' },
-    { name: 'Stock Receipts' },
-    { name: 'Expiration Batches' },
-    { name: 'Employees' },
-    { name: 'Schedules' },
-    { name: 'Shift Covers' },
-    { name: 'Users' },
-    { name: 'Customers' },
-    { name: 'Delivery Zones' },
-    { name: 'Promotions' },
-    { name: 'Purchases' },
-    { name: 'Purchase Returns' },
-    { name: 'Expense Categories' },
-    { name: 'Expenses' },
-    { name: 'Till Movements' },
-    { name: 'Cash Audit' },
-    { name: 'Cash Register' },
-    { name: 'Notifications' },
+    { name: 'Autenticación' },
+    { name: 'Estado' },
+    { name: 'Configuración de tienda' },
+    { name: 'Categorías' },
+    { name: 'Unidades' },
+    { name: 'Inventario' },
+    { name: 'Códigos de barras' },
+    { name: 'Historial de precios' },
+    { name: 'Proveedores' },
+    { name: 'Órdenes de compra' },
+    { name: 'Recepciones de existencias' },
+    { name: 'Lotes de caducidad' },
+    { name: 'Empleados' },
+    { name: 'Horarios' },
+    { name: 'Coberturas de turno' },
+    { name: 'Usuarios' },
+    { name: 'Clientes' },
+    { name: 'Zonas de entrega' },
+    { name: 'Promociones' },
+    { name: 'Compras' },
+    { name: 'Devoluciones de compra' },
+    { name: 'Categorías de gasto' },
+    { name: 'Gastos' },
+    { name: 'Movimientos de caja' },
+    { name: 'Auditoría de caja' },
+    { name: 'Caja registradora' },
+    { name: 'Notificaciones' },
   ],
   components: {
     securitySchemes: {
@@ -172,15 +172,15 @@ const openapi = {
     },
     responses: {
       NotFound: {
-        description: 'Resource not found',
+        description: 'Recurso no encontrado',
         content: json({ $ref: '#/components/schemas/Error' }),
       },
       ValidationError: {
-        description: 'Invalid request payload',
+        description: 'Datos de solicitud no válidos',
         content: json({ $ref: '#/components/schemas/Error' }),
       },
       Forbidden: {
-        description: 'The authenticated role cannot access this resource',
+        description: 'El rol autenticado no puede acceder a este recurso',
         content: json({ $ref: '#/components/schemas/Error' }),
       },
     },
@@ -312,7 +312,7 @@ const openapi = {
         type: 'object',
         required: ['quantity_delta', 'reason'],
         properties: {
-          quantity_delta: { type: 'integer', description: 'Positive for entries, negative for exits' },
+          quantity_delta: { type: 'integer', description: 'Positivo para entradas y negativo para salidas' },
           reason: { type: 'string', minLength: 2, maxLength: 80 },
           notes: { type: 'string', maxLength: 500, nullable: true },
         },
@@ -553,7 +553,7 @@ const openapi = {
           role: {
             type: 'string',
             enum: ['admin', 'manager', 'cashier', 'stock', 'customer'],
-            description: 'Manager shares the administrative permission scope while retaining its role label.',
+            description: 'El gerente comparte el alcance de permisos administrativos y conserva la etiqueta de su rol.',
           },
           active: { type: 'boolean' },
           must_change_password: { type: 'boolean' },
@@ -573,7 +573,7 @@ const openapi = {
             type: 'string',
             enum: ['admin', 'manager', 'cashier', 'stock', 'customer'],
             default: 'cashier',
-            description: 'Manager shares the administrative permission scope while retaining its role label.',
+            description: 'El gerente comparte el alcance de permisos administrativos y conserva la etiqueta de su rol.',
           },
           active: { type: 'boolean', default: true },
           must_change_password: { type: 'boolean', default: false },
@@ -936,8 +936,8 @@ const openapi = {
   paths: {
     '/': {
       get: {
-        tags: ['Health'],
-        summary: 'API health check',
+        tags: ['Estado'],
+        summary: 'Comprobar el estado de la API',
         security: [],
         responses: {
           200: ok({ $ref: '#/components/schemas/Message' }),
@@ -946,8 +946,8 @@ const openapi = {
     },
     '/auth/register': {
       post: {
-        tags: ['Auth'],
-        summary: 'Register a new user and login automatically',
+        tags: ['Autenticación'],
+        summary: 'Registrar un usuario nuevo e iniciar sesión automáticamente',
         security: [],
         requestBody: requestBody({
           type: 'object',
@@ -971,14 +971,14 @@ const openapi = {
             },
           }),
           400: { $ref: '#/components/responses/ValidationError' },
-          409: { description: 'Username already exists' },
+          409: { description: 'El usuario ya existe' },
         },
       },
     },
     '/auth/login': {
       post: {
-        tags: ['Auth'],
-        summary: 'Login and get tokens',
+        tags: ['Autenticación'],
+        summary: 'Iniciar sesión y obtener tokens',
         security: [],
         requestBody: requestBody({
           type: 'object',
@@ -1000,15 +1000,15 @@ const openapi = {
             },
           }),
           400: { $ref: '#/components/responses/ValidationError' },
-          401: { description: 'Invalid credentials' },
-          403: { description: 'User is deactivated' },
+          401: { description: 'Credenciales no válidas' },
+          403: { description: 'El usuario está desactivado' },
         },
       },
     },
     '/auth/refresh': {
       post: {
-        tags: ['Auth'],
-        summary: 'Refresh access token using refresh token (Refresh Token Rotation)',
+        tags: ['Autenticación'],
+        summary: 'Renovar el token de acceso mediante el token de renovación',
         security: [],
         requestBody: requestBody({
           type: 'object',
@@ -1025,15 +1025,15 @@ const openapi = {
               refreshToken: { type: 'string' },
             },
           }),
-          401: { description: 'Refresh token is required' },
-          403: { description: 'Invalid, expired, or revoked refresh token' },
+          401: { description: 'Se requiere el token de renovación' },
+          403: { description: 'El token de renovación no es válido, expiró o fue revocado' },
         },
       },
     },
     '/auth/logout': {
       post: {
-        tags: ['Auth'],
-        summary: 'Logout and revoke refresh token',
+        tags: ['Autenticación'],
+        summary: 'Cerrar sesión y revocar el token de renovación',
         security: [],
         requestBody: requestBody({
           type: 'object',
@@ -1048,8 +1048,8 @@ const openapi = {
     },
     '/auth/forgot-password': {
       post: {
-        tags: ['Auth'],
-        summary: 'Request a password reset link',
+        tags: ['Autenticación'],
+        summary: 'Solicitar un enlace para restablecer la contraseña',
         security: [],
         requestBody: requestBody({
           type: 'object',
@@ -1071,8 +1071,8 @@ const openapi = {
     },
     '/auth/reset-password': {
       post: {
-        tags: ['Auth'],
-        summary: 'Reset password using token',
+        tags: ['Autenticación'],
+        summary: 'Restablecer la contraseña mediante un token',
         security: [],
         requestBody: requestBody({
           type: 'object',
@@ -1090,21 +1090,21 @@ const openapi = {
               message: { type: 'string' },
             },
           }),
-          400: { description: 'Invalid token or credentials' },
+          400: { description: 'Token o credenciales no válidos' },
         },
       },
     },
     '/shop-config': {
       get: {
-        tags: ['Shop Config'],
-        summary: 'Get shop configuration',
+        tags: ['Configuración de tienda'],
+        summary: 'Obtener la configuración de la tienda',
         responses: {
           200: ok({ $ref: '#/components/schemas/ShopConfig' }),
         },
       },
       put: {
-        tags: ['Shop Config'],
-        summary: 'Update shop configuration',
+        tags: ['Configuración de tienda'],
+        summary: 'Actualizar la configuración de la tienda',
         requestBody: requestBody({ $ref: '#/components/schemas/ShopConfigInput' }),
         responses: {
           200: ok({ $ref: '#/components/schemas/ShopConfig' }),
@@ -1117,8 +1117,8 @@ const openapi = {
     '/units/{id}': unit.item,
     '/inventory': {
       get: {
-        tags: ['Inventory'],
-        summary: 'List inventory items',
+        tags: ['Inventario'],
+        summary: 'Listar artículos del inventario',
         parameters: [
           { name: 'active', in: 'query', schema: { type: 'boolean' } },
           { name: 'category_id', in: 'query', schema: uuid },
@@ -1128,8 +1128,8 @@ const openapi = {
         },
       },
       post: {
-        tags: ['Inventory'],
-        summary: 'Create inventory item',
+        tags: ['Inventario'],
+        summary: 'Crear artículo de inventario',
         requestBody: requestBody({ $ref: '#/components/schemas/InventoryItemInput' }),
         responses: {
           201: created({ $ref: '#/components/schemas/InventoryItem' }),
@@ -1138,8 +1138,8 @@ const openapi = {
     },
     '/inventory/low-stock': {
       get: {
-        tags: ['Inventory'],
-        summary: 'List low-stock inventory items',
+        tags: ['Inventario'],
+        summary: 'Listar artículos con existencias bajas',
         responses: {
           200: ok({ type: 'array', items: { $ref: '#/components/schemas/InventoryItem' } }),
         },
@@ -1147,8 +1147,8 @@ const openapi = {
     },
     '/inventory/movements': {
       get: {
-        tags: ['Inventory'],
-        summary: 'List auditable stock movements (admin or stock role)',
+        tags: ['Inventario'],
+        summary: 'Listar movimientos auditables de existencias',
         parameters: [
           { name: 'inventory_id', in: 'query', schema: uuid },
           { name: 'movement_type', in: 'query', schema: { type: 'string', enum: ['entry', 'exit'] } },
@@ -1163,8 +1163,8 @@ const openapi = {
     '/inventory/barcode/{barcode}': {
       parameters: [{ name: 'barcode', in: 'path', required: true, schema: { type: 'string' } }],
       get: {
-        tags: ['Barcodes'],
-        summary: 'Find inventory item by barcode',
+        tags: ['Códigos de barras'],
+        summary: 'Buscar un artículo por código de barras',
         responses: {
           200: ok({ $ref: '#/components/schemas/InventoryItem' }),
           404: { $ref: '#/components/responses/NotFound' },
@@ -1174,16 +1174,16 @@ const openapi = {
     '/inventory/{id}': {
       parameters: [idParam],
       get: {
-        tags: ['Inventory'],
-        summary: 'Get inventory item by ID',
+        tags: ['Inventario'],
+        summary: 'Obtener un artículo por ID',
         responses: {
           200: ok({ $ref: '#/components/schemas/InventoryItem' }),
           404: { $ref: '#/components/responses/NotFound' },
         },
       },
       put: {
-        tags: ['Inventory'],
-        summary: 'Update inventory item',
+        tags: ['Inventario'],
+        summary: 'Actualizar un artículo de inventario',
         requestBody: requestBody({ $ref: '#/components/schemas/InventoryItemInput' }),
         responses: {
           200: ok({ $ref: '#/components/schemas/InventoryItem' }),
@@ -1191,8 +1191,8 @@ const openapi = {
         },
       },
       delete: {
-        tags: ['Inventory'],
-        summary: 'Deactivate inventory item',
+        tags: ['Inventario'],
+        summary: 'Desactivar un artículo de inventario',
         responses: {
           200: ok({ $ref: '#/components/schemas/InventoryItem' }),
           404: { $ref: '#/components/responses/NotFound' },
@@ -1202,15 +1202,15 @@ const openapi = {
     '/inventory/{id}/barcodes': {
       parameters: [idParam],
       get: {
-        tags: ['Barcodes'],
-        summary: 'List barcodes for an inventory item',
+        tags: ['Códigos de barras'],
+        summary: 'Listar códigos de barras de un artículo',
         responses: {
           200: ok({ type: 'array', items: { $ref: '#/components/schemas/Barcode' } }),
         },
       },
       post: {
-        tags: ['Barcodes'],
-        summary: 'Add barcode to an inventory item',
+        tags: ['Códigos de barras'],
+        summary: 'Agregar un código de barras a un artículo',
         requestBody: requestBody({
           type: 'object',
           required: ['barcode'],
@@ -1227,8 +1227,8 @@ const openapi = {
     '/inventory/{id}/adjustments': {
       parameters: [idParam],
       post: {
-        tags: ['Inventory'],
-        summary: 'Adjust stock and record the movement (admin or stock role)',
+        tags: ['Inventario'],
+        summary: 'Ajustar existencias y registrar el movimiento',
         requestBody: requestBody({ $ref: '#/components/schemas/InventoryAdjustmentInput' }),
         responses: {
           201: created({ $ref: '#/components/schemas/InventoryMovement' }),
@@ -1244,8 +1244,8 @@ const openapi = {
         { name: 'barcode', in: 'path', required: true, schema: { type: 'string' } },
       ],
       delete: {
-        tags: ['Barcodes'],
-        summary: 'Remove barcode from an inventory item',
+        tags: ['Códigos de barras'],
+        summary: 'Quitar un código de barras de un artículo',
         responses: {
           204: deleted,
           404: { $ref: '#/components/responses/NotFound' },
@@ -1254,8 +1254,8 @@ const openapi = {
     },
     '/price-history': {
       get: {
-        tags: ['Price History'],
-        summary: 'List price history entries',
+        tags: ['Historial de precios'],
+        summary: 'Listar el historial de precios',
         responses: {
           200: ok({ type: 'array', items: { $ref: '#/components/schemas/PriceHistory' } }),
         },
@@ -1264,8 +1264,8 @@ const openapi = {
     '/price-history/inventory/{id}': {
       parameters: [idParam],
       get: {
-        tags: ['Price History'],
-        summary: 'List price history for one inventory item',
+        tags: ['Historial de precios'],
+        summary: 'Listar el historial de precios de un artículo',
         responses: {
           200: ok({ type: 'array', items: { $ref: '#/components/schemas/PriceHistory' } }),
         },
@@ -1276,15 +1276,15 @@ const openapi = {
     '/suppliers/{id}/items': {
       parameters: [idParam],
       get: {
-        tags: ['Suppliers'],
-        summary: 'List supplier items',
+        tags: ['Proveedores'],
+        summary: 'Listar productos del proveedor',
         responses: {
           200: ok({ type: 'array', items: { $ref: '#/components/schemas/SupplierItem' } }),
         },
       },
       post: {
-        tags: ['Suppliers'],
-        summary: 'Add item to supplier',
+        tags: ['Proveedores'],
+        summary: 'Agregar un producto al proveedor',
         requestBody: requestBody({ $ref: '#/components/schemas/SupplierItemInput' }),
         responses: {
           201: created({ $ref: '#/components/schemas/SupplierItem' }),
@@ -1297,16 +1297,16 @@ const openapi = {
         { name: 'inventoryId', in: 'path', required: true, schema: uuid },
       ],
       put: {
-        tags: ['Suppliers'],
-        summary: 'Update supplier item',
+        tags: ['Proveedores'],
+        summary: 'Actualizar un producto del proveedor',
         requestBody: requestBody({ $ref: '#/components/schemas/SupplierItemInput' }),
         responses: {
           200: ok({ $ref: '#/components/schemas/SupplierItem' }),
         },
       },
       delete: {
-        tags: ['Suppliers'],
-        summary: 'Remove supplier item',
+        tags: ['Proveedores'],
+        summary: 'Quitar un producto del proveedor',
         responses: {
           204: deleted,
         },
@@ -1314,15 +1314,15 @@ const openapi = {
     },
     '/purchase-orders': {
       get: {
-        tags: ['Purchase Orders'],
-        summary: 'List purchase orders',
+        tags: ['Órdenes de compra'],
+        summary: 'Listar órdenes de compra',
         responses: {
           200: ok({ type: 'array', items: { $ref: '#/components/schemas/PurchaseOrder' } }),
         },
       },
       post: {
-        tags: ['Purchase Orders'],
-        summary: 'Create purchase order',
+        tags: ['Órdenes de compra'],
+        summary: 'Crear una orden de compra',
         requestBody: requestBody({ $ref: '#/components/schemas/PurchaseOrderInput' }),
         responses: {
           201: created({ $ref: '#/components/schemas/PurchaseOrder' }),
@@ -1332,24 +1332,24 @@ const openapi = {
     '/purchase-orders/{id}': {
       parameters: [idParam],
       get: {
-        tags: ['Purchase Orders'],
-        summary: 'Get purchase order by ID',
+        tags: ['Órdenes de compra'],
+        summary: 'Obtener una orden de compra por ID',
         responses: {
           200: ok({ $ref: '#/components/schemas/PurchaseOrder' }),
           404: { $ref: '#/components/responses/NotFound' },
         },
       },
       put: {
-        tags: ['Purchase Orders'],
-        summary: 'Update purchase order',
+        tags: ['Órdenes de compra'],
+        summary: 'Actualizar una orden de compra',
         requestBody: requestBody({ $ref: '#/components/schemas/PurchaseOrderInput' }),
         responses: {
           200: ok({ $ref: '#/components/schemas/PurchaseOrder' }),
         },
       },
       delete: {
-        tags: ['Purchase Orders'],
-        summary: 'Delete purchase order',
+        tags: ['Órdenes de compra'],
+        summary: 'Eliminar una orden de compra',
         responses: {
           204: deleted,
           404: { $ref: '#/components/responses/NotFound' },
@@ -1359,15 +1359,15 @@ const openapi = {
     '/purchase-orders/{id}/items': {
       parameters: [idParam],
       get: {
-        tags: ['Purchase Orders'],
-        summary: 'List purchase order items',
+        tags: ['Órdenes de compra'],
+        summary: 'Listar productos de una orden de compra',
         responses: {
           200: ok({ type: 'array', items: { $ref: '#/components/schemas/PurchaseOrderItem' } }),
         },
       },
       post: {
-        tags: ['Purchase Orders'],
-        summary: 'Add item to purchase order',
+        tags: ['Órdenes de compra'],
+        summary: 'Agregar un producto a la orden de compra',
         requestBody: requestBody({ $ref: '#/components/schemas/PurchaseOrderItemInput' }),
         responses: {
           201: created({ $ref: '#/components/schemas/PurchaseOrderItem' }),
@@ -1380,16 +1380,16 @@ const openapi = {
         { name: 'itemId', in: 'path', required: true, schema: uuid },
       ],
       put: {
-        tags: ['Purchase Orders'],
-        summary: 'Update purchase order item',
+        tags: ['Órdenes de compra'],
+        summary: 'Actualizar un producto de la orden de compra',
         requestBody: requestBody({ $ref: '#/components/schemas/PurchaseOrderItemInput' }),
         responses: {
           200: ok({ $ref: '#/components/schemas/PurchaseOrderItem' }),
         },
       },
       delete: {
-        tags: ['Purchase Orders'],
-        summary: 'Remove purchase order item',
+        tags: ['Órdenes de compra'],
+        summary: 'Quitar un producto de la orden de compra',
         responses: {
           204: deleted,
         },
@@ -1405,15 +1405,15 @@ const openapi = {
     '/schedules/{id}': schedule.item,
     '/shift-covers': {
       get: {
-        tags: ['Shift Covers'],
-        summary: 'List shift covers',
+        tags: ['Coberturas de turno'],
+        summary: 'Listar coberturas de turno',
         responses: {
           200: ok({ type: 'array', items: { $ref: '#/components/schemas/ShiftCover' } }),
         },
       },
       post: {
-        tags: ['Shift Covers'],
-        summary: 'Create shift cover',
+        tags: ['Coberturas de turno'],
+        summary: 'Crear una cobertura de turno',
         requestBody: requestBody({ $ref: '#/components/schemas/ShiftCoverInput' }),
         responses: {
           201: created({ $ref: '#/components/schemas/ShiftCover' }),
@@ -1423,15 +1423,15 @@ const openapi = {
     '/shift-covers/{id}': {
       parameters: [idParam],
       get: {
-        tags: ['Shift Covers'],
-        summary: 'Get shift cover by ID',
+        tags: ['Coberturas de turno'],
+        summary: 'Obtener una cobertura de turno por ID',
         responses: {
           200: ok({ $ref: '#/components/schemas/ShiftCover' }),
         },
       },
       delete: {
-        tags: ['Shift Covers'],
-        summary: 'Delete shift cover',
+        tags: ['Coberturas de turno'],
+        summary: 'Eliminar una cobertura de turno',
         responses: {
           204: deleted,
         },
@@ -1440,8 +1440,8 @@ const openapi = {
     '/users': user.collection,
     '/users/cashiers': {
       post: {
-        tags: ['Users'],
-        summary: 'Create a cashier employee and login account (admin only)',
+        tags: ['Usuarios'],
+        summary: 'Crear un cajero y su cuenta de acceso',
         requestBody: requestBody({
           type: 'object',
           required: ['first_name', 'last_name', 'email', 'password'],
@@ -1463,8 +1463,8 @@ const openapi = {
     '/delivery-zones': deliveryZone.collection,
     '/delivery-zones/fee': {
       get: {
-        tags: ['Delivery Zones'],
-        summary: 'Calculate delivery fee by distance',
+        tags: ['Zonas de entrega'],
+        summary: 'Calcular la tarifa de entrega por distancia',
         parameters: [
           { name: 'distance_km', in: 'query', required: true, schema: { type: 'number' } },
         ],
@@ -1477,8 +1477,8 @@ const openapi = {
     '/delivery-zones/{id}/audit': {
       parameters: [idParam],
       get: {
-        tags: ['Delivery Zones'],
-        summary: 'List audit entries for a delivery zone',
+        tags: ['Zonas de entrega'],
+        summary: 'Listar auditorías de una zona de entrega',
         responses: {
           200: ok({ type: 'array', items: { type: 'object' } }),
         },
@@ -1488,15 +1488,15 @@ const openapi = {
     '/promotions/{id}': promotion.item,
     '/purchases': {
       get: {
-        tags: ['Purchases'],
-        summary: 'List purchases',
+        tags: ['Compras'],
+        summary: 'Listar compras',
         responses: {
           200: ok({ type: 'array', items: { $ref: '#/components/schemas/Purchase' } }),
         },
       },
       post: {
-        tags: ['Purchases'],
-        summary: 'Create purchase with line items',
+        tags: ['Compras'],
+        summary: 'Crear una compra con sus productos',
         requestBody: requestBody({ $ref: '#/components/schemas/PurchaseInput' }),
         responses: {
           201: created({ $ref: '#/components/schemas/Purchase' }),
@@ -1505,8 +1505,8 @@ const openapi = {
     },
     '/purchases/pos': {
       post: {
-        tags: ['Cash Register'],
-        summary: 'Create a point-of-sale purchase using server-side prices',
+        tags: ['Caja registradora'],
+        summary: 'Crear una venta de caja con precios calculados por el servidor',
         requestBody: requestBody({
           type: 'object',
           required: ['items', 'payment_method'],
@@ -1528,15 +1528,15 @@ const openapi = {
         }),
         responses: {
           201: created({ $ref: '#/components/schemas/Purchase' }),
-          409: { description: 'Register closed or insufficient stock' },
+          409: { description: 'Caja cerrada o existencias insuficientes' },
         },
       },
     },
     '/purchases/{id}': {
       parameters: [idParam],
       get: {
-        tags: ['Purchases'],
-        summary: 'Get purchase by ID',
+        tags: ['Compras'],
+        summary: 'Obtener una compra por ID',
         responses: {
           200: ok({ $ref: '#/components/schemas/Purchase' }),
           404: { $ref: '#/components/responses/NotFound' },
@@ -1546,8 +1546,8 @@ const openapi = {
     '/purchases/{id}/items': {
       parameters: [idParam],
       get: {
-        tags: ['Purchases'],
-        summary: 'List purchase line items',
+        tags: ['Compras'],
+        summary: 'Listar productos de una compra',
         responses: {
           200: ok({ type: 'array', items: { $ref: '#/components/schemas/PurchaseItem' } }),
         },
@@ -1556,8 +1556,8 @@ const openapi = {
     '/purchases/{id}/status': {
       parameters: [idParam],
       patch: {
-        tags: ['Purchases'],
-        summary: 'Update purchase status',
+        tags: ['Compras'],
+        summary: 'Actualizar el estado de una compra',
         requestBody: requestBody({ $ref: '#/components/schemas/PurchaseStatusInput' }),
         responses: {
           200: ok({ $ref: '#/components/schemas/Purchase' }),
@@ -1566,15 +1566,15 @@ const openapi = {
     },
     '/returns': {
       get: {
-        tags: ['Purchase Returns'],
-        summary: 'List purchase returns',
+        tags: ['Devoluciones de compra'],
+        summary: 'Listar devoluciones de compra',
         responses: {
           200: ok({ type: 'array', items: { $ref: '#/components/schemas/PurchaseReturn' } }),
         },
       },
       post: {
-        tags: ['Purchase Returns'],
-        summary: 'Create purchase return with returned items',
+        tags: ['Devoluciones de compra'],
+        summary: 'Crear una devolución con sus productos',
         requestBody: requestBody({ $ref: '#/components/schemas/PurchaseReturnInput' }),
         responses: {
           201: created({ $ref: '#/components/schemas/PurchaseReturn' }),
@@ -1584,8 +1584,8 @@ const openapi = {
     '/returns/{id}': {
       parameters: [idParam],
       get: {
-        tags: ['Purchase Returns'],
-        summary: 'Get purchase return by ID',
+        tags: ['Devoluciones de compra'],
+        summary: 'Obtener una devolución por ID',
         responses: {
           200: ok({ $ref: '#/components/schemas/PurchaseReturn' }),
         },
@@ -1594,8 +1594,8 @@ const openapi = {
     '/returns/{id}/items': {
       parameters: [idParam],
       get: {
-        tags: ['Purchase Returns'],
-        summary: 'List returned items',
+        tags: ['Devoluciones de compra'],
+        summary: 'Listar productos devueltos',
         responses: {
           200: ok({ type: 'array', items: { $ref: '#/components/schemas/PurchaseReturnItem' } }),
         },
@@ -1607,15 +1607,15 @@ const openapi = {
     '/expenses/{id}': expense.item,
     '/till-movements': {
       get: {
-        tags: ['Till Movements'],
-        summary: 'List till movements',
+        tags: ['Movimientos de caja'],
+        summary: 'Listar movimientos de caja',
         responses: {
           200: ok({ type: 'array', items: { $ref: '#/components/schemas/TillMovement' } }),
         },
       },
       post: {
-        tags: ['Till Movements'],
-        summary: 'Create till movement',
+        tags: ['Movimientos de caja'],
+        summary: 'Crear un movimiento de caja',
         requestBody: requestBody({ $ref: '#/components/schemas/TillMovementInput' }),
         responses: {
           201: created({ $ref: '#/components/schemas/TillMovement' }),
@@ -1624,8 +1624,8 @@ const openapi = {
     },
     '/till-movements/balance': {
       get: {
-        tags: ['Till Movements'],
-        summary: 'Get till balance summary',
+        tags: ['Movimientos de caja'],
+        summary: 'Obtener el resumen de saldo de caja',
         responses: {
           200: ok({ type: 'array', items: { $ref: '#/components/schemas/TillBalance' } }),
         },
@@ -1634,8 +1634,8 @@ const openapi = {
     '/till-movements/{id}': {
       parameters: [idParam],
       get: {
-        tags: ['Till Movements'],
-        summary: 'Get till movement by ID',
+        tags: ['Movimientos de caja'],
+        summary: 'Obtener un movimiento de caja por ID',
         responses: {
           200: ok({ $ref: '#/components/schemas/TillMovement' }),
         },
@@ -1645,15 +1645,15 @@ const openapi = {
     '/cash-audit/{id}': cashAudit.item,
     '/cash-register/status': {
       get: {
-        tags: ['Cash Register'],
-        summary: 'Get the authenticated cashier register status and daily totals',
+        tags: ['Caja registradora'],
+        summary: 'Obtener el estado de caja y los totales diarios del cajero autenticado',
         responses: { 200: ok({ type: 'object' }) },
       },
     },
     '/cash-register/open': {
       post: {
-        tags: ['Cash Register'],
-        summary: 'Open the authenticated cashier register',
+        tags: ['Caja registradora'],
+        summary: 'Abrir la caja del cajero autenticado',
         requestBody: requestBody({
           type: 'object',
           required: ['opening_amount'],
@@ -1662,32 +1662,32 @@ const openapi = {
             shift: { type: 'string', enum: ['morning', 'afternoon'] },
           },
         }),
-        responses: { 201: created({ type: 'object' }), 409: { description: 'Register already open' } },
+        responses: { 201: created({ type: 'object' }), 409: { description: 'La caja ya está abierta' } },
       },
     },
     '/cash-register/close': {
       post: {
-        tags: ['Cash Register'],
-        summary: 'Close the authenticated cashier register and calculate difference',
+        tags: ['Caja registradora'],
+        summary: 'Cerrar la caja del cajero autenticado y calcular la diferencia',
         requestBody: requestBody({
           type: 'object',
           required: ['counted_amount'],
           properties: { counted_amount: money },
         }),
-        responses: { 201: created({ type: 'object' }), 409: { description: 'No open register' } },
+        responses: { 201: created({ type: 'object' }), 409: { description: 'No hay una caja abierta' } },
       },
     },
     '/notifications': {
       get: {
-        tags: ['Notifications'],
-        summary: 'List notifications',
+        tags: ['Notificaciones'],
+        summary: 'Listar notificaciones',
         responses: {
           200: ok({ type: 'array', items: { $ref: '#/components/schemas/Notification' } }),
         },
       },
       post: {
-        tags: ['Notifications'],
-        summary: 'Create notification',
+        tags: ['Notificaciones'],
+        summary: 'Crear una notificación',
         requestBody: requestBody({ $ref: '#/components/schemas/NotificationInput' }),
         responses: {
           201: created({ $ref: '#/components/schemas/Notification' }),
@@ -1696,8 +1696,8 @@ const openapi = {
     },
     '/notifications/seen-all': {
       patch: {
-        tags: ['Notifications'],
-        summary: 'Mark all notifications as seen',
+        tags: ['Notificaciones'],
+        summary: 'Marcar todas las notificaciones como vistas',
         responses: {
           200: ok({ $ref: '#/components/schemas/Message' }),
         },
@@ -1706,8 +1706,8 @@ const openapi = {
     '/notifications/{id}': {
       parameters: [idParam],
       get: {
-        tags: ['Notifications'],
-        summary: 'Get notification by ID',
+        tags: ['Notificaciones'],
+        summary: 'Obtener una notificación por ID',
         responses: {
           200: ok({ $ref: '#/components/schemas/Notification' }),
         },
@@ -1716,8 +1716,8 @@ const openapi = {
     '/notifications/{id}/seen': {
       parameters: [idParam],
       patch: {
-        tags: ['Notifications'],
-        summary: 'Mark notification as seen',
+        tags: ['Notificaciones'],
+        summary: 'Marcar una notificación como vista',
         responses: {
           200: ok({ $ref: '#/components/schemas/Notification' }),
         },
