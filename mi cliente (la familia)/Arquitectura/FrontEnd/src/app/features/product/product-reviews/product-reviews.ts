@@ -385,6 +385,28 @@ const EMPTY_SUMMARY: ReviewSummary = {
       .review-card { padding: 15px; }
       .review-header time { align-self: flex-start; }
     }
+
+    /* Shared client visual tokens */
+    .reviews-summary,
+    .review-form {
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .review-filters,
+    .review-invitation,
+    .eligibility-note,
+    .review-card,
+    .empty-state {
+      border-radius: var(--radius-lg);
+    }
+
+    .primary-button,
+    .secondary-button,
+    .review-total,
+    .own-badge {
+      border-radius: var(--radius-pill);
+    }
   `],
 })
 export class ProductReviews implements OnInit {

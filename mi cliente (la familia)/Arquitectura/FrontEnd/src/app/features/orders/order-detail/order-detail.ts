@@ -1011,6 +1011,30 @@ import { IconComponent } from '../../../shared/components/icon/icon';
         grid-column: 3;
       }
     }
+
+    /* Shared client visual tokens */
+    .hero-tracking-card,
+    .details-card-group,
+    .financial-card {
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .help-card-row,
+    .quick-actions-row {
+      border-radius: var(--radius-lg);
+    }
+
+    .receipt-btn,
+    .cancel-btn {
+      min-height: var(--control-height);
+      border-radius: var(--radius-pill);
+    }
+
+    .modal-dialog {
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-md);
+    }
   `],
 })
 export class OrderDetail implements OnInit {
