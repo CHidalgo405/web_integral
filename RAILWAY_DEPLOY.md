@@ -96,6 +96,7 @@ contra PostgreSQL. Para los módulos actuales se requiere:
 psql "<CONNECTION_URL>" -f "mi cliente (la familia)/Arquitectura/Database/migrations/004_customer_cashier_roles.sql"
 psql "<CONNECTION_URL>" -f "mi cliente (la familia)/Arquitectura/Database/migrations/005_email_verification.sql"
 psql "<CONNECTION_URL>" -f "mi cliente (la familia)/Arquitectura/Database/migrations/006_inventory_movements.sql"
+psql "<CONNECTION_URL>" -f "mi cliente (la familia)/Arquitectura/Database/migrations/007_inventory_images.sql"
 ```
 
 Las migraciones son idempotentes. Una instalación nueva creada directamente
