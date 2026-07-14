@@ -98,7 +98,7 @@ import { IconComponent } from '../../../shared/components/icon/icon';
                   <td>
                     <div class="product-info-cell">
                       <div class="product-cell-emoji">
-                        <img [src]="prod.images[0] || 'https://placehold.co/400x400?text=Sin+Imagen'" [alt]="prod.name" />
+                        <img [src]="prod.images[0] || 'https://placehold.co/400x400?text=Sin+Imagen'" [alt]="prod.name" class="product-media-img" loading="lazy" decoding="async" />
                       </div>
                       <div>
                         <h4 class="product-cell-name">{{ prod.name }}</h4>
@@ -312,7 +312,7 @@ import { IconComponent } from '../../../shared/components/icon/icon';
                   <app-icon name="upload" size="22" color="var(--primary)" />
                 </div>
                 <span class="upload-text">Haz clic para elegir una imagen</span>
-                <span class="upload-subtext">JPG, PNG o WebP &bull; Máx. 5 MB</span>
+                <span class="upload-subtext">1:1 &bull; Ideal 1200 × 1200 px &bull; JPG, PNG o WebP &bull; Máx. 5 MB</span>
               } @else {
                 <div class="upload-preview">
                   <img [src]="modalFilePreview" class="upload-preview-img" alt="preview" />
@@ -331,7 +331,7 @@ import { IconComponent } from '../../../shared/components/icon/icon';
               #modalFileInput
               id="p-image"
               (change)="onModalFileSelected($event)"
-              accept="image/*"
+              accept="image/jpeg,image/png,image/webp"
               style="display: none"
             />
           </div>

@@ -253,8 +253,11 @@
 
 .item-img {
   width: 70px;
-  height: 70px;
+  aspect-ratio: 1 / 1;
   object-fit: contain;
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 4px;
   filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));
 }
 
@@ -492,7 +495,7 @@
   }
 
   .cart-item-wrapper:hover .cart-item { transform: none; }
-  .item-img { width: 92px; height: 92px; }
+  .item-img { width: 92px; }
 
   .item-qty-vertical {
     flex-direction: row-reverse;

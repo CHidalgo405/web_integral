@@ -12,6 +12,7 @@ Fecha: 14 de julio de 2026
 - Encabezados: se alinearon a un contenedor común en pantallas grandes.
 - Accesibilidad: se añadió foco de teclado visible y se respeta `prefers-reduced-motion`.
 - Carrito: eliminar un artículo ya no depende de simular un gesto de deslizamiento con el mouse.
+- Catálogo: todas las imágenes de producto usan formato visual 1:1, `object-fit: contain` y fondo neutro para evitar recortes.
 
 ## Pendientes recomendados
 
@@ -33,7 +34,6 @@ Fecha: 14 de julio de 2026
 1. El scrollbar global está oculto; en listas largas no existe una pista visual de posición.
 2. Aún hay botones sólo con icono sin nombre accesible en componentes antiguos.
 3. Varias pantallas contienen estilos extensos dentro del archivo TypeScript, lo que dificulta reutilizar patrones responsive.
-4. Las imágenes de algunas tarjetas usan `object-fit: cover`, que puede recortar empaques verticales; se debe decidir por tipo de catálogo entre `cover` y `contain`.
 
 ## Matriz mínima de validación
 

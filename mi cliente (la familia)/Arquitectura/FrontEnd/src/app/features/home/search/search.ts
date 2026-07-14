@@ -38,7 +38,13 @@ import { IconComponent } from '../../../shared/components/icon/icon';
             <a [routerLink]="['/product', product.id]" class="result-row">
               <div style="display: flex; align-items: center;">
                 <div class="prod-thumb" style="width: 48px; height: 48px; border-radius: 10px; background: var(--surface); display: flex; align-items: center; justify-content: center; overflow: hidden; margin-right: 12px; flex-shrink: 0;">
-                  <img [src]="product.images[0] || 'assets/images/productos/placeholder.png'" [alt]="product.name" style="width:100%;height:100%;object-fit:cover;" />
+                  <img
+                    [src]="product.images[0] || 'assets/images/productos/placeholder.png'"
+                    [alt]="product.name"
+                    class="product-media-img"
+                    loading="lazy"
+                    decoding="async"
+                  />
                 </div>
                 <div class="result-info">
                   <h3>{{ product.name }}</h3>
@@ -71,6 +77,7 @@ import { IconComponent } from '../../../shared/components/icon/icon';
     .result-count { font-size: 0.8rem; color: var(--text-secondary); margin: 0 0 12px; }
     .results-list { display: flex; flex-direction: column; gap: 8px; }
     .result-row { display: flex; align-items: center; justify-content: space-between; padding: 12px; background: var(--surface-raised); border-radius: 12px; text-decoration: none; transition: transform 0.2s; }
+    .prod-thumb { padding: 4px; border: 1px solid var(--border); }
     .result-row:hover { transform: translateX(4px); }
     .result-info h3 { font-size: 0.85rem; font-weight: 600; color: var(--text-primary); margin: 0 0 2px; }
     .result-cat { font-size: 0.7rem; color: var(--text-muted); }

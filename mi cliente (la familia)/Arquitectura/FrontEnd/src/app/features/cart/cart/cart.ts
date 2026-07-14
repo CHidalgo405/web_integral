@@ -62,7 +62,7 @@ import { IconComponent } from '../../../shared/components/icon/icon';
             <div class="cart-item-wrapper">
               <div class="cart-item" [id]="'cart-item-' + item.id">
                 
-                <img [src]="item.product.images[0] || 'https://media.istockphoto.com/id/185284489/photo/orange.jpg?s=612x612&w=0&k=20&c=m4EXniUNMHTOUDOZfm2h-dD01M8l3Q00r6T8j7Bf3G0='" alt="Product" class="item-img" referrerpolicy="no-referrer" />
+                <img [src]="item.product.images[0] || 'assets/images/productos/placeholder.png'" [alt]="item.product.name" class="item-img" loading="lazy" decoding="async" />
                 
                 <div class="item-info">
                   <h3>{{ item.product.name }}</h3>

@@ -202,7 +202,7 @@
 .product-card { background: var(--surface-raised); border-radius: 16px; overflow: hidden; position: relative; transition: transform 0.2s; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
 .product-card:hover { transform: translateY(-2px); }
 .product-link { text-decoration: none; color: inherit; }
-.product-image { height: 120px; background: var(--surface); display: flex; align-items: center; justify-content: center; position: relative; }
+.product-image { width: 100%; aspect-ratio: 1 / 1; background: var(--surface); display: flex; align-items: center; justify-content: center; position: relative; padding: 10px; }
 .product-emoji { font-size: 2.5rem; }
 .discount-badge { position: absolute; top: 8px; left: 8px; background: var(--accent); color: #fff; font-size: 0.65rem; font-weight: 700; padding: 3px 8px; border-radius: 6px; }
 .out-badge { position: absolute; top: 8px; right: 44px; background: var(--danger); color: #fff; font-size: 0.65rem; font-weight: 700; padding: 3px 8px; border-radius: 6px; z-index: 5; }
@@ -220,7 +220,7 @@
   .home-page { padding-bottom: 130px; }
   .home-content { padding: 40px clamp(28px, 5vw, 72px); }
   .products-grid { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 24px; }
-  .product-image { height: 200px; }
+  .product-image { padding: 16px; }
   .product-info { padding: 16px; }
   .product-info h3 { font-size: 1rem; }
   .hero-content h2 { font-size: 2.5rem; }

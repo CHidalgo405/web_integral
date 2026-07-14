@@ -44,7 +44,13 @@ import { Product } from '../../../core/models/product.model';
 
               <a [routerLink]="['/product', product.id]" class="card-link">
                 <div class="card-image-sec" style="overflow: hidden;">
-                  <img [src]="product.images[0] || 'assets/images/productos/placeholder.png'" [alt]="product.name" style="width:100%;height:100%;object-fit:cover;" />
+                  <img
+                    [src]="product.images[0] || 'assets/images/productos/placeholder.png'"
+                    [alt]="product.name"
+                    class="product-media-img"
+                    loading="lazy"
+                    decoding="async"
+                  />
                   @if (!product.inStock) {
                     <span class="out-badge">Agotado</span>
                   }
@@ -151,13 +157,15 @@ import { Product } from '../../../core/models/product.model';
 
     /* Image section */
     .card-image-sec {
-      height: 100px;
+      width: 100%;
+      aspect-ratio: 1 / 1;
       background: var(--surface);
       display: flex;
       align-items: center;
       justify-content: center;
       position: relative;
       border-bottom: 1px solid var(--border);
+      padding: 10px;
     }
     .category-icon-bg {
       font-size: 2.2rem;
@@ -354,7 +362,7 @@ import { Product } from '../../../core/models/product.model';
         grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
         gap: 20px;
       }
-      .card-image-sec { height: 180px; }
+      .card-image-sec { padding: 16px; }
       .card-info-sec { padding: 16px; }
       .card-info-sec h3 { font-size: 1rem; }
       .empty-favorites-state {

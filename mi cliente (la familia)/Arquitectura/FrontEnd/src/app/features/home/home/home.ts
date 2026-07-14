@@ -82,7 +82,13 @@ import { IconComponent } from '../../../shared/components/icon/icon';
               <div class="product-card" [id]="'product-' + product.id">
                 <a [routerLink]="['/product', product.id]" class="product-link">
                   <div class="product-image" style="overflow: hidden;">
-                    <img [src]="product.images[0] || 'assets/images/productos/placeholder.png'" [alt]="product.name" style="width:100%;height:100%;object-fit:cover;display:block;" />
+                    <img
+                      [src]="product.images[0] || 'assets/images/productos/placeholder.png'"
+                      [alt]="product.name"
+                      class="product-media-img"
+                      loading="lazy"
+                      decoding="async"
+                    />
                     @if (product.originalPrice) {
                       <span class="discount-badge">-{{ getDiscount(product) }}%</span>
                     }
