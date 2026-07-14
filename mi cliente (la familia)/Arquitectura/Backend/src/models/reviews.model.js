@@ -35,6 +35,9 @@ const getSummary = (inventoryId) =>
     [inventoryId],
   );
 
+const productExists = (inventoryId) =>
+  db.query('SELECT id FROM inventory WHERE id=$1 AND active=TRUE', [inventoryId]);
+
 const getEligibility = async (inventoryId, userId) => {
   const [product, existingReview, purchase] = await Promise.all([
     db.query('SELECT id FROM inventory WHERE id=$1 AND active=TRUE', [inventoryId]),
@@ -147,4 +150,4 @@ const remove = (id, userId, canModerate) =>
     [id, userId, canModerate],
   );
 
-module.exports = { findByProduct, getSummary, getEligibility, create, update, remove };
+module.exports = { findByProduct, getSummary, productExists, getEligibility, create, update, remove };

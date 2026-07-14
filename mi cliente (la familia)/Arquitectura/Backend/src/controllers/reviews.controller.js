@@ -16,15 +16,16 @@ const serializeSummary = (row) => ({
 const getProductReviews = async (req, res, next) => {
   try {
     const inventoryId = validateUuid(req.params.inventoryId, 'Producto');
-    const [{ rows: reviews }, { rows: summaries }] = await Promise.all([
+    const [{ rows: reviews }, { rows: summaries }, { rows: products }] = await Promise.all([
       Reviews.findByProduct(inventoryId, req.user.id),
       Reviews.getSummary(inventoryId),
+      Reviews.productExists(inventoryId),
     ]);
+    if (!products.length) return res.status(404).json({ error: 'Producto no encontrado' });
 
     const eligibility = req.user.role === 'customer'
       ? await Reviews.getEligibility(inventoryId, req.user.id)
       : { exists: true, can_review: false, reason: 'customer_only' };
-    if (!eligibility.exists) return res.status(404).json({ error: 'Producto no encontrado' });
 
     res.json({
       reviews,
