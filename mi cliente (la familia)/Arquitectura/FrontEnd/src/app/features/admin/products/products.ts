@@ -522,13 +522,8 @@ export class ProductManager {
   }
 
   adjustStock(product: Product, delta: number): void {
-    const newQty = Math.max(0, product.stockQuantity + delta);
-    const updated: Product = {
-      ...product,
-      stockQuantity: newQty,
-      inStock: newQty > 0 ? product.inStock : false,
-    };
-    this.productService.updateProduct(updated);
+    if (product.stockQuantity + delta < 0) return;
+    this.productService.adjustStock(product.id, delta);
   }
 
   toggleInStock(product: Product): void {
