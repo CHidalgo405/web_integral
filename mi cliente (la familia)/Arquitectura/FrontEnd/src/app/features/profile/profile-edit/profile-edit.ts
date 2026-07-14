@@ -347,6 +347,8 @@ import { IconComponent } from '../../../shared/components/icon/icon';
       }
 
       .avatar-section {
+        grid-column: 1;
+        grid-row: 1 / span 2;
         justify-content: center;
         min-height: 520px;
         padding: 48px 32px;
@@ -364,6 +366,8 @@ import { IconComponent } from '../../../shared/components/icon/icon';
       }
 
       .form-card {
+        grid-column: 2;
+        grid-row: 1;
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 22px;
@@ -379,9 +383,12 @@ import { IconComponent } from '../../../shared/components/icon/icon';
       }
 
       .actions {
+        grid-column: 2;
+        grid-row: 2;
         flex-direction: row-reverse;
         flex-wrap: wrap;
         align-items: center;
+        justify-content: center;
         padding: 0 42px 42px;
       }
 
