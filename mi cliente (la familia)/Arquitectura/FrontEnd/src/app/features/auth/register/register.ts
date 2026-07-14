@@ -24,21 +24,33 @@ import { IconComponent } from '../../../shared/components/icon/icon';
               <label>Nombre</label>
               <div class="input-wrapper">
                 <span class="input-icon" style="display: flex; align-items: center;"><app-icon name="user" size="18" /></span>
-                <input type="text" formControlName="firstName" placeholder="Tu nombre" />
+                <input type="text" formControlName="firstName" placeholder="Tu nombre" (input)="onNameInput($event)" />
               </div>
               @if (form.get('firstName')?.touched && form.get('firstName')?.hasError('required')) {
                 <span class="error-msg">Requerido</span>
+              }
+              @if (form.get('firstName')?.touched && form.get('firstName')?.hasError('pattern')) {
+                <span class="error-msg">Solo letras y espacios</span>
+              }
+              @if (form.get('firstName')?.touched && form.get('firstName')?.hasError('minlength')) {
+                <span class="error-msg">Mínimo 2 caracteres</span>
               }
             </div>
             
             <div class="input-group">
               <label>Apellido</label>
               <div class="input-wrapper">
-                <span class="input-icon" style="display:none;"></span> <!-- spacer or omit -->
-                <input type="text" formControlName="lastName" placeholder="Tu apellido" style="padding-left: 0;" />
+                <span class="input-icon" style="display:none;"></span>
+                <input type="text" formControlName="lastName" placeholder="Tu apellido" style="padding-left: 0;" (input)="onNameInput($event)" />
               </div>
               @if (form.get('lastName')?.touched && form.get('lastName')?.hasError('required')) {
                 <span class="error-msg">Requerido</span>
+              }
+              @if (form.get('lastName')?.touched && form.get('lastName')?.hasError('pattern')) {
+                <span class="error-msg">Solo letras y espacios</span>
+              }
+              @if (form.get('lastName')?.touched && form.get('lastName')?.hasError('minlength')) {
+                <span class="error-msg">Mínimo 2 caracteres</span>
               }
             </div>
           </div>
@@ -49,6 +61,9 @@ import { IconComponent } from '../../../shared/components/icon/icon';
               <span class="input-icon" style="display: flex; align-items: center;"><app-icon name="mail" size="18" /></span>
               <input type="email" formControlName="email" placeholder="tu@email.com" />
             </div>
+            @if (form.get('email')?.touched && form.get('email')?.hasError('required')) {
+              <span class="error-msg">Requerido</span>
+            }
             @if (form.get('email')?.touched && form.get('email')?.hasError('email')) {
               <span class="error-msg">Correo inválido</span>
             }
@@ -75,6 +90,9 @@ import { IconComponent } from '../../../shared/components/icon/icon';
               <input [type]="showPassword() ? 'text' : 'password'" formControlName="password" placeholder="••••••••" />
               <button type="button" class="input-icon-right" (click)="togglePasswordVisibility()" [attr.aria-label]="showPassword() ? 'Ocultar contrasena' : 'Mostrar contrasena'" style="display: flex; align-items: center;"><app-icon [name]="showPassword() ? 'eye-off' : 'eye'" size="18" /></button>
             </div>
+            @if (form.get('password')?.touched && form.get('password')?.hasError('required')) {
+              <span class="error-msg">Requerido</span>
+            }
             @if (form.get('password')?.touched && form.get('password')?.hasError('minlength')) {
               <span class="error-msg">Mínimo 6 caracteres</span>
             }
@@ -86,6 +104,9 @@ import { IconComponent } from '../../../shared/components/icon/icon';
               <span class="input-icon" style="display: flex; align-items: center;"><app-icon name="lock" size="18" /></span>
               <input type="password" formControlName="confirmPassword" placeholder="••••••••" />
             </div>
+            @if (form.get('confirmPassword')?.touched && form.get('confirmPassword')?.hasError('required')) {
+              <span class="error-msg">Requerido</span>
+            }
             @if (form.get('confirmPassword')?.touched && form.hasError('mismatch')) {
               <span class="error-msg">Las contraseñas no coinciden</span>
             }
@@ -362,8 +383,16 @@ export class Register implements AfterViewInit {
   showPassword = signal(false);
 
   form = this.fb.group({
-    firstName: ['', Validators.required],
-    lastName: ['', Validators.required],
+    firstName: ['', [
+      Validators.required,
+      Validators.minLength(2),
+      Validators.pattern('^[a-zA-ZáéíóúÁÉÍÓÚñÑ\\s]+$')
+    ]],
+    lastName: ['', [
+      Validators.required,
+      Validators.minLength(2),
+      Validators.pattern('^[a-zA-ZáéíóúÁÉÍÓÚñÑ\\s]+$')
+    ]],
     email: ['', [Validators.required, Validators.email]],
     phone: ['', [Validators.required, Validators.pattern('^[0-9]{8,15}$')]],
     password: ['', [Validators.required, Validators.minLength(6)]],
@@ -395,6 +424,16 @@ export class Register implements AfterViewInit {
     });
   }
 
+  onNameInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    // Solo permitir letras, espacios, acentos y ñ
+    const sanitized = input.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
+    this.form.patchValue({
+      [input.getAttribute('formControlName')!]: sanitized
+    }, { emitEvent: false });
+    input.value = sanitized;
+  }
+
   onPhoneInput(event: Event): void {
     const input = event.target as HTMLInputElement;
     const sanitized = input.value.replace(/[^0-9]/g, '');
@@ -413,7 +452,6 @@ export class Register implements AfterViewInit {
       }).subscribe({
         next: (res) => {
           this.isLoading.set(false);
-          // Ya no hay auto-login: se manda a verificar el código OTP
           this.router.navigate(['/auth/verify-otp'], { queryParams: { email: res.email } });
         },
         error: (err) => {
