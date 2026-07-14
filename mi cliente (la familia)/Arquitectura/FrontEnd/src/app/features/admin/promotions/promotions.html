@@ -1,5 +1,86 @@
-<div class="ops-page"><header class="ops-header"><div><h1>Promociones</h1><p>Descuentos programados por producto y vigencia</p></div><button class="ops-btn" (click)="open()"><app-icon name="plus" size="16" color="white"/> Nueva promoción</button></header>
-@if(error()){<div class="ops-error">{{error()}}</div>}<div class="ops-summary"><article class="ops-metric"><small>Activas</small><strong>{{count('active')}}</strong></article><article class="ops-metric"><small>Programadas</small><strong>{{count('scheduled')}}</strong></article><article class="ops-metric"><small>Finalizadas</small><strong>{{count('expired')}}</strong></article><article class="ops-metric"><small>Total</small><strong>{{promotions().length}}</strong></article></div>
-<nav class="ops-tabs"><button class="ops-tab" [class.active]="filter()==='all'" (click)="filter.set('all')">Todas</button><button class="ops-tab" [class.active]="filter()==='active'" (click)="filter.set('active')">Activas</button><button class="ops-tab" [class.active]="filter()==='scheduled'" (click)="filter.set('scheduled')">Programadas</button><button class="ops-tab" [class.active]="filter()==='expired'" (click)="filter.set('expired')">Finalizadas</button></nav>
-<section class="ops-panel"><div class="ops-table-wrap"><table class="ops-table"><thead><tr><th>Promoción</th><th>Producto</th><th>Descuento</th><th>Vigencia</th><th>Estado</th><th></th></tr></thead><tbody>@for(item of visible();track item.id){<tr><td><strong>{{item.name}}</strong><br><small>{{item.description}}</small></td><td>{{product(item.inventory_id)}}</td><td><strong>{{item.discount_pct!=null?item.discount_pct+'%':money(item.discount_fixed)}}</strong></td><td>{{item.valid_from||'Ahora'}} – {{item.valid_until||'Sin límite'}}</td><td><span class="ops-badge" [class.warn]="state(item)==='scheduled'" [class.danger]="state(item)==='expired'">{{stateLabel(item)}}</span></td><td><div class="ops-row-actions"><button class="ops-icon-btn" title="Editar" (click)="open(item)"><app-icon name="pencil" size="15"/></button>@if(item.active){<button class="ops-icon-btn" title="Desactivar" (click)="disable(item)"><app-icon name="x" size="15"/></button>}</div></td></tr>}@empty{<tr><td colspan="6" class="ops-empty">No hay promociones en este estado.</td></tr>}</tbody></table></div></section></div>
-@if(modal()){<div class="ops-modal-backdrop"><aside class="ops-drawer"><div class="ops-drawer-head"><h2>{{draft.id?'Editar':'Nueva'}} promoción</h2><button class="ops-close" (click)="modal.set(false)">×</button></div><form class="ops-form" (ngSubmit)="save()"><label>Nombre *<input class="ops-input" name="name" [(ngModel)]="draft.name" required></label><label>Producto *<select class="ops-select" name="product" [(ngModel)]="draft.inventory_id" required><option value="">Selecciona</option><option *ngFor="let product of inventory()" [value]="product.id">{{product.name}}</option></select></label><div class="ops-tabs"><button type="button" class="ops-tab" [class.active]="mode==='percent'" (click)="mode='percent'">Porcentaje</button><button type="button" class="ops-tab" [class.active]="mode==='fixed'" (click)="mode='fixed'">Monto fijo</button></div>@if(mode==='percent'){<label>Descuento (%)<input class="ops-input" type="number" min="0.01" max="100" step=".01" name="pct" [(ngModel)]="draft.discount_pct" required></label>}@else{<label>Descuento (MXN)<input class="ops-input" type="number" min="0.01" step=".01" name="fixed" [(ngModel)]="draft.discount_fixed" required></label>}<div class="ops-grid-2"><label>Desde<input class="ops-input" type="date" name="from" [(ngModel)]="draft.valid_from"></label><label>Hasta<input class="ops-input" type="date" name="until" [(ngModel)]="draft.valid_until"></label></div><label>Descripción<textarea class="ops-textarea" name="description" [(ngModel)]="draft.description"></textarea></label><button class="ops-btn">Guardar promoción</button></form></aside></div>}
+<div class="ops-page">
+    <header class="ops-header">
+        <div>
+            <h1>Promociones</h1>
+            <p>Descuentos programados por producto y vigencia</p>
+        </div><button class="ops-btn" (click)="open()"><app-icon name="plus" size="16" color="white" /> Nueva
+            promoción</button>
+    </header>
+    @if(error()){<div class="ops-error">{{error()}}</div>}<div class="ops-summary">
+        <article class="ops-metric"><small>Activas</small><strong>{{count('active')}}</strong></article>
+        <article class="ops-metric"><small>Programadas</small><strong>{{count('scheduled')}}</strong></article>
+        <article class="ops-metric"><small>Finalizadas</small><strong>{{count('expired')}}</strong></article>
+        <article class="ops-metric"><small>Total</small><strong>{{promotions().length}}</strong></article>
+    </div>
+    <nav class="ops-tabs"><button class="ops-tab" [class.active]="filter()==='all'"
+            (click)="filter.set('all')">Todas</button><button class="ops-tab" [class.active]="filter()==='active'"
+            (click)="filter.set('active')">Activas</button><button class="ops-tab"
+            [class.active]="filter()==='scheduled'" (click)="filter.set('scheduled')">Programadas</button><button
+            class="ops-tab" [class.active]="filter()==='expired'" (click)="filter.set('expired')">Finalizadas</button>
+    </nav>
+    <section class="ops-panel">
+        <div class="ops-table-wrap">
+            <table class="ops-table">
+                <thead>
+                    <tr>
+                        <th>Promoción</th>
+                        <th>Producto</th>
+                        <th>Descuento</th>
+                        <th>Vigencia</th>
+                        <th>Estado</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>@for(item of visible();track item.id){<tr>
+                        <td><strong>{{item.name}}</strong><br><small>{{item.description}}</small></td>
+                        <td>{{product(item.inventory_id)}}</td>
+                        <td><strong>{{item.discount_pct!=null?item.discount_pct+'%':money(item.discount_fixed)}}</strong>
+                        </td>
+                        <td>{{item.valid_from||'Ahora'}} – {{item.valid_until||'Sin límite'}}</td>
+                        <td><span class="ops-badge" [class.warn]="state(item)==='scheduled'"
+                                [class.danger]="state(item)==='expired'">{{stateLabel(item)}}</span></td>
+                        <td>
+                            <div class="ops-row-actions"><button class="ops-icon-btn" title="Editar"
+                                    (click)="open(item)"><app-icon name="pencil"
+                                        size="15" /></button>@if(item.active){<button class="ops-icon-btn"
+                                    title="Desactivar" (click)="disable(item)"><app-icon name="x" size="15" /></button>}
+                            </div>
+                        </td>
+                    </tr>}@empty{<tr>
+                        <td colspan="6" class="ops-empty">No hay promociones en este estado.</td>
+                    </tr>}</tbody>
+            </table>
+        </div>
+    </section>
+</div>
+@if(modal()){<div class="ops-modal-backdrop">
+    <aside class="ops-drawer">
+        <div class="ops-drawer-head">
+            <h2>{{draft.id?'Editar':'Nueva'}} promoción</h2><button class="ops-close"
+                (click)="modal.set(false)">×</button>
+        </div>
+        <form class="ops-form" (ngSubmit)="save()"><label>Nombre *<input class="ops-input" name="name"
+                    [(ngModel)]="draft.name" required></label><label>Producto *<select class="ops-select" name="product"
+                    [(ngModel)]="draft.inventory_id" required>
+                    <option value="">Selecciona</option>
+                    <option *ngFor="let product of inventory()" [value]="product.id">{{product.name}}</option>
+                </select></label>
+            <div class="ops-tabs"><button type="button" class="ops-tab" [class.active]="mode==='percent'"
+                    (click)="mode='percent'">Porcentaje</button><button type="button" class="ops-tab"
+                    [class.active]="mode==='fixed'" (click)="mode='fixed'">Monto fijo</button></div>
+            @if(mode==='percent'){<label>Descuento (%)<input class="ops-input" type="number" min="0.01" max="100"
+                    step=".01" name="pct" [(ngModel)]="draft.discount_pct" required></label>}@else{<label>Descuento
+                (MXN)<input class="ops-input" type="number" min="0.01" step=".01" name="fixed"
+                    [(ngModel)]="draft.discount_fixed" required></label>}<div class="ops-grid-2"><label>Desde<input
+                        class="ops-input ops-date-input" type="text" name="from" [value]="draft.valid_from || ''"
+                        (input)="draft.valid_from = $any($event.target).value" placeholder="Selecciona fecha"
+                        id="dateFrom"></label><label>Hasta<input class="ops-input ops-date-input" type="text"
+                        name="until" [value]="draft.valid_until || ''"
+                        (input)="draft.valid_until = $any($event.target).value" placeholder="Selecciona fecha"
+                        id="dateUntil"></label></div>
+            <label>Descripción<textarea class="ops-textarea" name="description"
+                    [(ngModel)]="draft.description"></textarea></label><button class="ops-btn">Guardar
+                promoción</button>
+        </form>
+    </aside>
+</div>}
