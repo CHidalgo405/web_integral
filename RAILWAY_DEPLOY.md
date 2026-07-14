@@ -90,10 +90,12 @@ Guarda esa URL, la necesitas en el siguiente paso.
 ### Migraciones de una base existente
 
 Después de desplegar una versión que agregue migraciones, ejecútalas en orden
-contra PostgreSQL. Para el módulo de cajero se requiere:
+contra PostgreSQL. Para los módulos actuales se requiere:
 
 ```bash
 psql "<CONNECTION_URL>" -f "mi cliente (la familia)/Arquitectura/Database/migrations/004_customer_cashier_roles.sql"
+psql "<CONNECTION_URL>" -f "mi cliente (la familia)/Arquitectura/Database/migrations/005_email_verification.sql"
+psql "<CONNECTION_URL>" -f "mi cliente (la familia)/Arquitectura/Database/migrations/006_inventory_movements.sql"
 ```
 
 Las migraciones son idempotentes. Una instalación nueva creada directamente

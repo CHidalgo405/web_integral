@@ -5,7 +5,8 @@
 - `customer`: comprador de la tienda en línea. Solo accede a catálogo, perfil, carrito y sus pedidos.
 - `cashier`: empleado de caja. Entra directamente a `/cashier` y únicamente puede operar su propia caja y ventas.
 - `admin`: administra usuarios, inventario y pedidos; también puede abrir el punto de venta.
-- `manager` y `stock`: se conservan para futuras interfaces operativas, sin permisos POS por ahora.
+- `stock`: cuenta con su propia interfaz de inventario y no tiene permisos POS.
+- `manager`: se conserva para la futura interfaz gerencial, sin permisos POS por ahora.
 
 La migración `Database/migrations/004_customer_cashier_roles.sql` separa clientes existentes de cajeros sin alterar inventario, ventas o contraseñas.
 

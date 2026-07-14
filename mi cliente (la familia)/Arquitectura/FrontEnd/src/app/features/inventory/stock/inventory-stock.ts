@@ -168,7 +168,14 @@ import { MxnCurrencyPipe } from '../../../shared/pipes/currency.pipe';
 
           <label class="form-field">
             <span>Cantidad *</span>
-            <input type="number" min="1" step="1" [(ngModel)]="adjustmentQuantity" inputmode="numeric" />
+            <input
+              type="number"
+              min="1"
+              step="1"
+              [ngModel]="adjustmentQuantity()"
+              (ngModelChange)="adjustmentQuantity.set($event)"
+              inputmode="numeric"
+            />
           </label>
           <label class="form-field">
             <span>Motivo *</span>
@@ -211,7 +218,7 @@ export class InventoryStock implements OnInit {
   successMessage = signal('');
 
   barcodeQuery = '';
-  adjustmentQuantity = 1;
+  adjustmentQuantity = signal(1);
   adjustmentReason = '';
   adjustmentNotes = '';
 
@@ -237,7 +244,7 @@ export class InventoryStock implements OnInit {
   readonly previewStock = computed(() => {
     const item = this.selectedItem();
     if (!item) return 0;
-    const amount = Number(this.adjustmentQuantity) || 0;
+    const amount = Number(this.adjustmentQuantity()) || 0;
     return item.stock + (this.adjustmentDirection() === 'entry' ? amount : -amount);
   });
   readonly reasons = computed(() =>
@@ -272,7 +279,7 @@ export class InventoryStock implements OnInit {
   openAdjustment(item: InventoryItem): void {
     this.selectedItem.set(item);
     this.adjustmentDirection.set('entry');
-    this.adjustmentQuantity = 1;
+    this.adjustmentQuantity.set(1);
     this.adjustmentReason = '';
     this.adjustmentNotes = '';
     this.pageError.set('');
@@ -286,7 +293,7 @@ export class InventoryStock implements OnInit {
 
   saveAdjustment(): void {
     const item = this.selectedItem();
-    const amount = Number(this.adjustmentQuantity);
+    const amount = Number(this.adjustmentQuantity());
     if (!item || !Number.isInteger(amount) || amount <= 0) {
       this.pageError.set('Ingresa una cantidad válida en números enteros.');
       return;
@@ -316,7 +323,8 @@ export class InventoryStock implements OnInit {
       },
       error: (error) => {
         this.savingAdjustment.set(false);
-        this.pageError.set(error?.error?.error || 'No se pudo registrar el movimiento.');
+        const message = error?.error?.error;
+        this.pageError.set(message === 'Stock cannot be negative' ? 'La existencia no puede quedar en números negativos.' : message || 'No se pudo registrar el movimiento.');
       },
     });
   }
