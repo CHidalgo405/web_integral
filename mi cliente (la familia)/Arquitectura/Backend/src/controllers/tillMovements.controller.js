@@ -10,7 +10,7 @@ const getAll = async (req, res, next) => {
 const getOne = async (req, res, next) => {
   try {
     const { rows } = await TillMovements.findById(req.params.id);
-    if (!rows.length) return res.status(404).json({ error: 'Till movement not found' });
+    if (!rows.length) return res.status(404).json({ error: 'Movimiento de caja no encontrado' });
     res.json(rows[0]);
   } catch (err) { next(err); }
 };

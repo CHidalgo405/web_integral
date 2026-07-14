@@ -63,6 +63,10 @@ interface ApiProductReviewsResult {
   };
 }
 
+interface ApiInventoryMovement {
+  new_stock: number | string;
+}
+
 const CATEGORY_ICONS: Record<string, string> = {
   dairy: 'milk',
   lacteos: 'milk',
@@ -261,6 +265,33 @@ export class ProductService {
         }
       },
       error: () => this.loadError.set('No se pudo actualizar el producto.'),
+    });
+  }
+
+  adjustStock(productId: string, quantityDelta: number): void {
+    this.loadError.set(null);
+    this.http.post<ApiInventoryMovement>(`${API_BASE_URL}/inventory/${productId}/adjustments`, {
+      quantity_delta: quantityDelta,
+      reason: 'Ajuste rapido desde administracion',
+    }).subscribe({
+      next: (movement) => {
+        const newStock = Number(movement.new_stock);
+        const meta = this.inventoryMeta.get(productId);
+        if (meta) this.inventoryMeta.set(productId, { ...meta, stock: newStock });
+
+        // Actualizar unicamente las existencias: la imagen y el resto de los
+        // datos visuales del producto deben permanecer intactos.
+        this.productsSignal.set(this.productsSignal().map((product) =>
+          product.id === productId
+            ? {
+                ...product,
+                stockQuantity: newStock,
+                inStock: Boolean(meta?.active ?? true) && newStock > 0,
+              }
+            : product,
+        ));
+      },
+      error: () => this.loadError.set('No se pudieron ajustar las existencias.'),
     });
   }
 

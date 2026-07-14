@@ -125,7 +125,7 @@ const adjustStock = async (id, { quantity_delta, reason, notes, user_id }) => {
     );
 
     if (!rows.length) {
-      const error = new Error('Item not found');
+      const error = new Error('Artículo no encontrado');
       error.status = 404;
       throw error;
     }
@@ -134,7 +134,7 @@ const adjustStock = async (id, { quantity_delta, reason, notes, user_id }) => {
     const previousStock = Number(item.stock);
     const newStock = previousStock + quantity_delta;
     if (newStock < 0) {
-      const error = new Error('Stock cannot be negative');
+      const error = new Error('Las existencias no pueden ser negativas');
       error.status = 400;
       throw error;
     }

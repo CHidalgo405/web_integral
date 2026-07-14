@@ -39,4 +39,35 @@ const update = (id, { category_id, employee_id, description, amount, payment_met
 const remove = (id) =>
   db.query('DELETE FROM expenses WHERE id=$1 RETURNING id', [id]);
 
-module.exports = { findAll, findById, create, update, remove };
+const reverse = async (id, { reason, created_by }) => {
+  const client = await db.connect();
+  try {
+    await client.query('BEGIN');
+    const { rows } = await client.query('SELECT * FROM expenses WHERE id=$1 FOR UPDATE', [id]);
+    const original = rows[0];
+    if (!original) throw Object.assign(new Error('Gasto no encontrado'), { status: 404 });
+    if (original.entry_type === 'reversal') {
+      throw Object.assign(new Error('Una reversión no puede revertirse'), { status: 409 });
+    }
+    const existing = await client.query('SELECT id FROM expenses WHERE reverses_expense_id=$1', [id]);
+    if (existing.rowCount) throw Object.assign(new Error('El gasto ya fue revertido'), { status: 409 });
+    if (!reason || reason.trim().length < 4) {
+      throw Object.assign(new Error('Indica el motivo de la reversión'), { status: 400 });
+    }
+    const { rows: saved } = await client.query(
+      `INSERT INTO expenses
+        (category_id,employee_id,description,amount,payment_method,receipt_ref,expense_date,
+         entry_type,reverses_expense_id,reversal_reason,created_by)
+       VALUES ($1,$2,$3,$4,$5,$6,CURRENT_DATE,'reversal',$7,$8,$9) RETURNING *`,
+      [original.category_id, original.employee_id, 'Reversión: ' + original.description,
+        original.amount, original.payment_method, original.receipt_ref, id, reason.trim(), created_by]
+    );
+    await client.query('COMMIT');
+    return saved[0];
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally { client.release(); }
+};
+
+module.exports = { findAll, findById, create, update, remove, reverse };

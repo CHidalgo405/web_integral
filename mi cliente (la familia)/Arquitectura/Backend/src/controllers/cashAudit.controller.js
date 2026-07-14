@@ -10,7 +10,7 @@ const getAll = async (req, res, next) => {
 const getOne = async (req, res, next) => {
   try {
     const { rows } = await CashAudit.findById(req.params.id);
-    if (!rows.length) return res.status(404).json({ error: 'Cash audit not found' });
+    if (!rows.length) return res.status(404).json({ error: 'Auditoría de caja no encontrada' });
     res.json(rows[0]);
   } catch (err) { next(err); }
 };

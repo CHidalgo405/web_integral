@@ -3,7 +3,7 @@ const ShopConfig = require('../models/shopConfig.model');
 const get = async (req, res, next) => {
   try {
     const { rows } = await ShopConfig.get();
-    if (!rows.length) return res.status(404).json({ error: 'Shop config not found' });
+    if (!rows.length) return res.status(404).json({ error: 'Configuración de tienda no encontrada' });
     res.json(rows[0]);
   } catch (err) { next(err); }
 };

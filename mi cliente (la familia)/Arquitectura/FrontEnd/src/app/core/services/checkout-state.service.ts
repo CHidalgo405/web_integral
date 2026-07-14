@@ -7,6 +7,7 @@ export class CheckoutStateService {
   guestEmail = signal('');
   selectedAddress = signal<Address | undefined>(undefined);
   selectedShipping = signal<ShippingMethod | ''>('');
+  shippingFee = signal(0);
   selectedPayment = signal<PaymentMethod | ''>('');
   discountCode = signal('');
 
@@ -14,6 +15,7 @@ export class CheckoutStateService {
     this.guestEmail.set('');
     this.selectedAddress.set(undefined);
     this.selectedShipping.set('');
+    this.shippingFee.set(0);
     this.selectedPayment.set('');
     this.discountCode.set('');
   }
@@ -21,7 +23,7 @@ export class CheckoutStateService {
   getShippingLabel(method: ShippingMethod | ''): string {
     const map: Record<ShippingMethod, string> = {
       standard: 'Envío Estándar',
-      express: 'Envío Express',
+      express: 'Envío exprés',
       pickup: 'Recoger en tienda',
     };
     return method ? map[method] : '';
@@ -37,12 +39,10 @@ export class CheckoutStateService {
   }
 
   getShippingPrice(method: ShippingMethod | ''): string {
-    const map: Record<ShippingMethod, string> = {
-      standard: '$49.99',
-      express: '$89.99',
-      pickup: 'Gratis',
-    };
-    return method ? map[method] : '';
+    if (!method) return '';
+    return method === 'pickup' || this.shippingFee() === 0
+      ? 'Gratis'
+      : this.shippingFee().toLocaleString('es-MX', { style: 'currency', currency: 'MXN' });
   }
 
   getShippingIcon(method: ShippingMethod | ''): string {

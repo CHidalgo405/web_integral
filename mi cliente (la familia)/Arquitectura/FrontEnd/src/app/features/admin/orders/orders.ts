@@ -217,7 +217,7 @@ import { IconComponent } from '../../../shared/components/icon/icon';
                 <label class="label-control">Método de Envío</label>
                 <span class="form-value-tag">
                   <app-icon [name]="selectedOrder()?.shippingMethod === 'express' ? 'bolt' : 'truck'" size="14" color="var(--primary)" />
-                  <span>{{ selectedOrder()?.shippingMethod === 'express' ? 'Express' : 'Estándar' }}</span>
+                  <span>{{ selectedOrder()?.shippingMethod === 'express' ? 'Exprés' : 'Estándar' }}</span>
                 </span>
               </div>
               <div class="form-group">

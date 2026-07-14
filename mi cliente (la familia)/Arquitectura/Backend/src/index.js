@@ -13,7 +13,7 @@ const allowedOrigin = process.env.FRONTEND_URL;
 app.use(cors(allowedOrigin ? { origin: allowedOrigin } : undefined));
 app.use(express.json());
 
-app.get('/', (req, res) => res.json({ message: 'Tiendita Maday API running' }));
+app.get('/', (req, res) => res.json({ message: 'API de Tiendita Maday en funcionamiento' }));
 app.get("/swagger.json", (req, res) => res.json(openapi));
 app.get("/api-docs", (req, res) => {
   res.type("html").send([

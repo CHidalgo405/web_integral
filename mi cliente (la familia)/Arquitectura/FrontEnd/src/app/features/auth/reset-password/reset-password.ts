@@ -130,7 +130,7 @@ export function passwordMatchValidator(control: AbstractControl): ValidationErro
           <!-- Enlace alternativo si ya tuvo éxito -->
           <a routerLink="/auth/login" class="btn-login-redirect">
             <app-icon name="log-in" size="18" color="#fff" />
-            Ir al Login
+            Ir al inicio de sesión
           </a>
         }
 

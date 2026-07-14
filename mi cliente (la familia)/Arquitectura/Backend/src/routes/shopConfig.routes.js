@@ -1,8 +1,8 @@
 const router = require('express').Router();
 const ctrl = require('../controllers/shopConfig.controller');
-const { verifyToken, requireRole } = require('../middleware/auth.middleware');
+const { verifyToken, requireExactRole } = require('../middleware/auth.middleware');
 
 router.get('/', verifyToken, ctrl.get);
-router.put('/', verifyToken, requireRole('admin'), ctrl.update);
+router.put('/', verifyToken, requireExactRole('admin'), ctrl.update);
 
 module.exports = router;

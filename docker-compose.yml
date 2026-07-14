@@ -18,11 +18,14 @@ services:
     volumes:
       - ./mi cliente (la familia)/Arquitectura/Backend:/app
       - /app/node_modules
+      - ./mi cliente (la familia)/Arquitectura/Database/migrations:/migrations:ro
     depends_on:
       - database
     environment:
       - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-yourpassword}@database:5432/${POSTGRES_DB:-tiendita_maday}
       - PORT=3000
+      - MIGRATIONS_DIR=/migrations
+    command: sh -c "npm run migrate && node src/index.js"
 
   database:
     image: postgres:latest

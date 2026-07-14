@@ -238,4 +238,10 @@ test('manager role inherits admin access across protected workflows', async () =
     body: { items: [], payment_method: 'cash' },
   });
   assert.equal(posResponse.status, 400);
+
+  const financeResponse = await request('/expenses', { token: managerToken });
+  assert.equal(financeResponse.status, 403);
+
+  const settingsResponse = await request('/shop-config', { method: 'PUT', token: managerToken, body: {} });
+  assert.equal(settingsResponse.status, 403);
 });

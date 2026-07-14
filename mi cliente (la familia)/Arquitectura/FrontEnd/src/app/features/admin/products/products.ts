@@ -302,8 +302,8 @@ import { IconComponent } from '../../../shared/components/icon/icon';
               <app-icon name="image" size="12" color="var(--text-muted)" />
               Imagen del Producto
             </label>
-            <div 
-              class="image-upload-zone" 
+            <div
+              class="image-upload-zone"
               [class.has-file]="selectedModalFile"
               (click)="modalFileInput.click()"
             >
@@ -326,11 +326,11 @@ import { IconComponent } from '../../../shared/components/icon/icon';
                 </div>
               }
             </div>
-            <input 
-              type="file" 
+            <input
+              type="file"
               #modalFileInput
-              id="p-image" 
-              (change)="onModalFileSelected($event)" 
+              id="p-image"
+              (change)="onModalFileSelected($event)"
               accept="image/*"
               style="display: none"
             />
@@ -522,13 +522,8 @@ export class ProductManager {
   }
 
   adjustStock(product: Product, delta: number): void {
-    const newQty = Math.max(0, product.stockQuantity + delta);
-    const updated: Product = {
-      ...product,
-      stockQuantity: newQty,
-      inStock: newQty > 0 ? product.inStock : false,
-    };
-    this.productService.updateProduct(updated);
+    if (product.stockQuantity + delta < 0) return;
+    this.productService.adjustStock(product.id, delta);
   }
 
   toggleInStock(product: Product): void {

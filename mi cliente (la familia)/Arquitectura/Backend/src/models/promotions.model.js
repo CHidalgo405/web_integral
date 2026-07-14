@@ -1,6 +1,6 @@
 const db = require('../db');
 
-const findAll = ({ inventory_id } = {}) => {
+const findAll = ({ inventory_id, include_inactive } = {}) => {
   if (inventory_id) {
     return db.query(
       `SELECT * FROM promotions
@@ -9,8 +9,15 @@ const findAll = ({ inventory_id } = {}) => {
       [inventory_id]
     );
   }
-  return db.query('SELECT * FROM promotions WHERE active=TRUE ORDER BY created_at DESC');
+  return db.query(`SELECT * FROM promotions ${include_inactive === 'true' ? '' : 'WHERE active=TRUE'} ORDER BY created_at DESC`);
 };
+
+const findOverlap = (inventoryId, validFrom, validUntil, excludeId) => db.query(
+  `SELECT id FROM promotions WHERE inventory_id=$1 AND active=TRUE AND ($4::uuid IS NULL OR id<>$4)
+   AND COALESCE(valid_until,'infinity'::date)>=COALESCE($2::date,'-infinity'::date)
+   AND COALESCE(valid_from,'-infinity'::date)<=COALESCE($3::date,'infinity'::date) LIMIT 1`,
+  [inventoryId, validFrom || null, validUntil || null, excludeId || null]
+);
 
 const findById = (id) =>
   db.query('SELECT * FROM promotions WHERE id=$1', [id]);
@@ -35,4 +42,4 @@ const update = (id, { name, description, discount_pct, discount_fixed, inventory
 const remove = (id) =>
   db.query('UPDATE promotions SET active=FALSE WHERE id=$1 RETURNING id', [id]);
 
-module.exports = { findAll, findById, create, update, remove };
+module.exports = { findAll, findById, findOverlap, create, update, remove };

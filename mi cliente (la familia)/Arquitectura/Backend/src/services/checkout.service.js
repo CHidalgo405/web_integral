@@ -145,19 +145,61 @@ const buildCheckoutQuote = async (client, userId, payload, { lock = false } = {}
 
   const promoted = allocatePromotion(items, promotion);
   items = promoted.items;
-  const deliveryFee = calculateShippingFee(subtotal, shippingMethod);
-
   let address = null;
+  let deliveryFee = 0;
+  let deliveryDistanceKm = null;
+  let deliveryZoneId = null;
   if (shippingMethod !== 'pickup') {
     if (!UUID_PATTERN.test(payload?.address_id || '')) throw checkoutError('Selecciona una dirección válida');
     const addressResult = await client.query(
       `SELECT id, full_name, phone, street, exterior_number, interior_number,
-              neighborhood, city, state, zip_code
+              neighborhood, city, state, zip_code, latitude, longitude
        FROM user_addresses WHERE id=$1 AND user_id=$2`,
       [payload.address_id, userId],
     );
     address = addressResult.rows[0] ?? null;
     if (!address) throw checkoutError('La dirección no existe o no pertenece a tu cuenta', 404);
+    if (address.latitude == null || address.longitude == null) {
+      const error = checkoutError('Confirma la ubicación de la dirección', 409);
+      error.appCode = 'ADDRESS_LOCATION_REQUIRED';
+      throw error;
+    }
+
+    const configResult = await client.query('SELECT * FROM shop_config WHERE id=1');
+    const config = configResult.rows[0];
+    if (!config || config.latitude == null || config.longitude == null) {
+      const error = checkoutError('La ubicación de la tienda no está configurada', 409);
+      error.appCode = 'SHOP_LOCATION_REQUIRED';
+      throw error;
+    }
+    const distance = distanceKm(
+      Number(config.latitude),
+      Number(config.longitude),
+      Number(address.latitude),
+      Number(address.longitude),
+    );
+    const zonesResult = await client.query(
+      'SELECT * FROM delivery_zones WHERE active=TRUE ORDER BY min_km',
+    );
+    const zone = selectZone(zonesResult.rows, distance);
+    if (!zone) {
+      const error = checkoutError('La dirección está fuera del área de entrega', 409);
+      error.appCode = 'DELIVERY_OUT_OF_RANGE';
+      throw error;
+    }
+    deliveryFee = feeFor(zone, distance);
+    if (
+      shippingMethod === 'standard' &&
+      config.free_shipping_threshold != null &&
+      subtotal >= Number(config.free_shipping_threshold)
+    ) {
+      deliveryFee = 0;
+    }
+    if (shippingMethod === 'express') {
+      deliveryFee = money(deliveryFee + Number(config.express_surcharge || 0));
+    }
+    deliveryDistanceKm = money(distance);
+    deliveryZoneId = zone.id;
   }
 
   return {
@@ -172,6 +214,8 @@ const buildCheckoutQuote = async (client, userId, payload, { lock = false } = {}
     subtotal,
     discount_total: promoted.discountTotal,
     delivery_fee: deliveryFee,
+    delivery_distance_km: deliveryDistanceKm,
+    delivery_zone_id: deliveryZoneId,
     total: money(Math.max(0, subtotal - promoted.discountTotal + deliveryFee)),
   };
 };
@@ -185,3 +229,4 @@ module.exports = {
   allocatePromotion,
   buildCheckoutQuote,
 };
+const { distanceKm, selectZone, feeFor } = require('../utils/delivery');

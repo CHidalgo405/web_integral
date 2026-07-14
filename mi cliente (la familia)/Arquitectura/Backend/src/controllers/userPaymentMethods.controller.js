@@ -14,7 +14,7 @@ const create = async (req, res, next) => {
       return res.status(400).json({ error: 'Tipo y etiqueta son obligatorios' });
     }
     if (!['card', 'cash'].includes(type)) {
-      return res.status(400).json({ error: 'Tipo inválido (card o cash)' });
+      return res.status(400).json({ error: 'Tipo inválido (tarjeta o efectivo)' });
     }
     const { rows } = await PaymentMethods.create(req.user.id, req.body);
     res.status(201).json(rows[0]);

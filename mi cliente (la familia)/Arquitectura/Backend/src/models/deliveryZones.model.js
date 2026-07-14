@@ -9,6 +9,14 @@ const findById = (id) =>
 const calculateFee = (distance_km) =>
   db.query('SELECT calculate_delivery_fee($1) AS fee', [distance_km]);
 
+const getCoverageData = async () => {
+  const [config, zones] = await Promise.all([
+    db.query('SELECT * FROM shop_config WHERE id=1'),
+    db.query('SELECT * FROM delivery_zones WHERE active=TRUE ORDER BY min_km'),
+  ]);
+  return { config: config.rows[0], zones: zones.rows };
+};
+
 const findAudit = (zone_id) =>
   db.query(
     'SELECT * FROM delivery_zone_audit WHERE zone_id=$1 ORDER BY changed_at DESC',
@@ -33,4 +41,4 @@ const update = (id, { name, min_km, max_km, base_fee, fee_per_km, active, update
 const remove = (id) =>
   db.query('UPDATE delivery_zones SET active=FALSE WHERE id=$1 RETURNING id', [id]);
 
-module.exports = { findAll, findById, calculateFee, findAudit, create, update, remove };
+module.exports = { findAll, findById, calculateFee, getCoverageData, findAudit, create, update, remove };

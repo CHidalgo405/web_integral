@@ -4,11 +4,12 @@ import { Header } from '../../../shared/components/header/header';
 import { IconComponent } from '../../../shared/components/icon/icon';
 import { FormsModule, NgForm } from '@angular/forms';
 import { Address } from '../../../core/models/address.model';
+import { LocationPicker } from '../../../shared/components/location-picker/location-picker';
 
 @Component({
   selector: 'app-addresses',
   standalone: true,
-  imports: [Header, IconComponent, FormsModule],
+  imports: [Header, IconComponent, FormsModule, LocationPicker],
   template: `
     <app-header title="Mis Direcciones" [showBack]="true"></app-header>
     
@@ -159,6 +160,12 @@ import { Address } from '../../../core/models/address.model';
             </div>
 
             <!-- Notes/Indications -->
+            <app-location-picker
+              [latitude]="formModel.latitude"
+              [longitude]="formModel.longitude"
+              (locationChange)="formModel.latitude = $event.latitude; formModel.longitude = $event.longitude"
+            />
+
             <div class="form-group">
               <label class="label-control">Indicaciones de Entrega</label>
               <textarea name="notes" [(ngModel)]="formModel.notes" placeholder="Ej. Portón verde, casa verde turquesa..." class="form-control textarea-control" rows="2"></textarea>
@@ -655,7 +662,9 @@ export class Addresses {
     city: '',
     state: '',
     notes: '',
-    isDefault: false
+    isDefault: false,
+    latitude: undefined,
+    longitude: undefined
   };
 
   getLabelIcon(label: string): string {
@@ -680,7 +689,9 @@ export class Addresses {
       city: '',
       state: '',
       notes: '',
-      isDefault: this.userService.getAddresses().length === 0
+      isDefault: this.userService.getAddresses().length === 0,
+      latitude: undefined,
+      longitude: undefined
     };
     this.showFormModal = true;
   }

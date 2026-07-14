@@ -10,7 +10,7 @@ import { IconComponent } from '../../../shared/components/icon/icon';
   standalone: true,
   imports: [RouterLink, Header, IconComponent],
   template: `
-    <app-header title="Checkout" [showBack]="true"></app-header>
+    <app-header title="Finalizar compra" [showBack]="true"></app-header>
     <div class="checkout-page" id="checkout-identify-page">
       <div class="step-indicator"><span class="step active">1</span><span class="step">2</span><span class="step">3</span><span class="step">4</span></div>
       <h2>¿Cómo deseas continuar?</h2>

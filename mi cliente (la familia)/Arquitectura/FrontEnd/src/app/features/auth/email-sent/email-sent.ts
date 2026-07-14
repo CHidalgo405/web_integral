@@ -65,7 +65,7 @@ import { AuthService } from '../../../core/services/auth.service';
 
           <a routerLink="/auth/login" class="btn-login" id="back-to-login-btn">
             <app-icon name="log-in" size="18" color="#fff" />
-            Volver al Login
+            Volver al inicio de sesión
           </a>
         </div>
 

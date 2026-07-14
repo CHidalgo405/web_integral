@@ -46,6 +46,8 @@ CREATE TABLE shop_config (
     latitude    NUMERIC(9,6),
     longitude   NUMERIC(9,6),
     currency    CHAR(3)     NOT NULL DEFAULT 'MXN',
+    express_surcharge NUMERIC(8,2) NOT NULL DEFAULT 40,
+    free_shipping_threshold NUMERIC(10,2),
     updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT single_row CHECK (id = 1)
 );
@@ -1020,6 +1022,8 @@ CREATE TABLE user_addresses (
     zip_code        VARCHAR(10),
     notes           TEXT,
     is_default      BOOLEAN      NOT NULL DEFAULT FALSE,
+    latitude        NUMERIC(9,6),
+    longitude       NUMERIC(9,6),
     created_at      TIMESTAMPTZ  NOT NULL DEFAULT NOW()
 );
 

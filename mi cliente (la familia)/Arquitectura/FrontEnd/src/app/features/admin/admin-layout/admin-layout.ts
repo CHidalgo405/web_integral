@@ -39,6 +39,13 @@ import { IconComponent } from '../../../shared/components/icon/icon';
             <span class="link-icon"><app-icon name="users" size="18" color="currentColor" /></span>
             <span class="link-label">Usuarios</span>
           </a>
+          <a routerLink="/admin/supply" routerLinkActive="active" class="menu-link"><span class="link-icon"><app-icon name="truck" size="18" color="currentColor" /></span><span class="link-label">Abastecimiento</span></a>
+          <a routerLink="/admin/expirations" routerLinkActive="active" class="menu-link"><span class="link-icon"><app-icon name="calendar" size="18" color="currentColor" /></span><span class="link-label">Caducidades</span></a>
+          <a routerLink="/admin/promotions" routerLinkActive="active" class="menu-link"><span class="link-icon"><app-icon name="tag" size="18" color="currentColor" /></span><span class="link-label">Promociones</span></a>
+          @if (authService.user()?.role === 'admin') {
+            <a routerLink="/admin/finance" routerLinkActive="active" class="menu-link"><span class="link-icon"><app-icon name="dollar-sign" size="18" color="currentColor" /></span><span class="link-label">Finanzas</span></a>
+            <a routerLink="/admin/settings" routerLinkActive="active" class="menu-link"><span class="link-icon"><app-icon name="map-pin" size="18" color="currentColor" /></span><span class="link-label">Configuración</span></a>
+          }
         </nav>
 
         <div class="sidebar-footer">
@@ -116,6 +123,13 @@ import { IconComponent } from '../../../shared/components/icon/icon';
             <app-icon name="users" size="18" color="currentColor" />
             Usuarios
           </a>
+          <a routerLink="/admin/supply" routerLinkActive="active" (click)="toggleMobileMenu()" class="drawer-link"><app-icon name="truck" size="18" color="currentColor" />Abastecimiento</a>
+          <a routerLink="/admin/expirations" routerLinkActive="active" (click)="toggleMobileMenu()" class="drawer-link"><app-icon name="calendar" size="18" color="currentColor" />Caducidades</a>
+          <a routerLink="/admin/promotions" routerLinkActive="active" (click)="toggleMobileMenu()" class="drawer-link"><app-icon name="tag" size="18" color="currentColor" />Promociones</a>
+          @if (authService.user()?.role === 'admin') {
+            <a routerLink="/admin/finance" routerLinkActive="active" (click)="toggleMobileMenu()" class="drawer-link"><app-icon name="dollar-sign" size="18" color="currentColor" />Finanzas</a>
+            <a routerLink="/admin/settings" routerLinkActive="active" (click)="toggleMobileMenu()" class="drawer-link"><app-icon name="map-pin" size="18" color="currentColor" />Configuración</a>
+          }
         </nav>
 
         <div class="drawer-footer">

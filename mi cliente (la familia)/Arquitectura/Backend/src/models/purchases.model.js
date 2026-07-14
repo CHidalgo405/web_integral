@@ -43,6 +43,8 @@ const findItems = (purchase_id) =>
   );
 
 const quoteCheckout = async (userId, payload) => {
+  Checkout.normalizeItems(payload?.items);
+  Checkout.calculateShippingFee(0, payload?.shipping_method);
   const client = await db.connect();
   try {
     return await Checkout.buildCheckoutQuote(client, userId, payload);
@@ -52,14 +54,16 @@ const quoteCheckout = async (userId, payload) => {
 };
 
 const createCheckout = async (userId, payload, paymentVerification = null) => {
+  Checkout.normalizeItems(payload?.items);
+  Checkout.calculateShippingFee(0, payload?.shipping_method);
+  const paymentMethod = payload?.payment_method;
+  if (!['cash', 'paypal'].includes(paymentMethod)) {
+    throw Checkout.checkoutError('Método de pago no disponible para pedidos en línea');
+  }
+
   const client = await db.connect();
   try {
     await client.query('BEGIN');
-
-    const paymentMethod = payload?.payment_method;
-    if (!['cash', 'paypal'].includes(paymentMethod)) {
-      throw Checkout.checkoutError('Método de pago no disponible para pedidos en línea');
-    }
 
     const quote = await Checkout.buildCheckoutQuote(client, userId, payload, { lock: true });
     let paidAt = null;
@@ -96,14 +100,17 @@ const createCheckout = async (userId, payload, paymentVerification = null) => {
     const { rows: [p] } = await client.query(
       `INSERT INTO purchases
          (user_id, delivery_method, shipping_tier, delivery_address, delivery_fee,
-          payment_method, status, subtotal, discount_total, total, paypal_order_id, paid_at, notes)
-       VALUES ($1,$2,$3,$4,$5,$6,'pending',$7,$8,$9,$10,$11,$12) RETURNING *`,
+          delivery_distance_km, delivery_zone_id, payment_method, status, subtotal,
+          discount_total, total, paypal_order_id, paid_at, notes)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'pending',$9,$10,$11,$12,$13,$14) RETURNING *`,
       [
         userId,
         quote.delivery_method,
         quote.shipping_method,
         quote.delivery_address,
         quote.delivery_fee,
+        quote.delivery_distance_km,
+        quote.delivery_zone_id,
         paymentMethod,
         quote.subtotal,
         quote.discount_total,
