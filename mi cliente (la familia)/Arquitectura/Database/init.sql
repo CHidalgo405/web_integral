@@ -542,6 +542,28 @@ CREATE TABLE purchase_items (
 
 CREATE INDEX idx_purchase_items_inv ON purchase_items(inventory_id);
 
+-- ─── Product Reviews ─────────────────────────────────────────
+-- Una reseña por usuario y producto. purchase_id conserva la
+-- compra entregada/completada que verificó el derecho a opinar.
+CREATE TABLE product_reviews (
+    id           UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+    inventory_id UUID        NOT NULL REFERENCES inventory(id) ON DELETE CASCADE,
+    user_id      UUID        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    purchase_id  UUID        NOT NULL REFERENCES purchases(id) ON DELETE RESTRICT,
+    rating       SMALLINT    NOT NULL CHECK (rating BETWEEN 1 AND 5),
+    comment      TEXT        NOT NULL CHECK (char_length(btrim(comment)) BETWEEN 10 AND 1000),
+    created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT uq_product_reviews_user_inventory UNIQUE (user_id, inventory_id)
+);
+
+CREATE INDEX idx_product_reviews_inventory_created
+    ON product_reviews(inventory_id, created_at DESC);
+
+CREATE TRIGGER trg_product_reviews_updated_at
+BEFORE UPDATE ON product_reviews
+FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
 -- Shared helper: deduct from expiration batches FIFO (earliest-expiring first)
 CREATE OR REPLACE FUNCTION reduce_expiration_batches(p_inventory_id UUID, p_quantity INTEGER)
 RETURNS VOID LANGUAGE plpgsql AS $$

@@ -17,10 +17,15 @@ const findAll = ({ active, category_id, low_stock } = {}) => {
        u.abbreviation AS unit, i.uom_id, i.price, i.cost, i.stock, i.min_stock,
        i.stock <= i.min_stock AS low_stock, i.has_expiration, i.active,
        i.image_url, i.image_public_id,
+       COALESCE(r.rating, 0) AS rating, COALESCE(r.review_count, 0) AS review_count,
        i.created_at, i.updated_at
      FROM inventory i
      LEFT JOIN categories c ON c.id = i.category_id
      LEFT JOIN units_of_measure u ON u.id = i.uom_id
+     LEFT JOIN (
+       SELECT inventory_id, ROUND(AVG(rating), 1) AS rating, COUNT(*)::int AS review_count
+       FROM product_reviews GROUP BY inventory_id
+     ) r ON r.inventory_id = i.id
      ${where}
      ORDER BY i.name`,
     params
@@ -28,7 +33,16 @@ const findAll = ({ active, category_id, low_stock } = {}) => {
 };
 
 const findById = (id) =>
-  db.query('SELECT * FROM inventory WHERE id=$1', [id]);
+  db.query(
+    `SELECT i.*, COALESCE(r.rating, 0) AS rating, COALESCE(r.review_count, 0) AS review_count
+     FROM inventory i
+     LEFT JOIN (
+       SELECT inventory_id, ROUND(AVG(rating), 1) AS rating, COUNT(*)::int AS review_count
+       FROM product_reviews GROUP BY inventory_id
+     ) r ON r.inventory_id = i.id
+     WHERE i.id=$1`,
+    [id],
+  );
 
 const findLowStock = () =>
   db.query('SELECT * FROM v_low_stock');

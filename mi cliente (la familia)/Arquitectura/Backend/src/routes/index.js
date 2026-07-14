@@ -34,5 +34,6 @@ router.use('/price-history',       ...adminOnly, require('./priceHistory.routes'
 router.use('/addresses',           require('./userAddresses.routes'));
 router.use('/payment-methods',     require('./userPaymentMethods.routes'));
 router.use('/paypal',              require('./paypal.routes'));
+router.use('/reviews',             require('./reviews.routes'));
 
 module.exports = router;

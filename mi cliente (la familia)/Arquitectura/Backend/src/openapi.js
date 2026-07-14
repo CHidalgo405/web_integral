@@ -154,6 +154,7 @@ const openapi = {
     { name: 'Categories' },
     { name: 'Units' },
     { name: 'Inventory' },
+    { name: 'Reviews' },
     { name: 'Barcodes' },
     { name: 'Price History' },
     { name: 'Suppliers' },
@@ -302,6 +303,8 @@ const openapi = {
           min_stock: { type: 'integer' },
           has_expiration: { type: 'boolean' },
           active: { type: 'boolean' },
+          rating: { type: 'number', minimum: 0, maximum: 5 },
+          review_count: { type: 'integer', minimum: 0 },
           created_at: dateTime,
           updated_at: dateTime,
         },
@@ -964,6 +967,31 @@ const openapi = {
           changed_at: dateTime,
         },
       },
+      ProductReview: {
+        type: 'object',
+        properties: {
+          id: uuid,
+          inventory_id: uuid,
+          user_id: uuid,
+          purchase_id: uuid,
+          user_name: { type: 'string' },
+          rating: { type: 'integer', minimum: 1, maximum: 5 },
+          comment: { type: 'string', minLength: 10, maxLength: 1000 },
+          verified_purchase: { type: 'boolean' },
+          is_mine: { type: 'boolean' },
+          created_at: dateTime,
+          updated_at: dateTime,
+        },
+      },
+      ProductReviewInput: {
+        type: 'object',
+        required: ['rating', 'comment'],
+        properties: {
+          inventory_id: uuid,
+          rating: { type: 'integer', minimum: 1, maximum: 5 },
+          comment: { type: 'string', minLength: 10, maxLength: 1000 },
+        },
+      },
     },
   },
   paths: {
@@ -1279,6 +1307,57 @@ const openapi = {
       delete: {
         tags: ['Barcodes'],
         summary: 'Remove barcode from an inventory item',
+        responses: {
+          204: deleted,
+          404: { $ref: '#/components/responses/NotFound' },
+        },
+      },
+    },
+    '/reviews/products/{inventoryId}': {
+      parameters: [{ name: 'inventoryId', in: 'path', required: true, schema: uuid }],
+      get: {
+        tags: ['Reviews'],
+        summary: 'List product reviews, rating summary and current-user eligibility',
+        responses: {
+          200: ok({
+            type: 'object',
+            properties: {
+              reviews: { type: 'array', items: { $ref: '#/components/schemas/ProductReview' } },
+              summary: { type: 'object' },
+              eligibility: { type: 'object' },
+            },
+          }),
+          404: { $ref: '#/components/responses/NotFound' },
+        },
+      },
+    },
+    '/reviews': {
+      post: {
+        tags: ['Reviews'],
+        summary: 'Create a verified-purchase product review [Role: customer]',
+        requestBody: requestBody({ $ref: '#/components/schemas/ProductReviewInput' }),
+        responses: {
+          201: created({ $ref: '#/components/schemas/ProductReview' }),
+          400: { $ref: '#/components/responses/ValidationError' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          409: { description: 'The customer already reviewed this product' },
+        },
+      },
+    },
+    '/reviews/{id}': {
+      parameters: [idParam],
+      put: {
+        tags: ['Reviews'],
+        summary: 'Update the authenticated customer review',
+        requestBody: requestBody({ $ref: '#/components/schemas/ProductReviewInput' }),
+        responses: {
+          200: ok({ $ref: '#/components/schemas/ProductReview' }),
+          404: { $ref: '#/components/responses/NotFound' },
+        },
+      },
+      delete: {
+        tags: ['Reviews'],
+        summary: 'Delete an owned review or moderate it as administrator',
         responses: {
           204: deleted,
           404: { $ref: '#/components/responses/NotFound' },
