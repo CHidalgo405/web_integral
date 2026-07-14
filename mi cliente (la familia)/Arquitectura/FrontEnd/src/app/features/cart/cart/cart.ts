@@ -15,11 +15,12 @@ import { IconComponent } from '../../../shared/components/icon/icon';
       <!-- Custom Header matching mockup -->
       <div class="cart-header">
         <div class="header-title">
-          <h1>Mi Carrito<br>La Familia</h1>
+          <span>La Familia</span>
+          <h1>Mi carrito</h1>
         </div>
-        <button class="search-icon-btn" style="display: flex; align-items: center; justify-content: center;">
+        <a routerLink="/home/search" class="search-icon-btn" aria-label="Buscar productos">
           <app-icon name="search" size="24" />
-        </button>
+        </a>
       </div>
 
       @if (cartService.items().length === 0) {
@@ -75,7 +76,7 @@ import { IconComponent } from '../../../shared/components/icon/icon';
                   <button (click)="cartService.updateQuantity(item.id, item.quantity - 1)" [disabled]="item.quantity <= 1">−</button>
                 </div>
 
-                <button class="delete-btn" (click)="cartService.removeItem(item.id)" style="display: flex; align-items: center; justify-content: center;">
+                <button class="delete-btn" (click)="cartService.removeItem(item.id)" [attr.aria-label]="'Eliminar ' + item.product.name">
                   <app-icon name="trash" size="20" />
                 </button>
 
