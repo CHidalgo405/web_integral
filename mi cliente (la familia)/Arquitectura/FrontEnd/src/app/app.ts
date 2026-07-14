@@ -127,7 +127,7 @@ export class App implements OnInit {
   showBottomNav = false;
   updateAvailable = false;
 
-  private hiddenRoutes = ['/auth', '/checkout', '/admin', '/cashier', '/product'];
+  private hiddenRoutes = ['/auth', '/checkout', '/admin', '/cashier', '/inventory', '/product'];
 
   constructor() {
     this.router.events

@@ -3,6 +3,7 @@ import { authGuard } from './core/guards/auth.guard';
 import { guestGuard } from './core/guards/guest.guard';
 import { adminGuard } from './core/guards/admin.guard';
 import { cashierGuard } from './core/guards/cashier.guard';
+import { inventoryGuard } from './core/guards/inventory.guard';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'auth', pathMatch: 'full' },
@@ -50,6 +51,11 @@ export const routes: Routes = [
     path: 'cashier',
     canActivate: [authGuard, cashierGuard],
     loadChildren: () => import('./features/cashier/cashier.routes').then((m) => m.CASHIER_ROUTES),
+  },
+  {
+    path: 'inventory',
+    canActivate: [authGuard, inventoryGuard],
+    loadChildren: () => import('./features/inventory/inventory.routes').then((m) => m.INVENTORY_ROUTES),
   },
   {
     path: '**',

@@ -94,6 +94,7 @@ export class AuthService {
     const role = this.currentUser()?.role;
     if (role === 'admin') return '/admin';
     if (role === 'cashier') return '/cashier';
+    if (role === 'stock') return '/inventory';
     return '/home';
   }
 
