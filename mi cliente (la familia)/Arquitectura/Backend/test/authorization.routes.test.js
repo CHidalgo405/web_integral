@@ -58,6 +58,17 @@ const stockToken = jwt.sign(
   { expiresIn: '5m' },
 );
 
+const managerToken = jwt.sign(
+  {
+    id: '00000000-0000-0000-0000-000000000004',
+    employee_id: '00000000-0000-0000-0000-000000000104',
+    username: 'manager@test.local',
+    role: 'manager',
+  },
+  process.env.JWT_SECRET,
+  { expiresIn: '5m' },
+);
+
 const request = (path, { method = 'GET', token, body } = {}) =>
   fetch(`${baseUrl}${path}`, {
     method,
@@ -173,4 +184,34 @@ test('stock role reaches adjustment validation but remains blocked from admin re
     body: {},
   });
   assert.equal(createProductResponse.status, 403);
+});
+
+test('manager role inherits admin access across protected workflows', async () => {
+  const cashierResponse = await request('/users/cashiers', {
+    method: 'POST',
+    token: managerToken,
+    body: {},
+  });
+  assert.equal(cashierResponse.status, 400);
+
+  const registerResponse = await request('/cash-register/open', {
+    method: 'POST',
+    token: managerToken,
+    body: { opening_amount: -1 },
+  });
+  assert.equal(registerResponse.status, 400);
+
+  const adjustmentResponse = await request('/inventory/00000000-0000-0000-0000-000000000100/adjustments', {
+    method: 'POST',
+    token: managerToken,
+    body: { quantity_delta: 0, reason: '' },
+  });
+  assert.equal(adjustmentResponse.status, 400);
+
+  const posResponse = await request('/purchases/pos', {
+    method: 'POST',
+    token: managerToken,
+    body: { items: [], payment_method: 'cash' },
+  });
+  assert.equal(posResponse.status, 400);
 });

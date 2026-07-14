@@ -28,7 +28,12 @@ const requireRole = (...roles) => {
       return res.status(401).json({ error: 'Unauthorized: No user role found' });
     }
 
-    if (!roles.includes(req.user.role)) {
+    // Manager conserva su rol para auditoría, pero comparte el alcance de admin.
+    const effectiveRoles = req.user.role === 'manager'
+      ? new Set([req.user.role, 'admin'])
+      : new Set([req.user.role]);
+
+    if (!roles.some((role) => effectiveRoles.has(role))) {
       return res.status(403).json({ error: `Forbidden: Requires one of these roles: ${roles.join(', ')}` });
     }
 

@@ -2,7 +2,7 @@ const Purchases = require('../models/purchases.model');
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 const canAccess = (purchase, user) =>
-  user.role === 'admin' ||
+  ['admin', 'manager'].includes(user.role) ||
   purchase.user_id === user.id ||
   (user.role === 'cashier' && user.employee_id && purchase.employee_id === user.employee_id);
 
@@ -117,7 +117,7 @@ const updateStatus = async (req, res, next) => {
 
     // Un cliente únicamente puede cancelar su propio pedido mientras todavía
     // está pendiente o en preparación. Los demás cambios son administrativos.
-    if (req.user.role !== 'admin') {
+    if (!['admin', 'manager'].includes(req.user.role)) {
       if (status !== 'cancelled') {
         return res.status(403).json({ error: 'Only administrators can change this order status' });
       }

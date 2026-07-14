@@ -61,7 +61,7 @@ const update = async (req, res, next) => {
     if (!allowedRoles.includes(req.body.role)) {
       return res.status(400).json({ error: 'Invalid user role' });
     }
-    if (req.params.id === req.user.id && (req.body.role !== 'admin' || req.body.active === false)) {
+    if (req.params.id === req.user.id && (!['admin', 'manager'].includes(req.body.role) || req.body.active === false)) {
       return res.status(400).json({ error: 'No puedes quitar tus propios permisos administrativos' });
     }
     const { rows } = await Users.update(req.params.id, req.body);

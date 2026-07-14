@@ -7,7 +7,7 @@ const toCatalogItem = ({ cost, min_stock, low_stock, created_at, updated_at, ...
 const getAll = async (req, res, next) => {
   try {
     const { rows } = await Inventory.findAll(req.query);
-    res.json(['admin', 'stock'].includes(req.user.role) ? rows : rows.map(toCatalogItem));
+    res.json(['admin', 'manager', 'stock'].includes(req.user.role) ? rows : rows.map(toCatalogItem));
   } catch (err) { next(err); }
 };
 
@@ -15,7 +15,7 @@ const getOne = async (req, res, next) => {
   try {
     const { rows } = await Inventory.findById(req.params.id);
     if (!rows.length) return res.status(404).json({ error: 'Item not found' });
-    res.json(['admin', 'stock'].includes(req.user.role) ? rows[0] : toCatalogItem(rows[0]));
+    res.json(['admin', 'manager', 'stock'].includes(req.user.role) ? rows[0] : toCatalogItem(rows[0]));
   } catch (err) { next(err); }
 };
 
