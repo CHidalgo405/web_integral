@@ -47,6 +47,17 @@ const cashierToken = jwt.sign(
   { expiresIn: '5m' },
 );
 
+const stockToken = jwt.sign(
+  {
+    id: '00000000-0000-0000-0000-000000000003',
+    employee_id: '00000000-0000-0000-0000-000000000103',
+    username: 'stock@test.local',
+    role: 'stock',
+  },
+  process.env.JWT_SECRET,
+  { expiresIn: '5m' },
+);
+
 const request = (path, { method = 'GET', token, body } = {}) =>
   fetch(`${baseUrl}${path}`, {
     method,
@@ -99,6 +110,10 @@ test('business endpoints reject unauthenticated requests', async () => {
 test('customer tokens cannot mutate catalog or access internal resources', async () => {
   const cases = [
     ['/inventory', { method: 'POST', body: {}, token: customerToken }],
+    ['/inventory/movements', { token: customerToken }],
+    ['/inventory/00000000-0000-0000-0000-000000000100/adjustments', {
+      method: 'POST', body: { quantity_delta: 2, reason: 'Conteo' }, token: customerToken,
+    }],
     ['/categories', { method: 'POST', body: {}, token: customerToken }],
     ['/suppliers', { token: customerToken }],
     ['/purchase-orders', { token: customerToken }],
@@ -139,4 +154,23 @@ test('cashier role reaches POS validation but remains blocked from admin resourc
 
   const adminResponse = await request('/suppliers', { token: cashierToken });
   assert.equal(adminResponse.status, 403);
+});
+
+test('stock role reaches adjustment validation but remains blocked from admin resources', async () => {
+  const adjustmentResponse = await request('/inventory/00000000-0000-0000-0000-000000000100/adjustments', {
+    method: 'POST',
+    token: stockToken,
+    body: { quantity_delta: 0, reason: '' },
+  });
+  assert.equal(adjustmentResponse.status, 400);
+
+  const supplierResponse = await request('/suppliers', { token: stockToken });
+  assert.equal(supplierResponse.status, 403);
+
+  const createProductResponse = await request('/inventory', {
+    method: 'POST',
+    token: stockToken,
+    body: {},
+  });
+  assert.equal(createProductResponse.status, 403);
 });

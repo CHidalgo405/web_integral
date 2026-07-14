@@ -179,6 +179,10 @@ const openapi = {
         description: 'Invalid request payload',
         content: json({ $ref: '#/components/schemas/Error' }),
       },
+      Forbidden: {
+        description: 'The authenticated role cannot access this resource',
+        content: json({ $ref: '#/components/schemas/Error' }),
+      },
     },
     schemas: {
       Error: {
@@ -284,6 +288,33 @@ const openapi = {
           min_stock: { type: 'integer', default: 0 },
           has_expiration: { type: 'boolean', default: false },
           active: { type: 'boolean', default: true },
+        },
+      },
+      InventoryMovement: {
+        type: 'object',
+        properties: {
+          id: uuid,
+          inventory_id: uuid,
+          inventory_name: { type: 'string' },
+          sku: { type: 'string', nullable: true },
+          user_id: { ...uuid, nullable: true },
+          performed_by: { type: 'string' },
+          movement_type: { type: 'string', enum: ['entry', 'exit'] },
+          quantity_delta: { type: 'integer' },
+          previous_stock: { type: 'integer' },
+          new_stock: { type: 'integer' },
+          reason: { type: 'string' },
+          notes: { type: 'string', nullable: true },
+          created_at: dateTime,
+        },
+      },
+      InventoryAdjustmentInput: {
+        type: 'object',
+        required: ['quantity_delta', 'reason'],
+        properties: {
+          quantity_delta: { type: 'integer', description: 'Positive for entries, negative for exits' },
+          reason: { type: 'string', minLength: 2, maxLength: 80 },
+          notes: { type: 'string', maxLength: 500, nullable: true },
         },
       },
       Barcode: {
@@ -1105,6 +1136,21 @@ const openapi = {
         },
       },
     },
+    '/inventory/movements': {
+      get: {
+        tags: ['Inventory'],
+        summary: 'List auditable stock movements (admin or stock role)',
+        parameters: [
+          { name: 'inventory_id', in: 'query', schema: uuid },
+          { name: 'movement_type', in: 'query', schema: { type: 'string', enum: ['entry', 'exit'] } },
+          { name: 'limit', in: 'query', schema: { type: 'integer', minimum: 1, maximum: 250, default: 100 } },
+        ],
+        responses: {
+          200: ok({ type: 'array', items: { $ref: '#/components/schemas/InventoryMovement' } }),
+          403: { $ref: '#/components/responses/Forbidden' },
+        },
+      },
+    },
     '/inventory/barcode/{barcode}': {
       parameters: [{ name: 'barcode', in: 'path', required: true, schema: { type: 'string' } }],
       get: {
@@ -1166,6 +1212,20 @@ const openapi = {
         }),
         responses: {
           201: created({ $ref: '#/components/schemas/Barcode' }),
+        },
+      },
+    },
+    '/inventory/{id}/adjustments': {
+      parameters: [idParam],
+      post: {
+        tags: ['Inventory'],
+        summary: 'Adjust stock and record the movement (admin or stock role)',
+        requestBody: requestBody({ $ref: '#/components/schemas/InventoryAdjustmentInput' }),
+        responses: {
+          201: created({ $ref: '#/components/schemas/InventoryMovement' }),
+          400: { $ref: '#/components/responses/ValidationError' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          404: { $ref: '#/components/responses/NotFound' },
         },
       },
     },

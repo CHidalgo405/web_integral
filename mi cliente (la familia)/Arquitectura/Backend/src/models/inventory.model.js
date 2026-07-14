@@ -74,5 +74,87 @@ const addBarcode = (inventory_id, { barcode, description }) =>
 const removeBarcode = (barcode) =>
   db.query('DELETE FROM product_barcodes WHERE barcode=$1 RETURNING *', [barcode]);
 
-module.exports = { findAll, findById, findLowStock, findByBarcode, create, update, remove, findBarcodes, addBarcode, removeBarcode };
+const findMovements = ({ inventory_id, movement_type, limit = 100 } = {}) => {
+  const conditions = [];
+  const params = [];
+  const parsedLimit = Math.min(Math.max(Number.parseInt(limit, 10) || 100, 1), 250);
 
+  if (inventory_id) conditions.push(`im.inventory_id=$${params.push(inventory_id)}`);
+  if (movement_type) conditions.push(`im.movement_type=$${params.push(movement_type)}`);
+
+  const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+  params.push(parsedLimit);
+
+  return db.query(
+    `SELECT im.*, i.name AS inventory_name, i.sku,
+            COALESCE(e.first_name || ' ' || e.last_name, u.username, 'Sistema') AS performed_by
+     FROM inventory_movements im
+     JOIN inventory i ON i.id = im.inventory_id
+     LEFT JOIN users u ON u.id = im.user_id
+     LEFT JOIN employees e ON e.id = u.employee_id
+     ${where}
+     ORDER BY im.created_at DESC
+     LIMIT $${params.length}`,
+    params
+  );
+};
+
+const adjustStock = async (id, { quantity_delta, reason, notes, user_id }) => {
+  const client = await db.connect();
+
+  try {
+    await client.query('BEGIN');
+    const { rows } = await client.query(
+      'SELECT id, name, sku, stock, min_stock FROM inventory WHERE id=$1 AND active=TRUE FOR UPDATE',
+      [id]
+    );
+
+    if (!rows.length) {
+      const error = new Error('Item not found');
+      error.status = 404;
+      throw error;
+    }
+
+    const item = rows[0];
+    const previousStock = Number(item.stock);
+    const newStock = previousStock + quantity_delta;
+    if (newStock < 0) {
+      const error = new Error('Stock cannot be negative');
+      error.status = 400;
+      throw error;
+    }
+
+    await client.query('UPDATE inventory SET stock=$1 WHERE id=$2', [newStock, id]);
+    const movement = await client.query(
+      `INSERT INTO inventory_movements
+         (inventory_id, user_id, movement_type, quantity_delta, previous_stock, new_stock, reason, notes)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+       RETURNING *`,
+      [id, user_id ?? null, quantity_delta > 0 ? 'entry' : 'exit', quantity_delta,
+       previousStock, newStock, reason, notes ?? null]
+    );
+
+    await client.query('COMMIT');
+    return { ...movement.rows[0], inventory_name: item.name, sku: item.sku, min_stock: item.min_stock };
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+};
+
+module.exports = {
+  findAll,
+  findById,
+  findLowStock,
+  findByBarcode,
+  create,
+  update,
+  remove,
+  findBarcodes,
+  addBarcode,
+  removeBarcode,
+  findMovements,
+  adjustStock,
+};
