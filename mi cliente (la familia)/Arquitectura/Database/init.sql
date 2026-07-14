@@ -104,6 +104,8 @@ CREATE TABLE inventory (
     min_stock      INTEGER       NOT NULL DEFAULT 0,
     has_expiration BOOLEAN       NOT NULL DEFAULT FALSE,
     active         BOOLEAN       NOT NULL DEFAULT TRUE,
+    image_url      VARCHAR(255),
+    image_public_id VARCHAR(120),
     created_at     TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
     updated_at     TIMESTAMPTZ   NOT NULL DEFAULT NOW()
 );
