@@ -74,10 +74,8 @@ const create = async (req, res, next) => {
 
 const update = async (req, res, next) => {
   try {
-    const current = await DeliveryZones.findAll(); assertContiguous(current.rows.map(zone=>zone.id===req.params.id?{...zone,...req.body}:zone));
-    const { rows } = await DeliveryZones.update(req.params.id, req.body);
-    if (!rows.length) return res.status(404).json({ error: 'Zona de entrega no encontrada' });
-    res.json(rows[0]);
+    const saved = await DeliveryZones.updateWithAdjacent(req.params.id, req.body);
+    res.json(saved);
   } catch (err) { next(err); }
 };
 
