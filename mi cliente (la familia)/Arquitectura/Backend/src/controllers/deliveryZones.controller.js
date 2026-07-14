@@ -1,15 +1,7 @@
 const DeliveryZones = require('../models/deliveryZones.model');
 const { distanceKm, selectZone, feeFor } = require('../utils/delivery');
 
-const assertContiguous = (zones) => {
-  const sorted = zones.filter(zone => zone.active !== false).sort((a,b)=>Number(a.min_km)-Number(b.min_km));
-  if (!sorted.length) return;
-  if (Math.abs(Number(sorted[0].min_km)) > 0.001) throw Object.assign(new Error('La primera zona debe comenzar en 0 km'), { status:400 });
-  for (let index=0; index<sorted.length; index++) {
-    const zone=sorted[index]; if(Number(zone.max_km)<=Number(zone.min_km)) throw Object.assign(new Error('Cada radio máximo debe superar al mínimo'), { status:400 });
-    if(index&&Math.abs(Number(zone.min_km)-Number(sorted[index-1].max_km))>0.001) throw Object.assign(new Error('Las zonas deben ser contiguas, sin huecos ni traslapes'), { status:409 });
-  }
-};
+const { assertContiguous } = require('../utils/deliveryZones');
 
 const getAll = async (req, res, next) => {
   try {

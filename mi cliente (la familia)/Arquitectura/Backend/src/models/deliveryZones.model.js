@@ -1,4 +1,5 @@
 const db = require('../db');
+const { prepareZoneUpdate } = require('../utils/deliveryZones');
 
 const findAll = () =>
   db.query('SELECT * FROM delivery_zones WHERE active=TRUE ORDER BY min_km');
