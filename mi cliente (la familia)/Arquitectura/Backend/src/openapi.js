@@ -33,93 +33,107 @@ const requestBody = (schema) => ({
   content: json(schema),
 });
 
-const crud = ({ tag, schema, createSchema = schema, updateSchema = schema, deleteDescription = 'Deleted' }) => ({
-  collection: {
-    get: {
-      tags: [tag],
-      summary: `List ${tag.toLowerCase()}`,
-      responses: {
-        200: ok({ type: 'array', items: { $ref: `#/components/schemas/${schema}` } }),
+const crud = ({ tag, schema, createSchema = schema, updateSchema = schema, deleteDescription = 'Deleted', roles = [] }) => {
+  const rolesStr = roles.length ? ` [Roles permitidos: ${roles.join(', ')}]` : '';
+  const authResponses = {
+    401: { $ref: '#/components/responses/Unauthorized' },
+    403: { $ref: '#/components/responses/Forbidden' }
+  };
+  return {
+    collection: {
+      get: {
+        tags: [tag],
+        summary: `List ${tag.toLowerCase()}${rolesStr}`,
+        responses: {
+          200: ok({ type: 'array', items: { $ref: `#/components/schemas/${schema}` } }),
+          ...authResponses
+        },
+      },
+      post: {
+        tags: [tag],
+        summary: `Create ${tag.toLowerCase()}${rolesStr}`,
+        requestBody: requestBody({ $ref: `#/components/schemas/${createSchema}` }),
+        responses: {
+          201: created({ $ref: `#/components/schemas/${schema}` }),
+          ...authResponses
+        },
       },
     },
-    post: {
-      tags: [tag],
-      summary: `Create ${tag.toLowerCase()}`,
-      requestBody: requestBody({ $ref: `#/components/schemas/${createSchema}` }),
-      responses: {
-        201: created({ $ref: `#/components/schemas/${schema}` }),
+    item: {
+      parameters: [idParam],
+      get: {
+        tags: [tag],
+        summary: `Get ${tag.toLowerCase()} by ID${rolesStr}`,
+        responses: {
+          200: ok({ $ref: `#/components/schemas/${schema}` }),
+          404: { $ref: '#/components/responses/NotFound' },
+          ...authResponses
+        },
+      },
+      put: {
+        tags: [tag],
+        summary: `Update ${tag.toLowerCase()}${rolesStr}`,
+        requestBody: requestBody({ $ref: `#/components/schemas/${updateSchema}` }),
+        responses: {
+          200: ok({ $ref: `#/components/schemas/${schema}` }),
+          404: { $ref: '#/components/responses/NotFound' },
+          ...authResponses
+        },
+      },
+      delete: {
+        tags: [tag],
+        summary: `Delete ${tag.toLowerCase()}${rolesStr}`,
+        responses: {
+          200: { description: deleteDescription },
+          204: deleted,
+          404: { $ref: '#/components/responses/NotFound' },
+          ...authResponses
+        },
       },
     },
-  },
-  item: {
-    parameters: [idParam],
-    get: {
-      tags: [tag],
-      summary: `Get ${tag.toLowerCase()} by ID`,
-      responses: {
-        200: ok({ $ref: `#/components/schemas/${schema}` }),
-        404: { $ref: '#/components/responses/NotFound' },
-      },
-    },
-    put: {
-      tags: [tag],
-      summary: `Update ${tag.toLowerCase()}`,
-      requestBody: requestBody({ $ref: `#/components/schemas/${updateSchema}` }),
-      responses: {
-        200: ok({ $ref: `#/components/schemas/${schema}` }),
-        404: { $ref: '#/components/responses/NotFound' },
-      },
-    },
-    delete: {
-      tags: [tag],
-      summary: `Delete ${tag.toLowerCase()}`,
-      responses: {
-        200: { description: deleteDescription },
-        204: deleted,
-        404: { $ref: '#/components/responses/NotFound' },
-      },
-    },
-  },
-});
+  };
+};
 
-const noDeleteCrud = ({ tag, schema, createSchema = schema }) => {
-  const docs = crud({ tag, schema, createSchema });
+const noDeleteCrud = ({ tag, schema, createSchema = schema, roles = [] }) => {
+  const docs = crud({ tag, schema, createSchema, roles });
   delete docs.item.put;
   delete docs.item.delete;
   return docs;
 };
 
-const category = crud({ tag: 'Categories', schema: 'Category', createSchema: 'CategoryInput' });
-const unit = crud({ tag: 'Units', schema: 'UnitOfMeasure', createSchema: 'UnitOfMeasureInput' });
-const supplier = crud({ tag: 'Suppliers', schema: 'Supplier', createSchema: 'SupplierInput', deleteDescription: 'Supplier deactivated' });
-const employee = crud({ tag: 'Employees', schema: 'Employee', createSchema: 'EmployeeInput', deleteDescription: 'Employee deactivated' });
-const schedule = crud({ tag: 'Schedules', schema: 'Schedule', createSchema: 'ScheduleInput' });
-const user = crud({ tag: 'Users', schema: 'User', createSchema: 'UserInput', deleteDescription: 'User deactivated' });
-const customer = crud({ tag: 'Customers', schema: 'Customer', createSchema: 'CustomerInput' });
-const deliveryZone = crud({ tag: 'Delivery Zones', schema: 'DeliveryZone', createSchema: 'DeliveryZoneInput', deleteDescription: 'Delivery zone deactivated' });
-const promotion = crud({ tag: 'Promotions', schema: 'Promotion', createSchema: 'PromotionInput', deleteDescription: 'Promotion deactivated' });
-const expenseCategory = crud({ tag: 'Expense Categories', schema: 'ExpenseCategory', createSchema: 'ExpenseCategoryInput' });
-const expense = crud({ tag: 'Expenses', schema: 'Expense', createSchema: 'ExpenseInput' });
-const expirationBatch = noDeleteCrud({ tag: 'Expiration Batches', schema: 'ExpirationBatch', createSchema: 'ExpirationBatchInput' });
+const category = crud({ tag: 'Categories', schema: 'Category', createSchema: 'CategoryInput', roles: ['admin'] });
+const unit = crud({ tag: 'Units', schema: 'UnitOfMeasure', createSchema: 'UnitOfMeasureInput', roles: ['admin'] });
+const supplier = crud({ tag: 'Suppliers', schema: 'Supplier', createSchema: 'SupplierInput', deleteDescription: 'Supplier deactivated', roles: ['admin'] });
+const employee = crud({ tag: 'Employees', schema: 'Employee', createSchema: 'EmployeeInput', deleteDescription: 'Employee deactivated', roles: ['admin'] });
+const schedule = crud({ tag: 'Schedules', schema: 'Schedule', createSchema: 'ScheduleInput', roles: ['admin'] });
+const user = crud({ tag: 'Users', schema: 'User', createSchema: 'UserInput', deleteDescription: 'User deactivated', roles: ['admin'] });
+const customer = crud({ tag: 'Customers', schema: 'Customer', createSchema: 'CustomerInput', roles: ['admin', 'customer', 'cashier'] });
+const deliveryZone = crud({ tag: 'Delivery Zones', schema: 'DeliveryZone', createSchema: 'DeliveryZoneInput', deleteDescription: 'Delivery zone deactivated', roles: ['admin'] });
+const promotion = crud({ tag: 'Promotions', schema: 'Promotion', createSchema: 'PromotionInput', deleteDescription: 'Promotion deactivated', roles: ['admin'] });
+const expenseCategory = crud({ tag: 'Expense Categories', schema: 'ExpenseCategory', createSchema: 'ExpenseCategoryInput', roles: ['admin'] });
+const expense = crud({ tag: 'Expenses', schema: 'Expense', createSchema: 'ExpenseInput', roles: ['admin'] });
+const expirationBatch = noDeleteCrud({ tag: 'Expiration Batches', schema: 'ExpirationBatch', createSchema: 'ExpirationBatchInput', roles: ['admin', 'stock'] });
 expirationBatch.item.put = {
   tags: ['Expiration Batches'],
-  summary: 'Update expiration batch',
+  summary: 'Update expiration batch [Roles permitidos: admin, stock]',
   requestBody: requestBody({ $ref: '#/components/schemas/ExpirationBatchInput' }),
   responses: {
     200: ok({ $ref: '#/components/schemas/ExpirationBatch' }),
+    401: { $ref: '#/components/responses/Unauthorized' },
+    403: { $ref: '#/components/responses/Forbidden' },
     404: { $ref: '#/components/responses/NotFound' },
   },
 };
-const stockReceipt = noDeleteCrud({ tag: 'Stock Receipts', schema: 'StockReceipt', createSchema: 'StockReceiptInput' });
+const stockReceipt = noDeleteCrud({ tag: 'Stock Receipts', schema: 'StockReceipt', createSchema: 'StockReceiptInput', roles: ['admin', 'stock'] });
 delete stockReceipt.item.put;
-const cashAudit = noDeleteCrud({ tag: 'Cash Audit', schema: 'CashAudit', createSchema: 'CashAuditInput' });
+const cashAudit = noDeleteCrud({ tag: 'Cash Audit', schema: 'CashAudit', createSchema: 'CashAuditInput', roles: ['admin', 'cashier'] });
 delete cashAudit.item.put;
 
 const openapi = {
   openapi: '3.0.3',
   info: {
-    title: 'Tiendita Maday API',
-    description: 'Swagger/OpenAPI documentation for Tiendita Maday. The manager role shares the administrative permission scope.',
+    title: 'Tiendita "La familia" API',
+    description: 'Swagger/OpenAPI documentación oficial de la tiendita "La familia"',
     version: '1.0.0',
   },
   servers: [
@@ -179,9 +193,28 @@ const openapi = {
         description: 'Invalid request payload',
         content: json({ $ref: '#/components/schemas/Error' }),
       },
+      Unauthorized: {
+        description: 'Authentication token is missing, invalid, or expired',
+        content: {
+          'application/json': {
+            schema: { $ref: '#/components/schemas/Error' },
+            example: {
+              error: 'Unauthorized: Invalid or expired token'
+            }
+          }
+        }
+      },
       Forbidden: {
         description: 'The authenticated role cannot access this resource',
-        content: json({ $ref: '#/components/schemas/Error' }),
+        content: {
+          'application/json': {
+            schema: { $ref: '#/components/schemas/Error' },
+            example: {
+              error: 'Forbidden: Requires one of these roles: admin, manager',
+              detail: 'No tienes permitido esto. Rol requerido no coincide o no tienes acceso.'
+            }
+          }
+        }
       },
     },
     schemas: {
