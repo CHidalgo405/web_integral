@@ -5,11 +5,13 @@ import { UserService } from '../../../core/services/user.service';
 import { Header } from '../../../shared/components/header/header';
 import { IconComponent } from '../../../shared/components/icon/icon';
 import { signal } from '@angular/core';
+import { LocationPicker } from '../../../shared/components/location-picker/location-picker';
+import { CartService } from '../../../core/services/cart.service';
 
 @Component({
   selector: 'app-address-form',
   standalone: true,
-  imports: [ReactiveFormsModule, Header, IconComponent],
+  imports: [ReactiveFormsModule, Header, IconComponent, LocationPicker],
   template: `
     <app-header title="Nueva Dirección" [showBack]="true"></app-header>
     <div class="checkout-page" id="address-form-page">
@@ -72,6 +74,17 @@ import { signal } from '@angular/core';
         <div class="form-group">
           <label for="notes">Notas (opc.)</label>
           <input id="notes" formControlName="notes" placeholder="Referencias de entrega" />
+        </div>
+        <div class="form-group location-group">
+          <app-location-picker
+            [latitude]="form.controls.latitude.value ?? undefined"
+            [longitude]="form.controls.longitude.value ?? undefined"
+            [subtotal]="cartService.cart().subtotal"
+            (locationChange)="setLocation($event)"
+          />
+          @if ((form.controls.latitude.invalid || form.controls.longitude.invalid) && locationTouched()) {
+            <span class="error-text">Selecciona en el mapa la entrada del domicilio.</span>
+          }
         </div>
         <label class="checkbox-row"><input type="checkbox" formControlName="isDefault" /> Usar como dirección principal</label>
         
