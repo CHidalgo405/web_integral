@@ -84,6 +84,7 @@ import { CartService } from '../../../core/services/cart.service';
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       display: flex;
       justify-content: center;
+      flex: 1;
     }
 
     .nav-pill {
