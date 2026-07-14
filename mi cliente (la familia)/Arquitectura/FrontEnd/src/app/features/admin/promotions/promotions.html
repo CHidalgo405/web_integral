@@ -32,14 +32,14 @@
                     </tr>
                 </thead>
                 <tbody>@for(item of visible();track item.id){<tr>
-                        <td><strong>{{item.name}}</strong><br><small>{{item.description}}</small></td>
-                        <td>{{product(item.inventory_id)}}</td>
-                        <td><strong>{{item.discount_pct!=null?item.discount_pct+'%':money(item.discount_fixed)}}</strong>
+                        <td data-label="Promoción"><strong>{{item.name}}</strong><br><small>{{item.description}}</small></td>
+                        <td data-label="Producto">{{product(item.inventory_id)}}</td>
+                        <td data-label="Descuento"><strong>{{item.discount_pct!=null?item.discount_pct+'%':money(item.discount_fixed)}}</strong>
                         </td>
-                        <td>{{item.valid_from||'Ahora'}} – {{item.valid_until||'Sin límite'}}</td>
-                        <td><span class="ops-badge" [class.warn]="state(item)==='scheduled'"
+                        <td data-label="Vigencia">{{item.valid_from||'Ahora'}} – {{item.valid_until||'Sin límite'}}</td>
+                        <td data-label="Estado"><span class="ops-badge" [class.warn]="state(item)==='scheduled'"
                                 [class.danger]="state(item)==='expired'">{{stateLabel(item)}}</span></td>
-                        <td>
+                        <td data-label="Acciones">
                             <div class="ops-row-actions"><button class="ops-icon-btn" title="Editar"
                                     (click)="open(item)"><app-icon name="pencil"
                                         size="15" /></button>@if(item.active){<button class="ops-icon-btn"

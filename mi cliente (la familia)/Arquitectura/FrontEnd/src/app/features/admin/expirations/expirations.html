@@ -59,13 +59,13 @@
         <tbody>
           @for (batch of visible(); track batch.id) {
             <tr>
-              <td>
+              <td data-label="Producto">
                 <strong>{{ batch.inventory_name }}</strong
                 ><br /><small>{{ batch.id.slice(0, 8) }}</small>
               </td>
-              <td>{{ batch.quantity }}</td>
-              <td>{{ batch.expiration_date | date: 'dd MMM yyyy' }}</td>
-              <td>
+              <td data-label="Cantidad">{{ batch.quantity }}</td>
+              <td data-label="Caducidad">{{ batch.expiration_date | date: 'dd MMM yyyy' }}</td>
+              <td data-label="Estado">
                 <span
                   class="ops-badge"
                   [class.danger]="state(batch) === 'expired' || state(batch) === 'critical'"
@@ -73,7 +73,7 @@
                   >{{ days(batch) < 0 ? 'Vencido' : days(batch) + ' días' }}</span
                 >
               </td>
-              <td>
+              <td data-label="Acciones">
                 <div class="ops-row-actions">
                   <button class="ops-btn secondary" (click)="openEdit(batch)">
                     <app-icon name="calendar" size="14" /> Editar fecha

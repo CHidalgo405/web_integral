@@ -27,11 +27,11 @@
           </tr>
         </thead>
         <tbody>@for(item of suppliers();track item.id){<tr>
-            <td><strong>{{item.name}}</strong><br><small>{{item.address}}</small></td>
-            <td>{{item.contact_name||'—'}}</td>
-            <td>{{item.phone||'—'}}</td>
-            <td>{{item.email||'—'}}</td>
-            <td><button class="ops-icon-btn" title="Editar" (click)="openSupplier(item)"><app-icon name="pencil"
+            <td data-label="Proveedor"><strong>{{item.name}}</strong><br><small>{{item.address}}</small></td>
+            <td data-label="Contacto">{{item.contact_name||'—'}}</td>
+            <td data-label="Teléfono">{{item.phone||'—'}}</td>
+            <td data-label="Correo">{{item.email||'—'}}</td>
+            <td data-label="Acciones"><button class="ops-icon-btn" title="Editar" (click)="openSupplier(item)"><app-icon name="pencil"
                   size="15" /></button></td>
           </tr>}@empty{<tr>
             <td colspan="5" class="ops-empty">No hay proveedores activos.</td>
@@ -55,11 +55,11 @@
         <tbody>@for(order of orders();track order.id){
           @if(tab()==='orders'||(tab()==='receipts'&&(order.status==='sent'||order.status==='partial'))){
           <tr>
-            <td><button class="ops-tab" (click)="viewOrder(order)">{{order.id.slice(0,8)}}</button></td>
-            <td>{{order.supplier_name}}</td>
-            <td>{{order.expected_date||'Sin fecha'}}</td>
-            <td><span class="ops-badge" [class.warn]="order.status==='draft'">{{statusLabel(order.status)}}</span></td>
-            <td>
+            <td data-label="Orden"><button class="ops-tab" (click)="viewOrder(order)">{{order.id.slice(0,8)}}</button></td>
+            <td data-label="Proveedor">{{order.supplier_name}}</td>
+            <td data-label="Entrega">{{order.expected_date||'Sin fecha'}}</td>
+            <td data-label="Estado"><span class="ops-badge" [class.warn]="order.status==='draft'">{{statusLabel(order.status)}}</span></td>
+            <td data-label="Acciones">
               <div class="ops-row-actions">@if(order.status==='draft'){<button class="ops-btn secondary"
                   (click)="sendOrder(order)">Enviar</button>}@if(order.status==='sent'||order.status==='partial'){<button
                   class="ops-btn" (click)="openReceive(order)">Recibir</button>}</div>
@@ -86,10 +86,10 @@
           </tr>
         </thead>
         <tbody>@for(line of orderItems();track line.id){<tr>
-            <td>{{line.inventory_name}}</td>
-            <td>{{line.quantity_ordered}}</td>
-            <td>{{line.quantity_received}}</td>
-            <td>{{money(line.unit_cost)}}</td>
+            <td data-label="Producto">{{line.inventory_name}}</td>
+            <td data-label="Solicitado">{{line.quantity_ordered}}</td>
+            <td data-label="Recibido">{{line.quantity_received}}</td>
+            <td data-label="Costo">{{money(line.unit_cost)}}</td>
           </tr>}</tbody>
       </table>
     </div>

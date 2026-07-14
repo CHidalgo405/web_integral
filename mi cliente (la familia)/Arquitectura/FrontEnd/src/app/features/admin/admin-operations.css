@@ -305,6 +305,29 @@
     }
 }
 
+@media(max-width:1100px) {
+    .ops-panel { border: 0; background: transparent; overflow: visible; }
+    .ops-table-wrap { overflow: visible; }
+    .ops-table { display: block; min-width: 0; }
+    .ops-table thead { display: none; }
+    .ops-table tbody { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .ops-table tbody tr { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: start; overflow: hidden; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); box-shadow: var(--shadow-xs, 0 4px 14px rgba(20, 42, 34, .05)); }
+    .ops-table tbody td { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-width: 0; padding: 10px 13px; border-bottom: 1px solid var(--border); overflow-wrap: anywhere; }
+    .ops-table tbody td::before { content: attr(data-label); flex: 0 0 auto; color: var(--text-muted); font-size: .64rem; font-weight: 850; letter-spacing: .05em; text-transform: uppercase; }
+    .ops-table tbody td:first-child { grid-column: 1 / -1; }
+    .ops-table tbody td:last-child { grid-column: 1 / -1; border-bottom: 0; }
+    .ops-table tbody td[data-label="Acciones"] { justify-content: flex-end; }
+    .ops-table tbody td[data-label="Acciones"]::before { margin-right: auto; }
+    .ops-table tbody tr:has(.ops-empty) { grid-column: 1 / -1; display: block; }
+    .ops-table .ops-empty { display: block; min-height: 150px; padding: 54px 20px; }
+    .ops-table .ops-empty::before { display: none; }
+    .ops-row-actions { flex-wrap: wrap; }
+}
+
+@media(max-width:680px) {
+    .ops-table tbody { grid-template-columns: 1fr; }
+}
+
 @media(max-width:520px) {
 
     .ops-summary,

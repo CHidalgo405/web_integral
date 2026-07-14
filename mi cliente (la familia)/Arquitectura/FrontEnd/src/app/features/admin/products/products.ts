@@ -95,7 +95,7 @@ import { IconComponent } from '../../../shared/components/icon/icon';
             <tbody>
               @for (prod of filteredProducts(); track prod.id) {
                 <tr>
-                  <td>
+                  <td data-label="Producto">
                     <div class="product-info-cell">
                       <div class="product-cell-emoji">
                         <img [src]="prod.images[0] || 'https://placehold.co/400x400?text=Sin+Imagen'" [alt]="prod.name" class="product-media-img" loading="lazy" decoding="async" />
@@ -112,13 +112,13 @@ import { IconComponent } from '../../../shared/components/icon/icon';
                       </div>
                     </div>
                   </td>
-                  <td>
+                  <td data-label="Categoría">
                     <span class="category-tag">
                       <app-icon [name]="getCategoryIcon(prod.categoryId)" size="12" color="var(--primary)" />
                       {{ prod.category }}
                     </span>
                   </td>
-                  <td>
+                  <td data-label="Precio">
                     <div class="price-cell">
                       <span class="current-price">{{ prod.price | mxnCurrency }}</span>
                       @if (prod.originalPrice) {
@@ -126,7 +126,7 @@ import { IconComponent } from '../../../shared/components/icon/icon';
                       }
                     </div>
                   </td>
-                  <td>
+                  <td data-label="Existencias">
                     <div class="stock-adjuster">
                       <button (click)="adjustStock(prod, -1)" class="btn-stock-adjust" [disabled]="prod.stockQuantity <= 0">
                         <app-icon name="minus" size="12" />
@@ -139,7 +139,7 @@ import { IconComponent } from '../../../shared/components/icon/icon';
                       </button>
                     </div>
                   </td>
-                  <td>
+                  <td data-label="Estado">
                     <label class="switch-label">
                       <input 
                         type="checkbox" 
@@ -154,7 +154,7 @@ import { IconComponent } from '../../../shared/components/icon/icon';
                       </span>
                     </label>
                   </td>
-                  <td>
+                  <td data-label="Acciones">
                     <div class="action-buttons">
                       <button (click)="fileInput.click()" class="action-btn btn-image" title="Subir Imagen">
                         <app-icon name="image" size="14" color="var(--primary)" />

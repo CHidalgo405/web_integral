@@ -33,14 +33,14 @@
                     </tr>
                 </thead>
                 <tbody>@for(item of expenses();track item.id){<tr>
-                        <td>{{item.expense_date|date:'dd MMM yyyy'}}</td>
-                        <td><strong>{{item.description}}</strong>@if(item.reversal_reason){<br><small>{{item.reversal_reason}}</small>}
+                        <td data-label="Fecha">{{item.expense_date|date:'dd MMM yyyy'}}</td>
+                        <td data-label="Descripción"><strong>{{item.description}}</strong>@if(item.reversal_reason){<br><small>{{item.reversal_reason}}</small>}
                         </td>
-                        <td>{{item.category_name||'Sin categoría'}}</td>
-                        <td>{{paymentLabel(item.payment_method)}}</td>
-                        <td [style.color]="item.entry_type==='reversal'?'var(--success)':'inherit'">
+                        <td data-label="Categoría">{{item.category_name||'Sin categoría'}}</td>
+                        <td data-label="Método">{{paymentLabel(item.payment_method)}}</td>
+                        <td data-label="Importe" [style.color]="item.entry_type==='reversal'?'var(--success)':'inherit'">
                             <strong>{{item.entry_type==='reversal'?'-':''}}{{money(item.amount)}}</strong></td>
-                        <td>@if(item.entry_type==='expense'&&!isReversed(item)){<button class="ops-btn secondary"
+                        <td data-label="Acciones">@if(item.entry_type==='expense'&&!isReversed(item)){<button class="ops-btn secondary"
                                 (click)="openReverse(item)">Revertir</button>}@if(isReversed(item)){<span
                                 class="ops-badge">Revertido</span>}</td>
                     </tr>}@empty{<tr>
@@ -64,13 +64,13 @@
                     </tr>
                 </thead>
                 <tbody>@for(item of audits();track item.id){<tr>
-                        <td>{{item.created_at|date:'dd MMM, HH:mm'}}</td>
-                        <td>{{item.first_name}} {{item.last_name}}</td>
-                        <td>{{shiftLabel(item.shift)}}</td>
-                        <td><span class="ops-badge">{{auditLabel(item.audit_type)}}</span></td>
-                        <td>{{money(item.expected_amount)}}</td>
-                        <td>{{money(item.counted_amount)}}</td>
-                        <td [style.color]="item.difference<0?'var(--danger)':'var(--success)'">
+                        <td data-label="Fecha">{{item.created_at|date:'dd MMM, HH:mm'}}</td>
+                        <td data-label="Responsable">{{item.first_name}} {{item.last_name}}</td>
+                        <td data-label="Turno">{{shiftLabel(item.shift)}}</td>
+                        <td data-label="Tipo"><span class="ops-badge">{{auditLabel(item.audit_type)}}</span></td>
+                        <td data-label="Esperado">{{money(item.expected_amount)}}</td>
+                        <td data-label="Contado">{{money(item.counted_amount)}}</td>
+                        <td data-label="Diferencia" [style.color]="item.difference<0?'var(--danger)':'var(--success)'">
                             <strong>{{money(item.difference)}}</strong></td>
                     </tr>}</tbody>
             </table>
@@ -86,8 +86,8 @@
                     </tr>
                 </thead>
                 <tbody>@for(cat of categories();track cat.id){<tr>
-                        <td><strong>{{cat.name}}</strong></td>
-                        <td>{{expenses().filter(item=>item.category_id===cat.id).length}}</td>
+                        <td data-label="Categoría"><strong>{{cat.name}}</strong></td>
+                        <td data-label="Movimientos">{{expenses().filter(item=>item.category_id===cat.id).length}}</td>
                     </tr>}</tbody>
             </table>
         </div>
