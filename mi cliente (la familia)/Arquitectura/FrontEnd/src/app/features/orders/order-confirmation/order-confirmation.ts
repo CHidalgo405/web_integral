@@ -407,6 +407,98 @@ import { Order, ShippingMethod } from '../../../core/models/order.model';
 
     .btn-receipt:hover:not(:disabled) { background: rgba(27, 61, 50, 0.05); }
     .btn-receipt:disabled { opacity: 0.6; cursor: wait; }
+
+    @media (min-width: 900px) {
+      :host {
+        display: block;
+        min-height: 100dvh;
+        background: var(--bg);
+        padding: clamp(32px, 6vh, 72px) clamp(24px, 4vw, 64px);
+      }
+
+      .confirmation-page {
+        display: grid;
+        grid-template-columns: minmax(280px, 340px) minmax(0, 1fr);
+        width: min(100%, 1180px);
+        min-height: min(680px, calc(100dvh - 96px));
+        margin: 0 auto;
+        padding-bottom: 0;
+        overflow: hidden;
+        border: 1px solid var(--border);
+        border-radius: 32px;
+        background: var(--surface-raised);
+        box-shadow: 0 24px 60px rgba(20, 45, 37, 0.12);
+      }
+
+      .success-header {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 56px 36px;
+      }
+
+      .success-header h1 {
+        max-width: 240px;
+        font-size: clamp(1.85rem, 3vw, 2.35rem);
+        line-height: 1.08;
+      }
+
+      .success-header p {
+        max-width: 250px;
+        font-size: 0.93rem;
+      }
+
+      .check-circle {
+        width: 96px;
+        height: 96px;
+        margin-bottom: 28px;
+      }
+
+      .confirmation-body {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(220px, 260px);
+        align-content: center;
+        align-items: start;
+        gap: 16px 24px;
+        max-width: none;
+        width: 100%;
+        margin: 0;
+        padding: clamp(32px, 4vw, 52px);
+      }
+
+      .confirmation-body > :not(.cta-group) {
+        grid-column: 1;
+      }
+
+      .info-card,
+      .items-card {
+        border-radius: 18px;
+      }
+
+      .cta-group {
+        grid-column: 2;
+        grid-row: 1 / span 4;
+        margin-top: 0;
+        padding: 20px;
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        background: var(--bg);
+      }
+
+      .btn-primary-conf,
+      .btn-secondary-conf,
+      .btn-receipt {
+        width: 100%;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .check-circle,
+      .check-mark {
+        animation: none;
+      }
+    }
   `],
 })
 export class OrderConfirmation implements OnInit {

@@ -245,6 +245,94 @@ import { IconComponent } from '../../../shared/components/icon/icon';
     }
 
     .btn-home:hover { color: var(--text-secondary); }
+
+    @media (min-width: 900px) {
+      :host {
+        display: block;
+        min-height: 100dvh;
+        background: var(--bg);
+        padding: clamp(32px, 6vh, 72px) clamp(24px, 4vw, 64px);
+      }
+
+      .error-page {
+        display: grid;
+        grid-template-columns: minmax(280px, 340px) minmax(0, 1fr);
+        width: min(100%, 1120px);
+        min-height: min(620px, calc(100dvh - 96px));
+        margin: 0 auto;
+        padding-bottom: 0;
+        overflow: hidden;
+        border: 1px solid var(--border);
+        border-radius: 32px;
+        background: var(--surface-raised);
+        box-shadow: 0 24px 60px rgba(89, 35, 28, 0.12);
+      }
+
+      .error-header {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 56px 36px;
+      }
+
+      .error-header h1 {
+        max-width: 240px;
+        font-size: clamp(1.85rem, 3vw, 2.35rem);
+        line-height: 1.08;
+      }
+
+      .error-header p {
+        max-width: 250px;
+        font-size: 0.93rem;
+      }
+
+      .error-circle {
+        width: 96px;
+        height: 96px;
+        margin-bottom: 28px;
+      }
+
+      .error-body {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(220px, 260px);
+        align-content: center;
+        align-items: start;
+        gap: 16px 24px;
+        max-width: none;
+        width: 100%;
+        margin: 0;
+        padding: clamp(32px, 4vw, 52px);
+      }
+
+      .causes-card,
+      .tips-card {
+        grid-column: 1;
+        border-radius: 18px;
+      }
+
+      .cta-group {
+        grid-column: 2;
+        grid-row: 1 / span 2;
+        margin-top: 0;
+        padding: 20px;
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        background: var(--bg);
+      }
+
+      .btn-retry,
+      .btn-cart,
+      .btn-home {
+        width: 100%;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .error-circle {
+        animation: none;
+      }
+    }
   `],
 })
 export class OrderError {
