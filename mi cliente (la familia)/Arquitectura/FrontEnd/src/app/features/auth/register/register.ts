@@ -58,10 +58,13 @@ import { IconComponent } from '../../../shared/components/icon/icon';
             <label>Teléfono</label>
             <div class="input-wrapper">
               <span class="input-icon" style="display: flex; align-items: center;"><app-icon name="phone" size="18" /></span>
-              <input type="tel" formControlName="phone" placeholder="+52 555 123 4567" />
+              <input type="tel" formControlName="phone" placeholder="5551234567" maxlength="15" (input)="onPhoneInput($event)" />
             </div>
             @if (form.get('phone')?.touched && form.get('phone')?.hasError('required')) {
               <span class="error-msg">Requerido</span>
+            }
+            @if (form.get('phone')?.touched && form.get('phone')?.hasError('pattern')) {
+              <span class="error-msg">Debe tener entre 8 y 15 números</span>
             }
           </div>
 
@@ -374,7 +377,7 @@ export class Register {
     firstName: ['', Validators.required],
     lastName: ['', Validators.required],
     email: ['', [Validators.required, Validators.email]],
-    phone: ['', Validators.required],
+    phone: ['', [Validators.required, Validators.pattern('^[0-9]{8,15}$')]],
     password: ['', [Validators.required, Validators.minLength(6)]],
     confirmPassword: ['', Validators.required],
   }, { validators: this.passwordMatchValidator });
@@ -391,6 +394,13 @@ export class Register {
 
   errorMessage = '';
   isLoading = signal(false);
+
+  onPhoneInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const sanitized = input.value.replace(/[^0-9]/g, '');
+    this.form.patchValue({ phone: sanitized }, { emitEvent: false });
+    input.value = sanitized;
+  }
 
   onSubmit(): void {
     if (this.form.valid) {
