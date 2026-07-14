@@ -32,11 +32,14 @@
                     </tr>
                 </thead>
                 <tbody>@for(item of visible();track item.id){<tr>
-                        <td data-label="Promoción"><strong>{{item.name}}</strong><br><small>{{item.description}}</small></td>
-                        <td data-label="Producto">{{product(item.inventory_id)}}</td>
-                        <td data-label="Descuento"><strong>{{item.discount_pct!=null?item.discount_pct+'%':money(item.discount_fixed)}}</strong>
+                        <td data-label="Promoción"><strong>{{item.name}}</strong><br><small>{{item.description}}</small>
                         </td>
-                        <td data-label="Vigencia">{{item.valid_from||'Ahora'}} – {{item.valid_until||'Sin límite'}}</td>
+                        <td data-label="Producto">{{product(item.inventory_id)}}</td>
+                        <td data-label="Descuento">
+                            <strong>{{item.discount_pct!=null?item.discount_pct+'%':money(item.discount_fixed)}}</strong>
+                        </td>
+                        <td data-label="Vigencia">{{formatDate(item.valid_from)}} – {{formatDate(item.valid_until)}}
+                        </td>
                         <td data-label="Estado"><span class="ops-badge" [class.warn]="state(item)==='scheduled'"
                                 [class.danger]="state(item)==='expired'">{{stateLabel(item)}}</span></td>
                         <td data-label="Acciones">
