@@ -2,7 +2,7 @@ import { AfterViewInit, Component, ElementRef, ViewChild, inject, signal } from 
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CartService } from '../../../core/services/cart.service';
-import { OrderService } from '../../../core/services/order.service';
+import { CheckoutPayload, CheckoutQuote, OrderService } from '../../../core/services/order.service';
 import { CheckoutStateService } from '../../../core/services/checkout-state.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { PaypalService } from '../../../core/services/paypal.service';
@@ -135,12 +135,12 @@ import { ShippingMethod, PaymentMethod } from '../../../core/models/order.model'
 
       <!-- Totales -->
       <div class="summary-totals">
-        <div class="summary-row"><span>Subtotal</span><span>{{ cartService.cart().subtotal | mxnCurrency }}</span></div>
-        @if (cartService.cart().discount > 0) {
-          <div class="summary-row discount"><span>Descuento</span><span>-{{ cartService.cart().discount | mxnCurrency }}</span></div>
+        <div class="summary-row"><span>Subtotal</span><span>{{ (serverQuote()?.subtotal ?? cartService.cart().subtotal) | mxnCurrency }}</span></div>
+        @if ((serverQuote()?.discount_total ?? cartService.cart().discount) > 0) {
+          <div class="summary-row discount"><span>Descuento</span><span>-{{ (serverQuote()?.discount_total ?? cartService.cart().discount) | mxnCurrency }}</span></div>
         }
-        <div class="summary-row"><span>Envío</span><span>{{ cartService.cart().shipping === 0 ? 'Gratis' : (cartService.cart().shipping | mxnCurrency) }}</span></div>
-        <div class="summary-row total"><span>Total</span><span>{{ cartService.cart().total | mxnCurrency }}</span></div>
+        <div class="summary-row"><span>Envío</span><span>{{ (serverQuote()?.delivery_fee ?? cartService.cart().shipping) === 0 ? 'Gratis' : ((serverQuote()?.delivery_fee ?? cartService.cart().shipping) | mxnCurrency) }}</span></div>
+        <div class="summary-row total"><span>Total</span><span>{{ (serverQuote()?.total ?? cartService.cart().total) | mxnCurrency }}</span></div>
       </div>
 
       @if (orderError()) {
@@ -160,12 +160,12 @@ import { ShippingMethod, PaymentMethod } from '../../../core/models/order.model'
         }
         <div #paypalContainer class="paypal-container" [style.display]="canPlaceOrder() ? 'block' : 'none'"></div>
       } @else {
-        <button class="btn-pay" [disabled]="isPlacingOrder() || !canPlaceOrder()" (click)="placeOrder()" id="place-order-btn">
+        <button class="btn-pay" [disabled]="isPlacingOrder() || quoteLoading() || !canPlaceOrder() || !serverQuote()" (click)="placeOrder()" id="place-order-btn">
           @if (isPlacingOrder()) {
             <app-icon name="loader" size="18" className="app-icon-spin" style="margin-right: 8px;" />
             Procesando...
           } @else {
-            Pagar · {{ cartService.cart().total | mxnCurrency }}
+            Confirmar · {{ (serverQuote()?.total ?? cartService.cart().total) | mxnCurrency }}
           }
         </button>
       }
@@ -186,12 +186,15 @@ export class CheckoutSummary implements AfterViewInit {
 
   isPlacingOrder = signal(false);
   paypalLoading = signal(false);
+  quoteLoading = signal(false);
+  serverQuote = signal<CheckoutQuote | null>(null);
   couponInput = '';
   couponApplied = signal(false);
   couponError = signal('');
   orderError = signal('');
 
-  ngAfterViewInit(): void {
+  async ngAfterViewInit(): Promise<void> {
+    await this.refreshQuote();
     if (this.checkoutState.selectedPayment() === 'paypal') {
       this.setupPaypal();
     }
@@ -205,7 +208,7 @@ export class CheckoutSummary implements AfterViewInit {
     try {
       await this.paypalService.renderButtons(
         container,
-        () => this.cartService.cart().total,
+        () => this.checkoutPayload(),
         async (paypalOrderId) => {
           await this.finalizeOrder('paypal', { orderId: paypalOrderId });
         },
@@ -219,9 +222,36 @@ export class CheckoutSummary implements AfterViewInit {
   }
 
   canPlaceOrder(): boolean {
-    return !!this.checkoutState.selectedAddress() &&
+    return this.cartService.items().length > 0 &&
+           !!this.checkoutState.selectedAddress() &&
            !!this.checkoutState.selectedShipping() &&
            !!this.checkoutState.selectedPayment();
+  }
+
+  private checkoutPayload(): CheckoutPayload {
+    return this.orderService.buildCheckoutPayload(
+      this.cartService.items(),
+      this.checkoutState.selectedAddress()!,
+      this.checkoutState.selectedShipping() as ShippingMethod,
+      this.cartService.cart().couponCode,
+    );
+  }
+
+  private async refreshQuote(): Promise<void> {
+    if (!this.canPlaceOrder()) {
+      this.serverQuote.set(null);
+      return;
+    }
+    this.quoteLoading.set(true);
+    this.orderError.set('');
+    try {
+      this.serverQuote.set(await this.orderService.quoteCheckout(this.checkoutPayload()));
+    } catch {
+      this.serverQuote.set(null);
+      this.orderError.set('No se pudo validar el total del pedido con el servidor.');
+    } finally {
+      this.quoteLoading.set(false);
+    }
   }
 
   async applyCoupon(): Promise<void> {
@@ -232,6 +262,8 @@ export class CheckoutSummary implements AfterViewInit {
     this.couponApplied.set(result.valid);
     if (!result.valid) {
       this.couponError.set(result.message);
+    } else {
+      await this.refreshQuote();
     }
   }
 
@@ -246,14 +278,11 @@ export class CheckoutSummary implements AfterViewInit {
     this.isPlacingOrder.set(true);
     this.orderError.set('');
 
-    const cart = this.cartService.cart();
     const addr = this.checkoutState.selectedAddress()!;
-    const shipping = this.checkoutState.selectedShipping() as ShippingMethod;
 
     try {
       await this.orderService.createOrder(
-        cart.items, addr, shipping, payment,
-        cart.subtotal, cart.discount, cart.shipping, cart.total,
+        this.checkoutPayload(), this.cartService.items(), addr, payment,
         paypal,
       );
       this.cartService.clearCart();
@@ -270,7 +299,6 @@ export class CheckoutSummary implements AfterViewInit {
     }
   }
 }
-
 
 
 

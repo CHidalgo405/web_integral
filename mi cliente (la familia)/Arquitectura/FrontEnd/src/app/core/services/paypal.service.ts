@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { API_BASE_URL } from '../api.config';
+import { CheckoutPayload } from './order.service';
 
 // SDK global que inyecta el script de PayPal
 declare global {
@@ -59,8 +60,8 @@ export class PaypalService {
     return this.sdkLoaded;
   }
 
-  createOrder(total: number): Promise<{ id: string }> {
-    return firstValueFrom(this.http.post<{ id: string }>(`${API_BASE_URL}/paypal/create-order`, { total }));
+  createOrder(checkout: CheckoutPayload): Promise<{ id: string }> {
+    return firstValueFrom(this.http.post<{ id: string }>(`${API_BASE_URL}/paypal/create-order`, checkout));
   }
 
   captureOrder(paypalOrderId: string): Promise<CaptureResult> {
@@ -69,11 +70,11 @@ export class PaypalService {
 
   /**
    * Renderiza los botones de PayPal dentro del contenedor dado.
-   * createTotal se evalúa al momento del click (total vigente del carrito).
+   * La cotización se vuelve a calcular en el servidor al momento del click.
    */
   async renderButtons(
     container: HTMLElement,
-    createTotal: () => number,
+    createCheckout: () => CheckoutPayload,
     onPaid: (paypalOrderId: string) => Promise<void>,
     onFail: (message: string) => void,
   ): Promise<void> {
@@ -85,7 +86,7 @@ export class PaypalService {
       .Buttons({
         style: { layout: 'vertical', color: 'gold', shape: 'pill', label: 'paypal' },
         createOrder: async () => {
-          const { id } = await this.createOrder(createTotal());
+          const { id } = await this.createOrder(createCheckout());
           return id;
         },
         onApprove: async (data) => {
