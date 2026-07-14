@@ -59,10 +59,11 @@ export class OrderService {
   }
 
   refresh(): void {
-    // Los admin ven el historial completo (panel admin); los usuarios solo sus compras
-    const isAdmin = this.authService.user()?.role === 'admin';
+    // Admin y gerente comparten el historial completo; los clientes solo ven sus compras.
+    const role = this.authService.user()?.role;
+    const hasAdminAccess = role === 'admin' || role === 'manager';
     const isLoggedIn = this.authService.isAuthenticated();
-    const endpoint = isAdmin ? `${API_BASE_URL}/purchases` : `${API_BASE_URL}/purchases/mine`;
+    const endpoint = hasAdminAccess ? `${API_BASE_URL}/purchases` : `${API_BASE_URL}/purchases/mine`;
 
     if (!isLoggedIn) {
       this.ordersSignal.set([]);

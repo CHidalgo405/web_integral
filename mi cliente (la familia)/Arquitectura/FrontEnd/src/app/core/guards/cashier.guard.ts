@@ -7,7 +7,7 @@ export const cashierGuard: CanActivateFn = () => {
   const router = inject(Router);
   const role = authService.user()?.role;
 
-  if (authService.isAuthenticated() && (role === 'cashier' || role === 'admin')) {
+  if (authService.isAuthenticated() && (role === 'cashier' || role === 'admin' || role === 'manager')) {
     return true;
   }
   return router.createUrlTree([authService.landingRoute()]);

@@ -7,7 +7,7 @@ export const inventoryGuard: CanActivateFn = () => {
   const router = inject(Router);
   const role = authService.user()?.role;
 
-  if (authService.isAuthenticated() && (role === 'stock' || role === 'admin')) {
+  if (authService.isAuthenticated() && (role === 'stock' || role === 'admin' || role === 'manager')) {
     return true;
   }
 

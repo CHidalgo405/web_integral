@@ -143,7 +143,7 @@ import { Router } from '@angular/router';
             <app-icon name="chevron-right" size="16" class="menu-arrow-icon" />
           </a>
 
-          @if (authService.user()?.role === 'admin') {
+          @if (authService.user()?.role === 'admin' || authService.user()?.role === 'manager') {
             <div class="menu-row-divider"></div>
             <a routerLink="/admin" class="menu-item-row admin-row" id="menu-admin">
               <div class="menu-icon-bg admin-badge-bg">

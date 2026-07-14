@@ -18,7 +18,7 @@ import { IconComponent } from '../../../shared/components/icon/icon';
           </span>
           <div class="logo-text">
             <h2>Maday Admin</h2>
-            <p>Control de Tienda</p>
+            <p>{{ authService.user()?.role === 'manager' ? 'Gerencia de Tienda' : 'Control de Tienda' }}</p>
           </div>
         </div>
 
@@ -93,7 +93,7 @@ import { IconComponent } from '../../../shared/components/icon/icon';
             </div>
             <div>
               <h3>{{ authService.user()?.firstName }} {{ authService.user()?.lastName }}</h3>
-              <p>Administrador</p>
+              <p>{{ authService.user()?.role === 'manager' ? 'Gerente · acceso administrativo' : 'Administrador' }}</p>
             </div>
           </div>
           <button (click)="toggleMobileMenu()" class="drawer-close" aria-label="Cerrar menú">&times;</button>

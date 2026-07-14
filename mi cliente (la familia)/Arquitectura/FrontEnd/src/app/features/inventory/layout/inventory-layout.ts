@@ -28,7 +28,9 @@ import { IconComponent } from '../../../shared/components/icon/icon';
           <div class="operator-avatar">{{ authService.user()?.firstName?.charAt(0) || 'I' }}</div>
           <div class="operator-name">
             <strong>{{ authService.user()?.firstName || 'Inventario' }}</strong>
-            <small>{{ authService.user()?.role === 'admin' ? 'Administrador' : 'Encargado de inventario' }}</small>
+            <small>
+              {{ authService.user()?.role === 'manager' ? 'Gerente' : authService.user()?.role === 'admin' ? 'Administrador' : 'Encargado de inventario' }}
+            </small>
           </div>
           <button type="button" class="logout-button" (click)="authService.logout()" aria-label="Cerrar sesión">
             <app-icon name="log-out" size="17" color="currentColor" />

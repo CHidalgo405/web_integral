@@ -128,10 +128,10 @@ interface AdminOrderRow {
                 <div class="user-item-details">
                   <div class="user-item-name-row">
                     <h4>{{ usr.firstName }} {{ usr.lastName }}</h4>
-                    @if (usr.role === 'admin') {
+                    @if (usr.role === 'admin' || usr.role === 'manager') {
                       <span class="admin-role-badge">
                         <app-icon name="shield" size="12" color="white" />
-                        Admin
+                        {{ usr.role === 'manager' ? 'Gerente · Admin' : 'Admin' }}
                       </span>
                     }
                     @if (usr.active) {
@@ -273,7 +273,7 @@ interface AdminOrderRow {
                         <option value="customer">Cliente</option>
                         <option value="cashier">Cajero / Cobrador</option>
                         <option value="stock">Almacén</option>
-                        <option value="manager">Gerente</option>
+                        <option value="manager">Gerente (acceso administrativo)</option>
                         <option value="admin">Administrador</option>
                       </select>
                     </label>

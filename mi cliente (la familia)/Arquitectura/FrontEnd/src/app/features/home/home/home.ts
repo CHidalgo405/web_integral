@@ -26,7 +26,7 @@ import { IconComponent } from '../../../shared/components/icon/icon';
             </div>
           </div>
           <div class="header-actions">
-            @if (authService.user()?.role === 'admin') {
+            @if (authService.user()?.role === 'admin' || authService.user()?.role === 'manager') {
               <a routerLink="/home/notifications" class="action-btn">
                 <span class="bell-icon"><app-icon name="bell" size="20" /></span>
                 <span class="badge"></span>
