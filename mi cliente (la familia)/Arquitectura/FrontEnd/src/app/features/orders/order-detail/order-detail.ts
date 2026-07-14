@@ -23,6 +23,8 @@ import { IconComponent } from '../../../shared/components/icon/icon';
       </app-header>
       
       <div class="order-detail-page" id="order-detail-page">
+        <div class="order-detail-grid">
+        <section class="tracking-column" aria-label="Seguimiento del pedido">
         
         <!-- Hero tracking section -->
         <div class="hero-tracking-card">
@@ -131,6 +133,10 @@ import { IconComponent } from '../../../shared/components/icon/icon';
           <span class="help-arrow"><app-icon name="chevron-right" size="16" /></span>
         </div>
 
+        </section>
+
+        <section class="purchase-column" aria-label="Artículos y entrega">
+
         <!-- Purchase details list group -->
         <div class="details-card-group">
           <h3>Detalle de la compra</h3>
@@ -161,8 +167,7 @@ import { IconComponent } from '../../../shared/components/icon/icon';
             </span>
           </div>
 
-          @if (showProductsList) {
-            <div class="expanded-products-list">
+            <div class="expanded-products-list" [class.open]="showProductsList">
               @for (item of order.items; track item.product.id) {
                 <div class="product-item-detail">
                   <span class="prod-icon"><app-icon [name]="getCategoryIcon(item.product.categoryId)" size="18" /></span>
@@ -174,9 +179,14 @@ import { IconComponent } from '../../../shared/components/icon/icon';
                 </div>
               }
             </div>
-          }
 
-          <div class="card-item-row clickable" (click)="showPriceDetails = !showPriceDetails">
+        </div>
+        </section>
+
+        <aside class="financial-column" aria-label="Resumen financiero">
+          <div class="financial-card">
+            <h3>Resumen del pago</h3>
+          <div class="card-item-row clickable payment-row" (click)="showPriceDetails = !showPriceDetails">
             <div class="row-left">
               <span class="row-icon"><app-icon name="credit-card" size="18" /></span>
               <div class="row-text">
@@ -189,8 +199,7 @@ import { IconComponent } from '../../../shared/components/icon/icon';
             </span>
           </div>
 
-          @if (showPriceDetails) {
-            <div class="expanded-totals-card">
+            <div class="expanded-totals-card" [class.open]="showPriceDetails">
               <div class="total-row"><span>Subtotal</span><span>{{ order.subtotal | mxnCurrency }}</span></div>
               @if (order.discount > 0) {
                 <div class="total-row discount"><span>Descuento</span><span>-{{ order.discount | mxnCurrency }}</span></div>
@@ -198,8 +207,7 @@ import { IconComponent } from '../../../shared/components/icon/icon';
               <div class="total-row"><span>Envío</span><span>{{ order.shippingCost === 0 ? 'Gratis' : (order.shippingCost | mxnCurrency) }}</span></div>
               <div class="total-row grand"><span>Total</span><span>{{ order.total | mxnCurrency }}</span></div>
             </div>
-          }
-        </div>
+          </div>
 
         <button class="receipt-btn" (click)="downloadReceipt()" [disabled]="downloadingReceipt" id="download-receipt-btn">
           <app-icon name="download" size="16" color="var(--primary)" />
@@ -209,6 +217,8 @@ import { IconComponent } from '../../../shared/components/icon/icon';
         @if (order.status === 'pending' || order.status === 'preparing') {
           <button class="cancel-btn" (click)="cancelOrder()" id="cancel-order-btn">Cancelar pedido</button>
         }
+        </aside>
+        </div>
       </div>
 
       <!-- Neighbor instruction Modal dialog -->
@@ -261,6 +271,7 @@ import { IconComponent } from '../../../shared/components/icon/icon';
   `,
   styles: [`
     .order-detail-page { padding: 16px; padding-bottom: 100px; background-color: var(--bg); min-height: 100dvh; }
+    .order-detail-grid { width: 100%; }
     
     /* Hero status card */
     .hero-tracking-card {
@@ -675,11 +686,13 @@ import { IconComponent } from '../../../shared/components/icon/icon';
     
     /* Expandable sub-cards */
     .expanded-products-list {
+      display: none;
       background: var(--bg);
       padding: 8px 20px;
       border-bottom: 1px solid var(--border);
       animation: slideDown 0.25s ease-out;
     }
+    .expanded-products-list.open { display: block; }
     .product-item-detail {
       display: flex;
       align-items: center;
@@ -717,11 +730,13 @@ import { IconComponent } from '../../../shared/components/icon/icon';
     }
     
     .expanded-totals-card {
+      display: none;
       background: var(--bg);
       padding: 14px 20px;
       border-bottom: 1px solid var(--border);
       animation: slideDown 0.25s ease-out;
     }
+    .expanded-totals-card.open { display: block; }
     .total-row {
       display: flex;
       justify-content: space-between;
@@ -739,6 +754,24 @@ import { IconComponent } from '../../../shared/components/icon/icon';
       font-weight: 800;
       color: var(--text-primary);
       font-size: 0.95rem;
+    }
+
+    .financial-card {
+      overflow: hidden;
+      margin-bottom: 0;
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      background: var(--surface-raised);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.04);
+    }
+
+    .financial-card h3 {
+      margin: 0;
+      padding: 20px 20px 12px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-primary);
+      font-family: var(--font-heading);
+      font-size: 1.1rem;
     }
     
     .cancel-btn {
@@ -875,6 +908,108 @@ import { IconComponent } from '../../../shared/components/icon/icon';
     @keyframes zoomIn {
       from { transform: scale(0.9); opacity: 0; }
       to { transform: scale(1); opacity: 1; }
+    }
+
+    @media (min-width: 1024px) {
+      .order-detail-page {
+        padding: 36px clamp(24px, 4vw, 56px) 80px;
+      }
+
+      .order-detail-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.08fr) minmax(360px, .92fr);
+        gap: 24px;
+        max-width: 1380px;
+        margin: 0 auto;
+        align-items: start;
+      }
+
+      .tracking-column,
+      .purchase-column,
+      .financial-column {
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+        min-width: 0;
+      }
+
+      .tracking-column {
+        grid-column: 1;
+        grid-row: 1 / span 2;
+      }
+
+      .purchase-column,
+      .financial-column {
+        grid-column: 2;
+      }
+
+      .hero-tracking-card,
+      .quick-actions-row,
+      .help-card-row,
+      .details-card-group {
+        margin: 0;
+      }
+
+      .hero-tracking-card {
+        padding: 30px;
+      }
+
+      .quick-actions-row {
+        padding: 18px;
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        background: var(--surface-raised);
+      }
+
+      .details-card-group,
+      .financial-card {
+        border-radius: 20px;
+      }
+
+      .expanded-products-list,
+      .expanded-totals-card {
+        display: block;
+      }
+
+      .row-chevron {
+        display: none;
+      }
+
+      .financial-column {
+        position: sticky;
+        top: 88px;
+      }
+
+      .receipt-btn,
+      .cancel-btn {
+        margin-top: 0;
+      }
+
+      .toast-notification {
+        left: 50%;
+        right: auto;
+        width: min(420px, calc(100vw - 40px));
+        translate: -50% 0;
+      }
+    }
+
+    @media (min-width: 1280px) {
+      .order-detail-grid {
+        grid-template-columns: minmax(380px, 1.08fr) minmax(340px, .92fr) minmax(280px, .72fr);
+      }
+
+      .tracking-column {
+        grid-column: 1;
+        grid-row: 1;
+      }
+
+      .purchase-column {
+        grid-column: 2;
+      }
+
+      .financial-column {
+        grid-column: 3;
+      }
     }
   `],
 })
@@ -1094,4 +1229,3 @@ export class OrderDetail implements OnInit {
     }
   }
 }
-
