@@ -97,6 +97,8 @@ psql "<CONNECTION_URL>" -f "mi cliente (la familia)/Arquitectura/Database/migrat
 psql "<CONNECTION_URL>" -f "mi cliente (la familia)/Arquitectura/Database/migrations/005_email_verification.sql"
 psql "<CONNECTION_URL>" -f "mi cliente (la familia)/Arquitectura/Database/migrations/006_inventory_movements.sql"
 psql "<CONNECTION_URL>" -f "mi cliente (la familia)/Arquitectura/Database/migrations/007_inventory_images.sql"
+psql "<CONNECTION_URL>" -f "mi cliente (la familia)/Arquitectura/Database/migrations/008_checkout_integrity.sql"
+psql "<CONNECTION_URL>" -f "mi cliente (la familia)/Arquitectura/Database/migrations/009_checkout_shipping_tier.sql"
 ```
 
 Las migraciones son idempotentes. Una instalación nueva creada directamente

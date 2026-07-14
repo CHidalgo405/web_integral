@@ -706,12 +706,13 @@ const openapi = {
           customer_id: { ...uuid, nullable: true },
           employee_id: { ...uuid, nullable: true },
           delivery_method: { type: 'string', enum: ['on_spot', 'home_delivery', 'pickup'] },
+          shipping_tier: { type: 'string', enum: ['standard', 'express', 'pickup'], nullable: true },
           delivery_address: { type: 'string', nullable: true },
           delivery_distance_km: { type: 'number', nullable: true },
           delivery_zone_id: { ...uuid, nullable: true },
           delivery_fee: money,
-          payment_method: { type: 'string', enum: ['cash', 'card'] },
-          status: { type: 'string', enum: ['pending', 'completed', 'cancelled'] },
+          payment_method: { type: 'string', enum: ['cash', 'card', 'paypal'] },
+          status: { type: 'string', enum: ['pending', 'preparing', 'shipped', 'delivered', 'completed', 'cancelled'] },
           subtotal: money,
           discount_total: money,
           total: money,
@@ -721,29 +722,32 @@ const openapi = {
           created_at: dateTime,
         },
       },
-      PurchaseInput: {
+      CheckoutInput: {
         type: 'object',
-        required: ['payment_method', 'items'],
+        required: ['shipping_method', 'items'],
         properties: {
-          customer_id: { ...uuid, nullable: true },
-          employee_id: { ...uuid, nullable: true },
-          delivery_method: { type: 'string', enum: ['on_spot', 'home_delivery', 'pickup'], default: 'on_spot' },
-          delivery_address: { type: 'string', nullable: true },
-          delivery_distance_km: { type: 'number', nullable: true },
-          delivery_zone_id: { ...uuid, nullable: true },
-          delivery_fee: { ...money, default: 0 },
-          payment_method: { type: 'string', enum: ['cash', 'card'] },
-          status: { type: 'string', enum: ['pending', 'completed', 'cancelled'], default: 'completed' },
-          subtotal: { ...money, default: 0 },
-          discount_total: { ...money, default: 0 },
-          total: { ...money, default: 0 },
-          cash_tendered: { ...money, nullable: true },
-          notes: { type: 'string', nullable: true },
+          address_id: { ...uuid, nullable: true, description: 'Required unless shipping_method is pickup' },
+          shipping_method: { type: 'string', enum: ['standard', 'express', 'pickup'] },
+          coupon_code: { type: 'string', nullable: true },
           items: {
             type: 'array',
+            minItems: 1,
             items: { $ref: '#/components/schemas/PurchaseItemInput' },
           },
         },
+      },
+      PurchaseInput: {
+        allOf: [
+          { $ref: '#/components/schemas/CheckoutInput' },
+          {
+            type: 'object',
+            required: ['payment_method'],
+            properties: {
+              payment_method: { type: 'string', enum: ['cash', 'paypal'] },
+              paypal_order_id: { type: 'string', nullable: true },
+            },
+          },
+        ],
       },
       PurchaseStatusInput: {
         type: 'object',
@@ -767,14 +771,10 @@ const openapi = {
       },
       PurchaseItemInput: {
         type: 'object',
-        required: ['inventory_id', 'quantity', 'unit_price', 'line_total'],
+        required: ['inventory_id', 'quantity'],
         properties: {
           inventory_id: uuid,
-          promotion_id: { ...uuid, nullable: true },
-          quantity: { type: 'integer', minimum: 1 },
-          unit_price: money,
-          discount_pct: { type: 'number', default: 0 },
-          line_total: money,
+          quantity: { type: 'integer', minimum: 1, maximum: 1000 },
         },
       },
       PurchaseReturn: {
@@ -1534,6 +1534,44 @@ const openapi = {
         responses: {
           201: created({ $ref: '#/components/schemas/Purchase' }),
         },
+      },
+    },
+    '/purchases/quote': {
+      post: {
+        tags: ['Purchases'],
+        summary: 'Calculate an authoritative checkout quote from current prices and stock',
+        requestBody: requestBody({ $ref: '#/components/schemas/CheckoutInput' }),
+        responses: {
+          200: ok({ type: 'object' }),
+          409: { description: 'Insufficient stock' },
+        },
+      },
+    },
+    '/paypal/config': {
+      get: {
+        tags: ['Payments'],
+        summary: 'Get public PayPal checkout configuration',
+        responses: { 200: ok({ type: 'object' }), 503: { description: 'PayPal is not configured' } },
+      },
+    },
+    '/paypal/create-order': {
+      post: {
+        tags: ['Payments'],
+        summary: 'Create a PayPal order using the authoritative server quote',
+        requestBody: requestBody({ $ref: '#/components/schemas/CheckoutInput' }),
+        responses: { 201: created({ type: 'object' }), 409: { description: 'Insufficient stock' } },
+      },
+    },
+    '/paypal/capture-order': {
+      post: {
+        tags: ['Payments'],
+        summary: 'Capture a PayPal order owned by the authenticated user',
+        requestBody: requestBody({
+          type: 'object',
+          required: ['paypalOrderId'],
+          properties: { paypalOrderId: { type: 'string' } },
+        }),
+        responses: { 200: ok({ type: 'object' }), 403: { $ref: '#/components/responses/Forbidden' } },
       },
     },
     '/purchases/pos': {

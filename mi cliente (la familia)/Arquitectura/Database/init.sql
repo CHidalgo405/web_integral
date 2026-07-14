@@ -501,6 +501,7 @@ CREATE TABLE purchases (
     customer_id          UUID            REFERENCES customers(id),
     employee_id          UUID            REFERENCES employees(id),
     delivery_method      delivery_method NOT NULL DEFAULT 'on_spot',
+    shipping_tier        VARCHAR(20) CHECK (shipping_tier IS NULL OR shipping_tier IN ('standard', 'express', 'pickup')),
     delivery_address     TEXT,
     delivery_distance_km NUMERIC(8,2),
     delivery_zone_id     UUID            REFERENCES delivery_zones(id),
@@ -524,6 +525,8 @@ CREATE TABLE purchases (
 
 CREATE INDEX idx_purchases_date     ON purchases(created_at);
 CREATE INDEX idx_purchases_employee ON purchases(employee_id);
+CREATE UNIQUE INDEX idx_purchases_paypal_order_unique
+    ON purchases(paypal_order_id) WHERE paypal_order_id IS NOT NULL;
 
 -- ─── Purchase Line Items ──────────────────────────────────────
 CREATE TABLE purchase_items (

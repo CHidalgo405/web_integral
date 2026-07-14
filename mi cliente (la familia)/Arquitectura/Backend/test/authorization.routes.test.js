@@ -148,6 +148,22 @@ test('customer tokens cannot mutate catalog or access internal resources', async
   }
 });
 
+test('customer role reaches checkout validation without receiving internal access', async () => {
+  const quoteResponse = await request('/purchases/quote', {
+    method: 'POST',
+    token: customerToken,
+    body: { items: [], shipping_method: 'pickup' },
+  });
+  assert.equal(quoteResponse.status, 400);
+
+  const orderResponse = await request('/purchases', {
+    method: 'POST',
+    token: customerToken,
+    body: { items: [], shipping_method: 'pickup', payment_method: 'cash' },
+  });
+  assert.equal(orderResponse.status, 400);
+});
+
 test('cashier role reaches POS validation but remains blocked from admin resources', async () => {
   const posResponse = await request('/purchases/pos', {
     method: 'POST',

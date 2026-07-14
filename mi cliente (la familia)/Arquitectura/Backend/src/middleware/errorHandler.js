@@ -11,6 +11,9 @@ const errorHandler = (err, req, res, next) => {
   if (err.code === '23514') {
     return res.status(400).json({ error: 'Constraint violation', detail: err.detail });
   }
+  if (err.status && err.status < 500) {
+    return res.status(err.status).json({ error: err.message });
+  }
   console.error('[ErrorHandler]', err);
   res.status(err.status || 500).json({ error: err.message || 'Internal server error' });
 };

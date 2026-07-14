@@ -1,4 +1,5 @@
 const db = require('../db');
+const Checkout = require('../services/checkout.service');
 
 const findAll = ({ date, employee_id, status, user_id } = {}) => {
   const conditions = [];
@@ -41,40 +42,79 @@ const findItems = (purchase_id) =>
     [purchase_id]
   );
 
-const createWithItems = async (purchase, items) => {
+const quoteCheckout = async (userId, payload) => {
+  const client = await db.connect();
+  try {
+    return await Checkout.buildCheckoutQuote(client, userId, payload);
+  } finally {
+    client.release();
+  }
+};
+
+const createCheckout = async (userId, payload, paymentVerification = null) => {
   const client = await db.connect();
   try {
     await client.query('BEGIN');
 
+    const paymentMethod = payload?.payment_method;
+    if (!['cash', 'paypal'].includes(paymentMethod)) {
+      throw Checkout.checkoutError('Método de pago no disponible para pedidos en línea');
+    }
+
+    const quote = await Checkout.buildCheckoutQuote(client, userId, payload, { lock: true });
+    let paidAt = null;
+    let paypalOrderId = null;
+
+    if (paymentMethod === 'paypal') {
+      paypalOrderId = typeof payload?.paypal_order_id === 'string' ? payload.paypal_order_id.trim() : '';
+      if (!/^[A-Z0-9-]{10,64}$/i.test(paypalOrderId)) {
+        throw Checkout.checkoutError('Orden de PayPal inválida');
+      }
+      if (!paymentVerification || paymentVerification.status !== 'COMPLETED') {
+        throw Checkout.checkoutError('El pago de PayPal no está completado', 409);
+      }
+      if (paymentVerification.custom_id !== userId) {
+        throw Checkout.checkoutError('La orden de PayPal no pertenece a esta cuenta', 403);
+      }
+      if (paymentVerification.currency !== (process.env.PAYPAL_CURRENCY || 'MXN')) {
+        throw Checkout.checkoutError('La moneda del pago de PayPal no coincide', 409);
+      }
+      if (Checkout.money(paymentVerification.amount) !== quote.total) {
+        throw Checkout.checkoutError('El importe pagado en PayPal no coincide con el pedido', 409);
+      }
+      const duplicate = await client.query('SELECT id FROM purchases WHERE paypal_order_id=$1', [paypalOrderId]);
+      if (duplicate.rows.length) throw Checkout.checkoutError('Esta orden de PayPal ya fue utilizada', 409);
+      paidAt = paymentVerification.paid_at;
+    }
+
+    const customerNotes = [
+      quote.customer_name && `Cliente: ${quote.customer_name}`,
+      quote.customer_phone && `Teléfono: ${quote.customer_phone}`,
+      quote.coupon_code && `Cupón: ${quote.coupon_code}`,
+    ].filter(Boolean).join('. ');
+
     const { rows: [p] } = await client.query(
       `INSERT INTO purchases
-         (customer_id, employee_id, user_id, delivery_method, delivery_address,
-          delivery_distance_km, delivery_zone_id, delivery_fee,
-          payment_method, status, subtotal, discount_total, total, cash_tendered,
-          paypal_order_id, paid_at, notes)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17) RETURNING *`,
+         (user_id, delivery_method, shipping_tier, delivery_address, delivery_fee,
+          payment_method, status, subtotal, discount_total, total, paypal_order_id, paid_at, notes)
+       VALUES ($1,$2,$3,$4,$5,$6,'pending',$7,$8,$9,$10,$11,$12) RETURNING *`,
       [
-        purchase.customer_id ?? null,
-        purchase.employee_id ?? null,
-        purchase.user_id ?? null,
-        purchase.delivery_method ?? 'on_spot',
-        purchase.delivery_address ?? null,
-        purchase.delivery_distance_km ?? null,
-        purchase.delivery_zone_id ?? null,
-        purchase.delivery_fee ?? 0,
-        purchase.payment_method,
-        purchase.status ?? 'completed',
-        purchase.subtotal,
-        purchase.discount_total ?? 0,
-        purchase.total,
-        purchase.cash_tendered ?? null,
-        purchase.paypal_order_id ?? null,
-        purchase.paid_at ?? null,
-        purchase.notes ?? null,
+        userId,
+        quote.delivery_method,
+        quote.shipping_method,
+        quote.delivery_address,
+        quote.delivery_fee,
+        paymentMethod,
+        quote.subtotal,
+        quote.discount_total,
+        quote.total,
+        paypalOrderId,
+        paidAt,
+        customerNotes || null,
       ]
     );
 
-    for (const item of items) {
+    for (const item of quote.items) {
       await client.query(
         `INSERT INTO purchase_items
            (purchase_id, inventory_id, promotion_id, quantity, unit_price, discount_pct, line_total)
@@ -84,7 +124,7 @@ const createWithItems = async (purchase, items) => {
     }
 
     await client.query('COMMIT');
-    return p;
+    return { ...p, items: quote.items };
   } catch (err) {
     await client.query('ROLLBACK');
     throw err;
@@ -248,4 +288,4 @@ const metrics = async () => {
   };
 };
 
-module.exports = { findAll, findById, findItems, createWithItems, createPosSale, updateStatus, metrics };
+module.exports = { findAll, findById, findItems, quoteCheckout, createCheckout, createPosSale, updateStatus, metrics };
