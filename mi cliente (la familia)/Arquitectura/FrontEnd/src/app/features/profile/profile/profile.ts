@@ -518,6 +518,24 @@ import { Router } from '@angular/router';
       from { transform: rotate(0deg); }
       to { transform: rotate(360deg); }
     }
+
+    @media (min-width: 900px) {
+      .profile-header-bg { padding: 54px 24px 86px; }
+      .profile-content {
+        width: min(100%, 1120px);
+        max-width: none;
+        padding: 0 clamp(28px, 5vw, 56px);
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        align-items: start;
+        gap: 20px;
+      }
+      .stats-card { grid-column: 1 / -1; margin-bottom: 4px; padding: 24px; }
+      .menu-section-card { height: 100%; margin-bottom: 0; }
+      .logout-action-btn { grid-column: 1 / -1; width: min(360px, 100%); justify-self: center; margin-top: 8px; }
+      .menu-item-row { min-height: 72px; }
+      .menu-item-text .subtitle { white-space: normal; }
+    }
   `],
 })
 export class Profile {
