@@ -1,6 +1,5 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { DatePipe } from '@angular/common';
 import { OrderService } from '../../../core/services/order.service';
 import { ReceiptService } from '../../../core/services/receipt.service';
 import { MxnCurrencyPipe } from '../../../shared/pipes/currency.pipe';
@@ -10,7 +9,7 @@ import { Order, ShippingMethod } from '../../../core/models/order.model';
 @Component({
   selector: 'app-order-confirmation',
   standalone: true,
-  imports: [RouterLink, DatePipe, MxnCurrencyPipe, IconComponent],
+  imports: [RouterLink, MxnCurrencyPipe, IconComponent],
   template: `
     <div class="confirmation-page" id="order-confirmation-page">
 
