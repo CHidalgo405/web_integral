@@ -24,6 +24,7 @@ interface ApiInventoryItem {
   min_stock?: number | null;
   active?: boolean | null;
   has_expiration?: boolean | null;
+  image_url?: string | null;
 }
 
 const CATEGORY_ICONS: Record<string, string> = {
@@ -42,17 +43,6 @@ const CATEGORY_ICONS: Record<string, string> = {
   snacks: 'cookie',
   cleaning: 'brush',
   limpieza: 'brush',
-};
-
-const PRODUCT_IMAGES: Record<string, string> = {
-  leche: 'assets/images/productos/leche-Photoroom.png',
-  manzana: 'assets/images/productos/manzanasrojas-Photoroom.png',
-  platano: 'assets/images/productos/platano-Photoroom.png',
-  pollo: 'assets/images/productos/pechuga-Photoroom.png',
-  pan: 'assets/images/productos/panbimbo-Photoroom.png',
-  coca: 'assets/images/productos/cocacola-Photoroom.png',
-  doritos: 'assets/images/productos/doritos-Photoroom.png',
-  fabuloso: 'assets/images/productos/fabuloso-Photoroom.png',
 };
 
 @Injectable({ providedIn: 'root' })
@@ -161,22 +151,30 @@ export class ProductService {
     return ['Leche', 'Pan', 'Huevo', 'Frutas', 'Verduras', 'Pollo', 'Refresco', 'Agua'];
   }
 
-  addProduct(product: Omit<Product, 'id'>): void {
+  addProduct(product: Omit<Product, 'id'>, imageFile?: File): void {
     this.http.post<ApiInventoryItem>(`${API_BASE_URL}/inventory`, this.toInventoryPayload(product)).subscribe({
       next: (created) => {
-        this.productsSignal.set([...this.productsSignal(), this.mapInventoryItem(created)]);
-        this.updateCategoryProductCounts();
+        if (imageFile) {
+          this.uploadProductImage(created.id, imageFile);
+        } else {
+          this.productsSignal.set([...this.productsSignal(), this.mapInventoryItem(created)]);
+          this.updateCategoryProductCounts();
+        }
       },
       error: () => this.loadError.set('No se pudo crear el producto.'),
     });
   }
 
-  updateProduct(product: Product): void {
+  updateProduct(product: Product, imageFile?: File): void {
     this.http.put<ApiInventoryItem>(`${API_BASE_URL}/inventory/${product.id}`, this.toInventoryPayload(product)).subscribe({
       next: (updated) => {
-        const mapped = this.mapInventoryItem(updated);
-        this.productsSignal.set(this.productsSignal().map((p) => (p.id === product.id ? mapped : p)));
-        this.updateCategoryProductCounts();
+        if (imageFile) {
+          this.uploadProductImage(updated.id, imageFile);
+        } else {
+          const mapped = this.mapInventoryItem(updated);
+          this.productsSignal.set(this.productsSignal().map((p) => (p.id === product.id ? mapped : p)));
+          this.updateCategoryProductCounts();
+        }
       },
       error: () => this.loadError.set('No se pudo actualizar el producto.'),
     });
@@ -225,6 +223,18 @@ export class ProductService {
     });
   }
 
+  uploadProductImage(productId: string, file: File): void {
+    const formData = new FormData();
+    formData.append('image', file);
+    this.http.post<ApiInventoryItem>(`${API_BASE_URL}/inventory/${productId}/image`, formData).subscribe({
+      next: (updated) => {
+        const mapped = this.mapInventoryItem(updated);
+        this.productsSignal.set(this.productsSignal().map((p) => (p.id === productId ? mapped : p)));
+      },
+      error: () => this.loadError.set('No se pudo subir la imagen.'),
+    });
+  }
+
   private mapCategory(category: ApiCategory): ProductCategory {
     return {
       id: category.id,
@@ -245,7 +255,7 @@ export class ProductService {
       name: item.name,
       description: item.description ?? 'Producto disponible en tienda.',
       price: Number(item.price),
-      images: [this.imageForProduct(item.name, item.sku)],
+      images: [item.image_url || 'https://placehold.co/400x400?text=Sin+Imagen'],
       category,
       categoryId,
       rating: 5,
@@ -283,12 +293,6 @@ export class ProductService {
   private iconForCategory(name: string, slug?: string): string {
     const key = this.normalize(slug || name);
     return CATEGORY_ICONS[key] ?? 'package';
-  }
-
-  private imageForProduct(name: string, sku?: string | null): string {
-    const key = this.normalize(`${name} ${sku ?? ''}`);
-    const match = Object.keys(PRODUCT_IMAGES).find((token) => key.includes(token));
-    return match ? PRODUCT_IMAGES[match] : 'assets/images/productos/placeholder.png';
   }
 
   private slugify(value: string): string {
