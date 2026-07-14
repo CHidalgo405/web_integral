@@ -7,14 +7,15 @@ import { IconComponent } from '../../../shared/components/icon/icon';
 import { signal } from '@angular/core';
 import { LocationPicker } from '../../../shared/components/location-picker/location-picker';
 import { CartService } from '../../../core/services/cart.service';
+import { CheckoutOrderSummary } from '../checkout-order-summary/checkout-order-summary';
 
 @Component({
   selector: 'app-address-form',
   standalone: true,
-  imports: [ReactiveFormsModule, Header, IconComponent, LocationPicker],
+  imports: [ReactiveFormsModule, Header, IconComponent, LocationPicker, CheckoutOrderSummary],
   template: `
     <app-header title="Nueva Dirección" [showBack]="true"></app-header>
-    <div class="checkout-page" id="address-form-page">
+    <div class="checkout-layout"><main class="checkout-page" id="address-form-page">
       <form [formGroup]="form" (ngSubmit)="onSubmit()" class="form-layout">
         <div class="form-group">
           <label for="label">Etiqueta</label>
@@ -97,7 +98,7 @@ import { CartService } from '../../../core/services/cart.service';
           }
         </button>
       </form>
-    </div>
+    </main><app-checkout-order-summary /></div>
   `,
   styleUrl: '../checkout-shared.css',
 })

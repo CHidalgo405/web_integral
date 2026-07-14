@@ -4,14 +4,15 @@ import { UserService } from '../../../core/services/user.service';
 import { CheckoutStateService } from '../../../core/services/checkout-state.service';
 import { Header } from '../../../shared/components/header/header';
 import { Address } from '../../../core/models/address.model';
+import { CheckoutOrderSummary } from '../checkout-order-summary/checkout-order-summary';
 
 @Component({
   selector: 'app-checkout-address',
   standalone: true,
-  imports: [RouterLink, Header],
+  imports: [RouterLink, Header, CheckoutOrderSummary],
   template: `
     <app-header title="Dirección de Envío" [showBack]="true"></app-header>
-    <div class="checkout-page" id="checkout-address-page">
+    <div class="checkout-layout"><main class="checkout-page" id="checkout-address-page">
       <div class="step-indicator"><span class="step done">✓</span><span class="step active">2</span><span class="step">3</span><span class="step">4</span></div>
       <div class="address-list" role="radiogroup">
         @if (userService.getAddresses().length === 0) {
@@ -40,7 +41,7 @@ import { Address } from '../../../core/models/address.model';
       </div>
       <a routerLink="/checkout/address/new" class="btn-add-address" id="add-address-btn">+ Agregar nueva dirección</a>
       <button class="btn-continue" [disabled]="!selectedAddress()" (click)="next()" id="address-next-btn">Continuar</button>
-    </div>
+    </main><app-checkout-order-summary /></div>
   `,
   styleUrl: '../checkout-shared.css',
 })

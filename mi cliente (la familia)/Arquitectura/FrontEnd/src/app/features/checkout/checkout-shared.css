@@ -13,6 +13,45 @@
     box-sizing: border-box;
 }
 
+.checkout-layout {
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.checkout-layout > .checkout-page {
+    margin: 0;
+}
+
+@media (min-width: 900px) {
+    .checkout-layout {
+        width: min(100%, 1280px);
+        max-width: none;
+        padding: 32px clamp(28px, 5vw, 64px) 72px;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(320px, 380px);
+        align-items: start;
+        gap: clamp(28px, 4vw, 56px);
+    }
+
+    .checkout-layout > .checkout-page {
+        width: 100%;
+        max-width: none;
+        padding: 0 0 40px;
+    }
+
+    .checkout-page h2 { text-align: left; font-size: 1.6rem; }
+    .step-indicator { justify-content: flex-start; margin-bottom: 32px; }
+    .user-card, .form-layout, .address-card, .option-card, .summary-section, .summary-totals {
+        border-color: var(--border);
+        box-shadow: 0 12px 36px rgba(15,42,32,.06);
+    }
+    .address-list { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); }
+    .address-card { min-height: 170px; }
+    .option-card { min-height: 92px; padding: 20px; }
+    #address-form-page .form-layout { padding: 28px; }
+}
+
 .checkout-page h2 {
     font-size: 1.25rem;
     font-weight: 700;

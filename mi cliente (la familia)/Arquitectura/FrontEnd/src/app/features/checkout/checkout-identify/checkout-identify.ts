@@ -4,14 +4,15 @@ import { AuthService } from '../../../core/services/auth.service';
 import { CheckoutStateService } from '../../../core/services/checkout-state.service';
 import { Header } from '../../../shared/components/header/header';
 import { IconComponent } from '../../../shared/components/icon/icon';
+import { CheckoutOrderSummary } from '../checkout-order-summary/checkout-order-summary';
 
 @Component({
   selector: 'app-checkout-identify',
   standalone: true,
-  imports: [RouterLink, Header, IconComponent],
+  imports: [RouterLink, Header, IconComponent, CheckoutOrderSummary],
   template: `
     <app-header title="Finalizar compra" [showBack]="true"></app-header>
-    <div class="checkout-page" id="checkout-identify-page">
+    <div class="checkout-layout"><main class="checkout-page" id="checkout-identify-page">
       <div class="step-indicator"><span class="step active">1</span><span class="step">2</span><span class="step">3</span><span class="step">4</span></div>
       <h2>¿Cómo deseas continuar?</h2>
       @if (authService.isAuthenticated()) {
@@ -32,7 +33,7 @@ import { IconComponent } from '../../../shared/components/icon/icon';
         </div>
         <button class="btn-guest" (click)="continueAsGuest(guestEmail.value)" id="continue-guest-btn">Continuar</button>
       }
-    </div>
+    </main><app-checkout-order-summary /></div>
   `,
   styleUrl: '../checkout-shared.css',
 })
