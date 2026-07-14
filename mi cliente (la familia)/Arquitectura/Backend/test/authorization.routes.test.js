@@ -110,6 +110,7 @@ test('business endpoints reject unauthenticated requests', async () => {
     ['/payment-methods'],
     ['/paypal/config'],
     ['/paypal/create-order', { method: 'POST', body: { total: 10 } }],
+    ['/reviews/products/00000000-0000-4000-8000-000000000100'],
   ];
 
   for (const [path, options] of cases) {
@@ -146,6 +147,29 @@ test('customer tokens cannot mutate catalog or access internal resources', async
     const response = await request(path, options);
     assert.equal(response.status, 403, `${path} should require the admin role`);
   }
+});
+
+test('customer role reaches checkout validation without receiving internal access', async () => {
+  const quoteResponse = await request('/purchases/quote', {
+    method: 'POST',
+    token: customerToken,
+    body: { items: [], shipping_method: 'pickup' },
+  });
+  assert.equal(quoteResponse.status, 400);
+
+  const orderResponse = await request('/purchases', {
+    method: 'POST',
+    token: customerToken,
+    body: { items: [], shipping_method: 'pickup', payment_method: 'cash' },
+  });
+  assert.equal(orderResponse.status, 400);
+
+  const reviewResponse = await request('/reviews', {
+    method: 'POST',
+    token: customerToken,
+    body: {},
+  });
+  assert.equal(reviewResponse.status, 400);
 });
 
 test('cashier role reaches POS validation but remains blocked from admin resources', async () => {

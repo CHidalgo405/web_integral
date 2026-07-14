@@ -1,5 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { Header } from '../../../shared/components/header/header';
 import { PaymentMethod } from '../../../core/models/order.model';
 import { CheckoutStateService } from '../../../core/services/checkout-state.service';
@@ -8,7 +8,7 @@ import { IconComponent } from '../../../shared/components/icon/icon';
 @Component({
   selector: 'app-checkout-payment',
   standalone: true,
-  imports: [RouterLink, Header, IconComponent],
+  imports: [Header, IconComponent],
   template: `
     <app-header title="Método de Pago" [showBack]="true"></app-header>
     <div class="checkout-page" id="checkout-payment-page">
@@ -28,11 +28,7 @@ import { IconComponent } from '../../../shared/components/icon/icon';
         }
       </div>
 
-      @if (selected() === 'card') {
-        <a routerLink="/checkout/payment/card" class="btn-continue" id="card-form-btn">Ingresar datos de tarjeta</a>
-      } @else {
-        <button class="btn-continue" [disabled]="!selected()" (click)="next()" id="payment-next-btn">Continuar</button>
-      }
+      <button class="btn-continue" [disabled]="!selected()" (click)="next()" id="payment-next-btn">Continuar</button>
     </div>
   `,
   styleUrl: '../checkout-shared.css',
@@ -45,7 +41,6 @@ export class CheckoutPayment {
 
   paymentOptions = [
     { key: 'paypal' as PaymentMethod, icon: 'paypal', label: 'PayPal', description: 'Paga seguro con tu cuenta PayPal o tarjeta' },
-    { key: 'card' as PaymentMethod, icon: 'credit-card', label: 'Tarjeta de crédito/débito', description: 'Visa, Mastercard, AMEX' },
     { key: 'cash' as PaymentMethod, icon: 'dollar-sign', label: 'Efectivo', description: 'Paga al recibir tu pedido' },
   ];
 

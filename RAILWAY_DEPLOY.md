@@ -96,6 +96,9 @@ contra PostgreSQL. Para los módulos actuales se requiere:
 psql "<CONNECTION_URL>" -f "mi cliente (la familia)/Arquitectura/Database/migrations/004_customer_cashier_roles.sql"
 psql "<CONNECTION_URL>" -f "mi cliente (la familia)/Arquitectura/Database/migrations/005_email_verification.sql"
 psql "<CONNECTION_URL>" -f "mi cliente (la familia)/Arquitectura/Database/migrations/006_inventory_movements.sql"
+psql "<CONNECTION_URL>" -f "mi cliente (la familia)/Arquitectura/Database/migrations/007_inventory_images.sql"
+psql "<CONNECTION_URL>" -f "mi cliente (la familia)/Arquitectura/Database/migrations/008_checkout_integrity.sql"
+psql "<CONNECTION_URL>" -f "mi cliente (la familia)/Arquitectura/Database/migrations/009_checkout_shipping_tier.sql"
 ```
 
 Las migraciones son idempotentes. Una instalación nueva creada directamente
@@ -135,6 +138,17 @@ restringirlo solo al frontend:
 
 Actualiza la variable `API_BASE_URL` en el servicio Frontend y vuelve a
 desplegar (Deployments → Redeploy) — no hace falta tocar código.
+
+## Actualizaciones rápidas del frontend
+
+El frontend comprueba si Railway publicó una versión nueva cada 30 segundos,
+al volver a la pestaña y después de navegar. Las pantallas de consulta se
+actualizan automáticamente; checkout, administración, caja e inventario
+muestran primero el aviso de actualización para no interrumpir una operación.
+
+`serve.json` desactiva el caché HTTP de `index.html`, `ngsw.json` y
+`ngsw-worker.js`. Los archivos compilados con nombre versionado continúan
+administrados por el service worker para conservar la velocidad de carga.
 
 ---
 

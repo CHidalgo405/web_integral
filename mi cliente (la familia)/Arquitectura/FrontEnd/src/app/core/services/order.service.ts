@@ -17,6 +17,7 @@ interface ApiPurchase {
   user_last_name?: string | null;
   user_email?: string | null;
   delivery_method: 'on_spot' | 'home_delivery' | 'pickup';
+  shipping_tier?: ShippingMethod | null;
   delivery_address?: string | null;
   payment_method: 'cash' | 'card' | 'paypal';
   status: ApiPurchaseStatus;
@@ -38,6 +39,21 @@ interface ApiPurchaseItem {
   quantity: number;
   unit_price: string | number;
   line_total: string | number;
+}
+
+export interface CheckoutPayload {
+  items: { inventory_id: string; quantity: number }[];
+  address_id: string;
+  shipping_method: ShippingMethod;
+  coupon_code?: string;
+}
+
+export interface CheckoutQuote {
+  subtotal: number;
+  discount_total: number;
+  delivery_fee: number;
+  total: number;
+  coupon_code?: string | null;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -108,44 +124,39 @@ export class OrderService {
     });
   }
 
-  async createOrder(
+  buildCheckoutPayload(
     items: CartItem[],
     address: Address,
     shippingMethod: ShippingMethod,
+    couponCode?: string,
+  ): CheckoutPayload {
+    return {
+      items: items.map((item) => ({ inventory_id: item.product.id, quantity: item.quantity })),
+      address_id: address.id,
+      shipping_method: shippingMethod,
+      ...(couponCode ? { coupon_code: couponCode } : {}),
+    };
+  }
+
+  quoteCheckout(payload: CheckoutPayload): Promise<CheckoutQuote> {
+    return firstValueFrom(this.http.post<CheckoutQuote>(`${API_BASE_URL}/purchases/quote`, payload));
+  }
+
+  async createOrder(
+    checkout: CheckoutPayload,
+    items: CartItem[],
+    address: Address,
     paymentMethod: PaymentMethod,
-    subtotal: number,
-    discount: number,
-    shippingCost: number,
-    total: number,
     paypal?: { orderId: string },
   ): Promise<Order> {
-    if (paymentMethod === 'transfer') {
-      throw new Error('La transferencia bancaria aun no esta disponible para pedidos conectados al servidor.');
+    if (!['cash', 'paypal'].includes(paymentMethod)) {
+      throw new Error('Este método de pago todavía no está disponible para pedidos en línea.');
     }
 
     const payload = {
-      address_id: address.id,
-      shipping_method: shippingMethod,
-      delivery_method: this.toApiShippingMethod(shippingMethod),
-      delivery_address: this.formatAddress(address),
-      delivery_fee: shippingCost,
+      ...checkout,
       payment_method: paymentMethod,
-      // Los pedidos nacen pendientes para que el admin los procese
-      // (preparando → en camino → entregado)
-      status: 'pending',
-      subtotal,
-      discount_total: discount,
-      total,
       paypal_order_id: paypal?.orderId ?? null,
-      paid_at: paypal ? new Date().toISOString() : null,
-      notes: `Cliente: ${address.fullName}. Telefono: ${address.phone}`,
-      items: items.map((item) => ({
-        inventory_id: item.product.id,
-        quantity: item.quantity,
-        unit_price: item.product.price,
-        discount_pct: 0,
-        line_total: item.product.price * item.quantity,
-      })),
     };
 
     const created = await firstValueFrom(this.http.post<ApiPurchase>(`${API_BASE_URL}/purchases`, payload));
@@ -153,7 +164,7 @@ export class OrderService {
       ...this.mapPurchase(created),
       items,
       shippingAddress: address,
-      shippingMethod,
+      shippingMethod: checkout.shipping_method,
       paymentMethod,
     };
     this.ordersSignal.set([order, ...this.ordersSignal()]);
@@ -215,7 +226,7 @@ export class OrderService {
       items: [],
       status: this.fromApiStatus(row.status),
       shippingAddress: this.addressFromPurchase(row),
-      shippingMethod: this.fromApiShippingMethod(row.delivery_method),
+      shippingMethod: this.fromApiShippingMethod(row.delivery_method, row.shipping_tier),
       paymentMethod: row.payment_method,
       subtotal: Number(row.subtotal),
       discount: Number(row.discount_total),
@@ -266,11 +277,11 @@ export class OrderService {
     };
   }
 
-  private toApiShippingMethod(method: ShippingMethod): 'home_delivery' | 'pickup' {
-    return method === 'pickup' ? 'pickup' : 'home_delivery';
-  }
-
-  private fromApiShippingMethod(method: ApiPurchase['delivery_method']): ShippingMethod {
+  private fromApiShippingMethod(
+    method: ApiPurchase['delivery_method'],
+    shippingTier?: ShippingMethod | null,
+  ): ShippingMethod {
+    if (shippingTier) return shippingTier;
     return method === 'pickup' || method === 'on_spot' ? 'pickup' : 'standard';
   }
 
@@ -284,9 +295,5 @@ export class OrderService {
     // 'completed' es el estado legado del punto de venta
     if (status === 'completed') return 'delivered';
     return status;
-  }
-
-  private formatAddress(address: Address): string {
-    return `${address.street} ${address.exteriorNumber}${address.interiorNumber ? ', ' + address.interiorNumber : ''}, ${address.neighborhood}, ${address.city}, ${address.state} ${address.zipCode}`;
   }
 }

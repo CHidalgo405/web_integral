@@ -40,7 +40,40 @@ export interface ProductReview {
   rating: number;
   comment: string;
   date: Date;
+  updatedAt: Date;
+  verifiedPurchase: boolean;
+  isMine: boolean;
   images?: string[];
+}
+
+export interface ReviewSummary {
+  average: number;
+  total: number;
+  distribution: Record<1 | 2 | 3 | 4 | 5, number>;
+}
+
+export type ReviewEligibilityReason =
+  | 'already_reviewed'
+  | 'purchase_required'
+  | 'customer_only'
+  | 'product_not_found'
+  | null;
+
+export interface ReviewEligibility {
+  canReview: boolean;
+  reason: ReviewEligibilityReason;
+  reviewId?: string;
+}
+
+export interface ProductReviewsResult {
+  reviews: ProductReview[];
+  summary: ReviewSummary;
+  eligibility: ReviewEligibility;
+}
+
+export interface ReviewInput {
+  rating: number;
+  comment: string;
 }
 
 export interface SearchFilters {

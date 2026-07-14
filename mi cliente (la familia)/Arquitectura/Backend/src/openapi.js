@@ -33,93 +33,107 @@ const requestBody = (schema) => ({
   content: json(schema),
 });
 
-const crud = ({ tag, schema, createSchema = schema, updateSchema = schema, deleteDescription = 'Deleted' }) => ({
-  collection: {
-    get: {
-      tags: [tag],
-      summary: `Listar ${tag.toLowerCase()}`,
-      responses: {
-        200: ok({ type: 'array', items: { $ref: `#/components/schemas/${schema}` } }),
+const crud = ({ tag, schema, createSchema = schema, updateSchema = schema, deleteDescription = 'Deleted', roles = [] }) => {
+  const rolesStr = roles.length ? ` [Roles permitidos: ${roles.join(', ')}]` : '';
+  const authResponses = {
+    401: { $ref: '#/components/responses/Unauthorized' },
+    403: { $ref: '#/components/responses/Forbidden' }
+  };
+  return {
+    collection: {
+      get: {
+        tags: [tag],
+        summary: `Listar ${tag.toLowerCase()}${rolesStr}`,
+        responses: {
+          200: ok({ type: 'array', items: { $ref: `#/components/schemas/${schema}` } }),
+          ...authResponses
+        },
+      },
+      post: {
+        tags: [tag],
+        summary: `Crear ${tag.toLowerCase()}${rolesStr}`,
+        requestBody: requestBody({ $ref: `#/components/schemas/${createSchema}` }),
+        responses: {
+          201: created({ $ref: `#/components/schemas/${schema}` }),
+          ...authResponses
+        },
       },
     },
-    post: {
-      tags: [tag],
-      summary: `Crear ${tag.toLowerCase()}`,
-      requestBody: requestBody({ $ref: `#/components/schemas/${createSchema}` }),
-      responses: {
-        201: created({ $ref: `#/components/schemas/${schema}` }),
+    item: {
+      parameters: [idParam],
+      get: {
+        tags: [tag],
+        summary: `Obtener ${tag.toLowerCase()} por ID${rolesStr}`,
+        responses: {
+          200: ok({ $ref: `#/components/schemas/${schema}` }),
+          404: { $ref: '#/components/responses/NotFound' },
+          ...authResponses
+        },
+      },
+      put: {
+        tags: [tag],
+        summary: `Actualizar ${tag.toLowerCase()}${rolesStr}`,
+        requestBody: requestBody({ $ref: `#/components/schemas/${updateSchema}` }),
+        responses: {
+          200: ok({ $ref: `#/components/schemas/${schema}` }),
+          404: { $ref: '#/components/responses/NotFound' },
+          ...authResponses
+        },
+      },
+      delete: {
+        tags: [tag],
+        summary: `Eliminar ${tag.toLowerCase()}${rolesStr}`,
+        responses: {
+          200: { description: deleteDescription },
+          204: deleted,
+          404: { $ref: '#/components/responses/NotFound' },
+          ...authResponses
+        },
       },
     },
-  },
-  item: {
-    parameters: [idParam],
-    get: {
-      tags: [tag],
-      summary: `Obtener ${tag.toLowerCase()} por ID`,
-      responses: {
-        200: ok({ $ref: `#/components/schemas/${schema}` }),
-        404: { $ref: '#/components/responses/NotFound' },
-      },
-    },
-    put: {
-      tags: [tag],
-      summary: `Actualizar ${tag.toLowerCase()}`,
-      requestBody: requestBody({ $ref: `#/components/schemas/${updateSchema}` }),
-      responses: {
-        200: ok({ $ref: `#/components/schemas/${schema}` }),
-        404: { $ref: '#/components/responses/NotFound' },
-      },
-    },
-    delete: {
-      tags: [tag],
-      summary: `Eliminar ${tag.toLowerCase()}`,
-      responses: {
-        200: { description: deleteDescription },
-        204: deleted,
-        404: { $ref: '#/components/responses/NotFound' },
-      },
-    },
-  },
-});
+  };
+};
 
-const noDeleteCrud = ({ tag, schema, createSchema = schema }) => {
-  const docs = crud({ tag, schema, createSchema });
+const noDeleteCrud = ({ tag, schema, createSchema = schema, roles = [] }) => {
+  const docs = crud({ tag, schema, createSchema, roles });
   delete docs.item.put;
   delete docs.item.delete;
   return docs;
 };
 
-const category = crud({ tag: 'Categorías', schema: 'Category', createSchema: 'CategoryInput' });
-const unit = crud({ tag: 'Unidades', schema: 'UnitOfMeasure', createSchema: 'UnitOfMeasureInput' });
-const supplier = crud({ tag: 'Proveedores', schema: 'Supplier', createSchema: 'SupplierInput', deleteDescription: 'Proveedor desactivado' });
-const employee = crud({ tag: 'Empleados', schema: 'Employee', createSchema: 'EmployeeInput', deleteDescription: 'Empleado desactivado' });
-const schedule = crud({ tag: 'Horarios', schema: 'Schedule', createSchema: 'ScheduleInput' });
-const user = crud({ tag: 'Usuarios', schema: 'User', createSchema: 'UserInput', deleteDescription: 'Usuario desactivado' });
-const customer = crud({ tag: 'Clientes', schema: 'Customer', createSchema: 'CustomerInput' });
-const deliveryZone = crud({ tag: 'Zonas de entrega', schema: 'DeliveryZone', createSchema: 'DeliveryZoneInput', deleteDescription: 'Zona de entrega desactivada' });
-const promotion = crud({ tag: 'Promociones', schema: 'Promotion', createSchema: 'PromotionInput', deleteDescription: 'Promoción desactivada' });
-const expenseCategory = crud({ tag: 'Categorías de gasto', schema: 'ExpenseCategory', createSchema: 'ExpenseCategoryInput' });
-const expense = crud({ tag: 'Gastos', schema: 'Expense', createSchema: 'ExpenseInput' });
-const expirationBatch = noDeleteCrud({ tag: 'Lotes de caducidad', schema: 'ExpirationBatch', createSchema: 'ExpirationBatchInput' });
+const category = crud({ tag: 'Categorías', schema: 'Category', createSchema: 'CategoryInput', roles: ['admin'] });
+const unit = crud({ tag: 'Unidades', schema: 'UnitOfMeasure', createSchema: 'UnitOfMeasureInput', roles: ['admin'] });
+const supplier = crud({ tag: 'Proveedores', schema: 'Supplier', createSchema: 'SupplierInput', deleteDescription: 'Supplier deactivated', roles: ['admin'] });
+const employee = crud({ tag: 'Empleados', schema: 'Employee', createSchema: 'EmployeeInput', deleteDescription: 'Employee deactivated', roles: ['admin'] });
+const schedule = crud({ tag: 'Horarios', schema: 'Schedule', createSchema: 'ScheduleInput', roles: ['admin'] });
+const user = crud({ tag: 'Usuarios', schema: 'User', createSchema: 'UserInput', deleteDescription: 'User deactivated', roles: ['admin'] });
+const customer = crud({ tag: 'Clientes', schema: 'Customer', createSchema: 'CustomerInput', roles: ['admin', 'customer', 'cashier'] });
+const deliveryZone = crud({ tag: 'Zonas de entrega', schema: 'DeliveryZone', createSchema: 'DeliveryZoneInput', deleteDescription: 'Delivery zone deactivated', roles: ['admin'] });
+const promotion = crud({ tag: 'Promociones', schema: 'Promotion', createSchema: 'PromotionInput', deleteDescription: 'Promotion deactivated', roles: ['admin'] });
+const expenseCategory = crud({ tag: 'Categorías de gasto', schema: 'ExpenseCategory', createSchema: 'ExpenseCategoryInput', roles: ['admin'] });
+const expense = crud({ tag: 'Gastos', schema: 'Expense', createSchema: 'ExpenseInput', roles: ['admin'] });
+const expirationBatch = noDeleteCrud({ tag: 'Lotes de caducidad', schema: 'ExpirationBatch', createSchema: 'ExpirationBatchInput', roles: ['admin', 'stock'] });
 expirationBatch.item.put = {
   tags: ['Lotes de caducidad'],
-  summary: 'Actualizar lote de caducidad',
+  summary: 'Actualizar lote de caducidad [Roles permitidos: admin, stock]',
   requestBody: requestBody({ $ref: '#/components/schemas/ExpirationBatchInput' }),
   responses: {
     200: ok({ $ref: '#/components/schemas/ExpirationBatch' }),
+    401: { $ref: '#/components/responses/Unauthorized' },
+    403: { $ref: '#/components/responses/Forbidden' },
     404: { $ref: '#/components/responses/NotFound' },
   },
 };
-const stockReceipt = noDeleteCrud({ tag: 'Recepciones de existencias', schema: 'StockReceipt', createSchema: 'StockReceiptInput' });
+const stockReceipt = noDeleteCrud({ tag: 'Recepciones de existencias', schema: 'StockReceipt', createSchema: 'StockReceiptInput', roles: ['admin', 'stock'] });
 delete stockReceipt.item.put;
-const cashAudit = noDeleteCrud({ tag: 'Auditoría de caja', schema: 'CashAudit', createSchema: 'CashAuditInput' });
+const cashAudit = noDeleteCrud({ tag: 'Auditoría de caja', schema: 'CashAudit', createSchema: 'CashAuditInput', roles: ['admin', 'cashier'] });
 delete cashAudit.item.put;
 
 const openapi = {
   openapi: '3.0.3',
   info: {
-    title: 'Tiendita Maday API',
-    description: 'Documentación Swagger/OpenAPI de Tiendita Maday. El rol de gerente comparte el alcance de permisos administrativos.',
+    title: 'Tiendita "La familia" API',
+    description: 'Documentación oficial Swagger/OpenAPI de la tiendita "La familia"',
     version: '1.0.0',
   },
   servers: [
@@ -140,6 +154,7 @@ const openapi = {
     { name: 'Categorías' },
     { name: 'Unidades' },
     { name: 'Inventario' },
+    { name: 'Reseñas' },
     { name: 'Códigos de barras' },
     { name: 'Historial de precios' },
     { name: 'Proveedores' },
@@ -179,9 +194,28 @@ const openapi = {
         description: 'Datos de solicitud no válidos',
         content: json({ $ref: '#/components/schemas/Error' }),
       },
+      Unauthorized: {
+        description: 'El token de autenticación no existe, no es válido o ha expirado',
+        content: {
+          'application/json': {
+            schema: { $ref: '#/components/schemas/Error' },
+            example: {
+              error: 'Unauthorized: Invalid or expired token'
+            }
+          }
+        }
+      },
       Forbidden: {
         description: 'El rol autenticado no puede acceder a este recurso',
-        content: json({ $ref: '#/components/schemas/Error' }),
+        content: {
+          'application/json': {
+            schema: { $ref: '#/components/schemas/Error' },
+            example: {
+              error: 'Forbidden: Requires one of these roles: admin, manager',
+              detail: 'No tienes permitido esto. Rol requerido no coincide o no tienes acceso.'
+            }
+          }
+        }
       },
     },
     schemas: {
@@ -269,6 +303,8 @@ const openapi = {
           min_stock: { type: 'integer' },
           has_expiration: { type: 'boolean' },
           active: { type: 'boolean' },
+          rating: { type: 'number', minimum: 0, maximum: 5 },
+          review_count: { type: 'integer', minimum: 0 },
           created_at: dateTime,
           updated_at: dateTime,
         },
@@ -553,7 +589,7 @@ const openapi = {
           role: {
             type: 'string',
             enum: ['admin', 'manager', 'cashier', 'stock', 'customer'],
-            description: 'El gerente comparte el alcance de permisos administrativos y conserva la etiqueta de su rol.',
+            description: 'El gerente comparte los permisos administrativos y conserva la etiqueta de su rol.',
           },
           active: { type: 'boolean' },
           must_change_password: { type: 'boolean' },
@@ -573,7 +609,7 @@ const openapi = {
             type: 'string',
             enum: ['admin', 'manager', 'cashier', 'stock', 'customer'],
             default: 'cashier',
-            description: 'El gerente comparte el alcance de permisos administrativos y conserva la etiqueta de su rol.',
+            description: 'El gerente comparte los permisos administrativos y conserva la etiqueta de su rol.',
           },
           active: { type: 'boolean', default: true },
           must_change_password: { type: 'boolean', default: false },
@@ -673,12 +709,13 @@ const openapi = {
           customer_id: { ...uuid, nullable: true },
           employee_id: { ...uuid, nullable: true },
           delivery_method: { type: 'string', enum: ['on_spot', 'home_delivery', 'pickup'] },
+          shipping_tier: { type: 'string', enum: ['standard', 'express', 'pickup'], nullable: true },
           delivery_address: { type: 'string', nullable: true },
           delivery_distance_km: { type: 'number', nullable: true },
           delivery_zone_id: { ...uuid, nullable: true },
           delivery_fee: money,
-          payment_method: { type: 'string', enum: ['cash', 'card'] },
-          status: { type: 'string', enum: ['pending', 'completed', 'cancelled'] },
+          payment_method: { type: 'string', enum: ['cash', 'card', 'paypal'] },
+          status: { type: 'string', enum: ['pending', 'preparing', 'shipped', 'delivered', 'completed', 'cancelled'] },
           subtotal: money,
           discount_total: money,
           total: money,
@@ -688,29 +725,32 @@ const openapi = {
           created_at: dateTime,
         },
       },
-      PurchaseInput: {
+      CheckoutInput: {
         type: 'object',
-        required: ['payment_method', 'items'],
+        required: ['shipping_method', 'items'],
         properties: {
-          customer_id: { ...uuid, nullable: true },
-          employee_id: { ...uuid, nullable: true },
-          delivery_method: { type: 'string', enum: ['on_spot', 'home_delivery', 'pickup'], default: 'on_spot' },
-          delivery_address: { type: 'string', nullable: true },
-          delivery_distance_km: { type: 'number', nullable: true },
-          delivery_zone_id: { ...uuid, nullable: true },
-          delivery_fee: { ...money, default: 0 },
-          payment_method: { type: 'string', enum: ['cash', 'card'] },
-          status: { type: 'string', enum: ['pending', 'completed', 'cancelled'], default: 'completed' },
-          subtotal: { ...money, default: 0 },
-          discount_total: { ...money, default: 0 },
-          total: { ...money, default: 0 },
-          cash_tendered: { ...money, nullable: true },
-          notes: { type: 'string', nullable: true },
+          address_id: { ...uuid, nullable: true, description: 'Obligatorio salvo cuando el método de envío es recolección' },
+          shipping_method: { type: 'string', enum: ['standard', 'express', 'pickup'] },
+          coupon_code: { type: 'string', nullable: true },
           items: {
             type: 'array',
+            minItems: 1,
             items: { $ref: '#/components/schemas/PurchaseItemInput' },
           },
         },
+      },
+      PurchaseInput: {
+        allOf: [
+          { $ref: '#/components/schemas/CheckoutInput' },
+          {
+            type: 'object',
+            required: ['payment_method'],
+            properties: {
+              payment_method: { type: 'string', enum: ['cash', 'paypal'] },
+              paypal_order_id: { type: 'string', nullable: true },
+            },
+          },
+        ],
       },
       PurchaseStatusInput: {
         type: 'object',
@@ -734,14 +774,10 @@ const openapi = {
       },
       PurchaseItemInput: {
         type: 'object',
-        required: ['inventory_id', 'quantity', 'unit_price', 'line_total'],
+        required: ['inventory_id', 'quantity'],
         properties: {
           inventory_id: uuid,
-          promotion_id: { ...uuid, nullable: true },
-          quantity: { type: 'integer', minimum: 1 },
-          unit_price: money,
-          discount_pct: { type: 'number', default: 0 },
-          line_total: money,
+          quantity: { type: 'integer', minimum: 1, maximum: 1000 },
         },
       },
       PurchaseReturn: {
@@ -931,6 +967,31 @@ const openapi = {
           changed_at: dateTime,
         },
       },
+      ProductReview: {
+        type: 'object',
+        properties: {
+          id: uuid,
+          inventory_id: uuid,
+          user_id: uuid,
+          purchase_id: uuid,
+          user_name: { type: 'string' },
+          rating: { type: 'integer', minimum: 1, maximum: 5 },
+          comment: { type: 'string', minLength: 10, maxLength: 1000 },
+          verified_purchase: { type: 'boolean' },
+          is_mine: { type: 'boolean' },
+          created_at: dateTime,
+          updated_at: dateTime,
+        },
+      },
+      ProductReviewInput: {
+        type: 'object',
+        required: ['rating', 'comment'],
+        properties: {
+          inventory_id: uuid,
+          rating: { type: 'integer', minimum: 1, maximum: 5 },
+          comment: { type: 'string', minLength: 10, maxLength: 1000 },
+        },
+      },
     },
   },
   paths: {
@@ -1097,14 +1158,14 @@ const openapi = {
     '/shop-config': {
       get: {
         tags: ['Configuración de tienda'],
-        summary: 'Obtener la configuración de la tienda',
+        summary: 'Obtener configuración de la tienda',
         responses: {
           200: ok({ $ref: '#/components/schemas/ShopConfig' }),
         },
       },
       put: {
         tags: ['Configuración de tienda'],
-        summary: 'Actualizar la configuración de la tienda',
+        summary: 'Actualizar configuración de la tienda',
         requestBody: requestBody({ $ref: '#/components/schemas/ShopConfigInput' }),
         responses: {
           200: ok({ $ref: '#/components/schemas/ShopConfig' }),
@@ -1118,7 +1179,7 @@ const openapi = {
     '/inventory': {
       get: {
         tags: ['Inventario'],
-        summary: 'Listar artículos del inventario',
+        summary: 'Listar artículo de inventarios',
         parameters: [
           { name: 'active', in: 'query', schema: { type: 'boolean' } },
           { name: 'category_id', in: 'query', schema: uuid },
@@ -1148,7 +1209,7 @@ const openapi = {
     '/inventory/movements': {
       get: {
         tags: ['Inventario'],
-        summary: 'Listar movimientos auditables de existencias',
+        summary: 'Listar movimientos auditables de existencias (admin or stock role)',
         parameters: [
           { name: 'inventory_id', in: 'query', schema: uuid },
           { name: 'movement_type', in: 'query', schema: { type: 'string', enum: ['entry', 'exit'] } },
@@ -1164,7 +1225,7 @@ const openapi = {
       parameters: [{ name: 'barcode', in: 'path', required: true, schema: { type: 'string' } }],
       get: {
         tags: ['Códigos de barras'],
-        summary: 'Buscar un artículo por código de barras',
+        summary: 'Buscar artículo de inventario by barcode',
         responses: {
           200: ok({ $ref: '#/components/schemas/InventoryItem' }),
           404: { $ref: '#/components/responses/NotFound' },
@@ -1175,7 +1236,7 @@ const openapi = {
       parameters: [idParam],
       get: {
         tags: ['Inventario'],
-        summary: 'Obtener un artículo por ID',
+        summary: 'Obtener artículo de inventario por ID',
         responses: {
           200: ok({ $ref: '#/components/schemas/InventoryItem' }),
           404: { $ref: '#/components/responses/NotFound' },
@@ -1183,7 +1244,7 @@ const openapi = {
       },
       put: {
         tags: ['Inventario'],
-        summary: 'Actualizar un artículo de inventario',
+        summary: 'Actualizar artículo de inventario',
         requestBody: requestBody({ $ref: '#/components/schemas/InventoryItemInput' }),
         responses: {
           200: ok({ $ref: '#/components/schemas/InventoryItem' }),
@@ -1192,7 +1253,7 @@ const openapi = {
       },
       delete: {
         tags: ['Inventario'],
-        summary: 'Desactivar un artículo de inventario',
+        summary: 'Desactivar artículo de inventario',
         responses: {
           200: ok({ $ref: '#/components/schemas/InventoryItem' }),
           404: { $ref: '#/components/responses/NotFound' },
@@ -1203,14 +1264,14 @@ const openapi = {
       parameters: [idParam],
       get: {
         tags: ['Códigos de barras'],
-        summary: 'Listar códigos de barras de un artículo',
+        summary: 'Listar barcodes for an artículo de inventario',
         responses: {
           200: ok({ type: 'array', items: { $ref: '#/components/schemas/Barcode' } }),
         },
       },
       post: {
         tags: ['Códigos de barras'],
-        summary: 'Agregar un código de barras a un artículo',
+        summary: 'Agregar barcode to an artículo de inventario',
         requestBody: requestBody({
           type: 'object',
           required: ['barcode'],
@@ -1228,7 +1289,7 @@ const openapi = {
       parameters: [idParam],
       post: {
         tags: ['Inventario'],
-        summary: 'Ajustar existencias y registrar el movimiento',
+        summary: 'Ajustar existencias y registrar el movimiento (admin or stock role)',
         requestBody: requestBody({ $ref: '#/components/schemas/InventoryAdjustmentInput' }),
         responses: {
           201: created({ $ref: '#/components/schemas/InventoryMovement' }),
@@ -1245,7 +1306,58 @@ const openapi = {
       ],
       delete: {
         tags: ['Códigos de barras'],
-        summary: 'Quitar un código de barras de un artículo',
+        summary: 'Quitar barcode from an artículo de inventario',
+        responses: {
+          204: deleted,
+          404: { $ref: '#/components/responses/NotFound' },
+        },
+      },
+    },
+    '/reviews/products/{inventoryId}': {
+      parameters: [{ name: 'inventoryId', in: 'path', required: true, schema: uuid }],
+      get: {
+        tags: ['Reseñas'],
+        summary: 'Listar reseñas, resumen de calificación y elegibilidad del usuario actual',
+        responses: {
+          200: ok({
+            type: 'object',
+            properties: {
+              reviews: { type: 'array', items: { $ref: '#/components/schemas/ProductReview' } },
+              summary: { type: 'object' },
+              eligibility: { type: 'object' },
+            },
+          }),
+          404: { $ref: '#/components/responses/NotFound' },
+        },
+      },
+    },
+    '/reviews': {
+      post: {
+        tags: ['Reseñas'],
+        summary: 'Crear una reseña de producto con compra verificada [Role: customer]',
+        requestBody: requestBody({ $ref: '#/components/schemas/ProductReviewInput' }),
+        responses: {
+          201: created({ $ref: '#/components/schemas/ProductReview' }),
+          400: { $ref: '#/components/responses/ValidationError' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          409: { description: 'El cliente ya reseñó este producto' },
+        },
+      },
+    },
+    '/reviews/{id}': {
+      parameters: [idParam],
+      put: {
+        tags: ['Reseñas'],
+        summary: 'Actualizar la reseña del cliente autenticado',
+        requestBody: requestBody({ $ref: '#/components/schemas/ProductReviewInput' }),
+        responses: {
+          200: ok({ $ref: '#/components/schemas/ProductReview' }),
+          404: { $ref: '#/components/responses/NotFound' },
+        },
+      },
+      delete: {
+        tags: ['Reseñas'],
+        summary: 'Eliminar una reseña propia o moderarla como administrador',
         responses: {
           204: deleted,
           404: { $ref: '#/components/responses/NotFound' },
@@ -1255,7 +1367,7 @@ const openapi = {
     '/price-history': {
       get: {
         tags: ['Historial de precios'],
-        summary: 'Listar el historial de precios',
+        summary: 'Listar historial de precios',
         responses: {
           200: ok({ type: 'array', items: { $ref: '#/components/schemas/PriceHistory' } }),
         },
@@ -1265,7 +1377,7 @@ const openapi = {
       parameters: [idParam],
       get: {
         tags: ['Historial de precios'],
-        summary: 'Listar el historial de precios de un artículo',
+        summary: 'Listar price history for one artículo de inventario',
         responses: {
           200: ok({ type: 'array', items: { $ref: '#/components/schemas/PriceHistory' } }),
         },
@@ -1284,7 +1396,7 @@ const openapi = {
       },
       post: {
         tags: ['Proveedores'],
-        summary: 'Agregar un producto al proveedor',
+        summary: 'Agregar producto al proveedor',
         requestBody: requestBody({ $ref: '#/components/schemas/SupplierItemInput' }),
         responses: {
           201: created({ $ref: '#/components/schemas/SupplierItem' }),
@@ -1298,7 +1410,7 @@ const openapi = {
       ],
       put: {
         tags: ['Proveedores'],
-        summary: 'Actualizar un producto del proveedor',
+        summary: 'Actualizar producto del proveedor',
         requestBody: requestBody({ $ref: '#/components/schemas/SupplierItemInput' }),
         responses: {
           200: ok({ $ref: '#/components/schemas/SupplierItem' }),
@@ -1306,7 +1418,7 @@ const openapi = {
       },
       delete: {
         tags: ['Proveedores'],
-        summary: 'Quitar un producto del proveedor',
+        summary: 'Quitar producto del proveedor',
         responses: {
           204: deleted,
         },
@@ -1322,7 +1434,7 @@ const openapi = {
       },
       post: {
         tags: ['Órdenes de compra'],
-        summary: 'Crear una orden de compra',
+        summary: 'Crear orden de compra',
         requestBody: requestBody({ $ref: '#/components/schemas/PurchaseOrderInput' }),
         responses: {
           201: created({ $ref: '#/components/schemas/PurchaseOrder' }),
@@ -1333,7 +1445,7 @@ const openapi = {
       parameters: [idParam],
       get: {
         tags: ['Órdenes de compra'],
-        summary: 'Obtener una orden de compra por ID',
+        summary: 'Obtener orden de compra por ID',
         responses: {
           200: ok({ $ref: '#/components/schemas/PurchaseOrder' }),
           404: { $ref: '#/components/responses/NotFound' },
@@ -1341,7 +1453,7 @@ const openapi = {
       },
       put: {
         tags: ['Órdenes de compra'],
-        summary: 'Actualizar una orden de compra',
+        summary: 'Actualizar orden de compra',
         requestBody: requestBody({ $ref: '#/components/schemas/PurchaseOrderInput' }),
         responses: {
           200: ok({ $ref: '#/components/schemas/PurchaseOrder' }),
@@ -1349,7 +1461,7 @@ const openapi = {
       },
       delete: {
         tags: ['Órdenes de compra'],
-        summary: 'Eliminar una orden de compra',
+        summary: 'Eliminar orden de compra',
         responses: {
           204: deleted,
           404: { $ref: '#/components/responses/NotFound' },
@@ -1367,7 +1479,7 @@ const openapi = {
       },
       post: {
         tags: ['Órdenes de compra'],
-        summary: 'Agregar un producto a la orden de compra',
+        summary: 'Agregar item to orden de compra',
         requestBody: requestBody({ $ref: '#/components/schemas/PurchaseOrderItemInput' }),
         responses: {
           201: created({ $ref: '#/components/schemas/PurchaseOrderItem' }),
@@ -1381,7 +1493,7 @@ const openapi = {
       ],
       put: {
         tags: ['Órdenes de compra'],
-        summary: 'Actualizar un producto de la orden de compra',
+        summary: 'Actualizar producto de la orden de compra',
         requestBody: requestBody({ $ref: '#/components/schemas/PurchaseOrderItemInput' }),
         responses: {
           200: ok({ $ref: '#/components/schemas/PurchaseOrderItem' }),
@@ -1389,7 +1501,7 @@ const openapi = {
       },
       delete: {
         tags: ['Órdenes de compra'],
-        summary: 'Quitar un producto de la orden de compra',
+        summary: 'Quitar producto de la orden de compra',
         responses: {
           204: deleted,
         },
@@ -1413,7 +1525,7 @@ const openapi = {
       },
       post: {
         tags: ['Coberturas de turno'],
-        summary: 'Crear una cobertura de turno',
+        summary: 'Crear cobertura de turno',
         requestBody: requestBody({ $ref: '#/components/schemas/ShiftCoverInput' }),
         responses: {
           201: created({ $ref: '#/components/schemas/ShiftCover' }),
@@ -1424,14 +1536,14 @@ const openapi = {
       parameters: [idParam],
       get: {
         tags: ['Coberturas de turno'],
-        summary: 'Obtener una cobertura de turno por ID',
+        summary: 'Obtener cobertura de turno por ID',
         responses: {
           200: ok({ $ref: '#/components/schemas/ShiftCover' }),
         },
       },
       delete: {
         tags: ['Coberturas de turno'],
-        summary: 'Eliminar una cobertura de turno',
+        summary: 'Eliminar cobertura de turno',
         responses: {
           204: deleted,
         },
@@ -1441,7 +1553,7 @@ const openapi = {
     '/users/cashiers': {
       post: {
         tags: ['Usuarios'],
-        summary: 'Crear un cajero y su cuenta de acceso',
+        summary: 'Crear a cajero y su cuenta de acceso (admin only)',
         requestBody: requestBody({
           type: 'object',
           required: ['first_name', 'last_name', 'email', 'password'],
@@ -1464,7 +1576,7 @@ const openapi = {
     '/delivery-zones/fee': {
       get: {
         tags: ['Zonas de entrega'],
-        summary: 'Calcular la tarifa de entrega por distancia',
+        summary: 'Calcular tarifa de entrega por distancia',
         parameters: [
           { name: 'distance_km', in: 'query', required: true, schema: { type: 'number' } },
         ],
@@ -1496,17 +1608,55 @@ const openapi = {
       },
       post: {
         tags: ['Compras'],
-        summary: 'Crear una compra con sus productos',
+        summary: 'Crear compra with line items',
         requestBody: requestBody({ $ref: '#/components/schemas/PurchaseInput' }),
         responses: {
           201: created({ $ref: '#/components/schemas/Purchase' }),
         },
       },
     },
+    '/purchases/quote': {
+      post: {
+        tags: ['Compras'],
+        summary: 'Calcular una cotización definitiva con precios y existencias actuales',
+        requestBody: requestBody({ $ref: '#/components/schemas/CheckoutInput' }),
+        responses: {
+          200: ok({ type: 'object' }),
+          409: { description: 'Existencias insuficientes' },
+        },
+      },
+    },
+    '/paypal/config': {
+      get: {
+        tags: ['Payments'],
+        summary: 'Obtener la configuración pública de PayPal',
+        responses: { 200: ok({ type: 'object' }), 503: { description: 'PayPal no está configurado' } },
+      },
+    },
+    '/paypal/create-order': {
+      post: {
+        tags: ['Payments'],
+        summary: 'Crear una orden de PayPal con la cotización definitiva del servidor',
+        requestBody: requestBody({ $ref: '#/components/schemas/CheckoutInput' }),
+        responses: { 201: created({ type: 'object' }), 409: { description: 'Existencias insuficientes' } },
+      },
+    },
+    '/paypal/capture-order': {
+      post: {
+        tags: ['Payments'],
+        summary: 'Capturar una orden de PayPal del usuario autenticado',
+        requestBody: requestBody({
+          type: 'object',
+          required: ['paypalOrderId'],
+          properties: { paypalOrderId: { type: 'string' } },
+        }),
+        responses: { 200: ok({ type: 'object' }), 403: { $ref: '#/components/responses/Forbidden' } },
+      },
+    },
     '/purchases/pos': {
       post: {
         tags: ['Caja registradora'],
-        summary: 'Crear una venta de caja con precios calculados por el servidor',
+        summary: 'Crear una venta de caja con precios del servidor',
         requestBody: requestBody({
           type: 'object',
           required: ['items', 'payment_method'],
@@ -1536,7 +1686,7 @@ const openapi = {
       parameters: [idParam],
       get: {
         tags: ['Compras'],
-        summary: 'Obtener una compra por ID',
+        summary: 'Obtener compra por ID',
         responses: {
           200: ok({ $ref: '#/components/schemas/Purchase' }),
           404: { $ref: '#/components/responses/NotFound' },
@@ -1557,7 +1707,7 @@ const openapi = {
       parameters: [idParam],
       patch: {
         tags: ['Compras'],
-        summary: 'Actualizar el estado de una compra',
+        summary: 'Actualizar estado de una compra',
         requestBody: requestBody({ $ref: '#/components/schemas/PurchaseStatusInput' }),
         responses: {
           200: ok({ $ref: '#/components/schemas/Purchase' }),
@@ -1574,7 +1724,7 @@ const openapi = {
       },
       post: {
         tags: ['Devoluciones de compra'],
-        summary: 'Crear una devolución con sus productos',
+        summary: 'Crear devolución de compra with productos devueltos',
         requestBody: requestBody({ $ref: '#/components/schemas/PurchaseReturnInput' }),
         responses: {
           201: created({ $ref: '#/components/schemas/PurchaseReturn' }),
@@ -1585,7 +1735,7 @@ const openapi = {
       parameters: [idParam],
       get: {
         tags: ['Devoluciones de compra'],
-        summary: 'Obtener una devolución por ID',
+        summary: 'Obtener devolución de compra por ID',
         responses: {
           200: ok({ $ref: '#/components/schemas/PurchaseReturn' }),
         },
@@ -1615,7 +1765,7 @@ const openapi = {
       },
       post: {
         tags: ['Movimientos de caja'],
-        summary: 'Crear un movimiento de caja',
+        summary: 'Crear movimiento de caja',
         requestBody: requestBody({ $ref: '#/components/schemas/TillMovementInput' }),
         responses: {
           201: created({ $ref: '#/components/schemas/TillMovement' }),
@@ -1625,7 +1775,7 @@ const openapi = {
     '/till-movements/balance': {
       get: {
         tags: ['Movimientos de caja'],
-        summary: 'Obtener el resumen de saldo de caja',
+        summary: 'Obtener resumen de saldo de caja',
         responses: {
           200: ok({ type: 'array', items: { $ref: '#/components/schemas/TillBalance' } }),
         },
@@ -1635,7 +1785,7 @@ const openapi = {
       parameters: [idParam],
       get: {
         tags: ['Movimientos de caja'],
-        summary: 'Obtener un movimiento de caja por ID',
+        summary: 'Obtener movimiento de caja por ID',
         responses: {
           200: ok({ $ref: '#/components/schemas/TillMovement' }),
         },
@@ -1687,7 +1837,7 @@ const openapi = {
       },
       post: {
         tags: ['Notificaciones'],
-        summary: 'Crear una notificación',
+        summary: 'Crear notificación',
         requestBody: requestBody({ $ref: '#/components/schemas/NotificationInput' }),
         responses: {
           201: created({ $ref: '#/components/schemas/Notification' }),
@@ -1697,7 +1847,7 @@ const openapi = {
     '/notifications/seen-all': {
       patch: {
         tags: ['Notificaciones'],
-        summary: 'Marcar todas las notificaciones como vistas',
+        summary: 'Marcar all notificaciones como vista',
         responses: {
           200: ok({ $ref: '#/components/schemas/Message' }),
         },
@@ -1707,7 +1857,7 @@ const openapi = {
       parameters: [idParam],
       get: {
         tags: ['Notificaciones'],
-        summary: 'Obtener una notificación por ID',
+        summary: 'Obtener notificación por ID',
         responses: {
           200: ok({ $ref: '#/components/schemas/Notification' }),
         },
@@ -1717,7 +1867,7 @@ const openapi = {
       parameters: [idParam],
       patch: {
         tags: ['Notificaciones'],
-        summary: 'Marcar una notificación como vista',
+        summary: 'Marcar notificación como vista',
         responses: {
           200: ok({ $ref: '#/components/schemas/Notification' }),
         },

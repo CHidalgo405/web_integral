@@ -51,9 +51,40 @@ const update = async (req, res, next) => {
 
 const remove = async (req, res, next) => {
   try {
-    const { rows } = await Inventory.remove(req.params.id);
-    if (!rows.length) return res.status(404).json({ error: 'Artículo no encontrado' });
+    const { rows: currentItem } = await Inventory.findById(req.params.id);
+    if (!currentItem.length) return res.status(404).json({ error: 'Artículo no encontrado' });
+
+    if (currentItem[0].image_public_id) {
+      const cloudinary = require('../config/cloudinary.config');
+      await cloudinary.uploader.destroy(currentItem[0].image_public_id).catch(() => {});
+    }
+
+    await Inventory.remove(req.params.id);
     res.status(204).send();
+  } catch (err) { next(err); }
+};
+
+const uploadImage = async (req, res, next) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No se subió ninguna imagen' });
+    }
+    const { rows: currentItem } = await Inventory.findById(req.params.id);
+    if (!currentItem.length) {
+      const cloudinary = require('../config/cloudinary.config');
+      await cloudinary.uploader.destroy(req.file.filename).catch(() => {});
+      return res.status(404).json({ error: 'Item not found' });
+    }
+    if (currentItem[0].image_public_id) {
+      const cloudinary = require('../config/cloudinary.config');
+      await cloudinary.uploader.destroy(currentItem[0].image_public_id).catch(() => {});
+    }
+    const { rows } = await Inventory.update(req.params.id, {
+      ...currentItem[0],
+      image_url: req.file.path,
+      image_public_id: req.file.filename
+    });
+    res.json(rows[0]);
   } catch (err) { next(err); }
 };
 
@@ -125,4 +156,5 @@ module.exports = {
   removeBarcode,
   getMovements,
   adjustStock,
+  uploadImage,
 };

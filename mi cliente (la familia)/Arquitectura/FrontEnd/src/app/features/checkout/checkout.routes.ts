@@ -7,6 +7,6 @@ export const CHECKOUT_ROUTES: Routes = [
   { path: 'address/new', loadComponent: () => import('./address-form/address-form').then(m => m.AddressForm) },
   { path: 'shipping', loadComponent: () => import('./checkout-shipping/checkout-shipping').then(m => m.CheckoutShipping) },
   { path: 'payment', loadComponent: () => import('./checkout-payment/checkout-payment').then(m => m.CheckoutPayment) },
-  { path: 'payment/card', loadComponent: () => import('./card-form/card-form').then(m => m.CardForm) },
+  { path: 'payment/card', redirectTo: 'payment' },
   { path: 'summary', loadComponent: () => import('./checkout-summary/checkout-summary').then(m => m.CheckoutSummary) },
 ];

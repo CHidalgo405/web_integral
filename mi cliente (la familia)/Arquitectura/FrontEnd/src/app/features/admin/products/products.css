@@ -449,6 +449,11 @@
   border-color: var(--primary);
 }
 
+.btn-image:hover {
+  background: rgba(59, 130, 246, 0.08);
+  border-color: #3b82f6;
+}
+
 .btn-delete:hover:not(:disabled) {
   background: rgba(239, 68, 68, 0.08);
   border-color: var(--danger);
@@ -595,6 +600,114 @@
 
 .checkbox-group {
   padding: 4px 0;
+}
+
+/* ===== IMAGE UPLOAD ZONE ===== */
+.image-upload-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: 2px dashed var(--border);
+  border-radius: 16px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: var(--bg);
+  position: relative;
+  min-height: 110px;
+  text-align: center;
+}
+
+.image-upload-zone:hover {
+  border-color: var(--primary);
+  background: rgba(46, 204, 113, 0.04);
+}
+
+.image-upload-zone.has-file {
+  border-color: var(--primary);
+  border-style: solid;
+  background: rgba(46, 204, 113, 0.06);
+}
+
+.image-upload-zone.has-file .upload-icon { display: none; }
+
+.upload-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(46, 204, 113, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.upload-text {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.upload-subtext {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+}
+
+.upload-preview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.upload-preview-img {
+  width: 64px;
+  height: 64px;
+  border-radius: 12px;
+  object-fit: cover;
+  border: 2px solid var(--primary);
+  flex-shrink: 0;
+}
+
+.upload-preview-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+  overflow: hidden;
+}
+
+.upload-preview-name {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.upload-preview-size {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+}
+
+.upload-change-btn {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--primary);
+  background: rgba(46, 204, 113, 0.1);
+  border: none;
+  border-radius: 8px;
+  padding: 3px 10px;
+  cursor: pointer;
+  margin-top: 2px;
+  transition: background 0.2s;
+  align-self: flex-start;
+}
+
+.upload-change-btn:hover {
+  background: rgba(46, 204, 113, 0.2);
 }
 
 .modal-footer {

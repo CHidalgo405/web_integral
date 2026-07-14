@@ -11,7 +11,14 @@ const errorHandler = (err, req, res, next) => {
   if (err.code === '23514') {
     return res.status(400).json({ error: 'Los datos no cumplen las restricciones', detail: err.detail });
   }
-  res.status(err.status || 500).json({ error: err.message || 'Internal server error', ...(err.appCode ? { code: err.appCode } : {}) });
+  if (err.status && err.status < 500) {
+    return res.status(err.status).json({ error: err.message, ...(err.appCode ? { code: err.appCode } : {}) });
+  }
+  console.error('[ErrorHandler]', err);
+  res.status(err.status || 500).json({
+    error: err.message || 'Error interno del servidor',
+    ...(err.appCode ? { code: err.appCode } : {}),
+  });
 };
 
 module.exports = errorHandler;

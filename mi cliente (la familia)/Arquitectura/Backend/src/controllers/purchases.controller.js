@@ -1,4 +1,5 @@
 const Purchases = require('../models/purchases.model');
+const PayPal = require('../services/paypal.service');
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 const canAccess = (purchase, user) =>
@@ -48,14 +49,27 @@ const getMine = async (req, res, next) => {
 
 const create = async (req, res, next) => {
   try {
-    const { items, ...purchase } = req.body;
-    if (!items || !items.length) {
-      return res.status(400).json({ error: 'Se requiere al menos un producto' });
+    let paymentVerification = null;
+    if (req.body?.payment_method === 'paypal') {
+      const paypalOrderId = typeof req.body.paypal_order_id === 'string'
+        ? req.body.paypal_order_id.trim()
+        : '';
+      if (!/^[A-Z0-9-]{10,64}$/i.test(paypalOrderId)) {
+        return res.status(400).json({ error: 'Orden de PayPal inválida' });
+      }
+      const paypalOrder = await PayPal.getOrder(paypalOrderId);
+      paymentVerification = PayPal.getCompletedPayment(paypalOrder);
     }
-    // Si hay sesión activa, la compra queda ligada a ese usuario
-    if (req.user?.id) purchase.user_id = req.user.id;
-    const row = await Purchases.createWithItems(purchase, items);
+
+    const row = await Purchases.createCheckout(req.user.id, req.body, paymentVerification);
     res.status(201).json(row);
+  } catch (err) { next(err); }
+};
+
+const quote = async (req, res, next) => {
+  try {
+    const result = await Purchases.quoteCheckout(req.user.id, req.body);
+    res.json(result);
   } catch (err) { next(err); }
 };
 
@@ -139,4 +153,4 @@ const getMetrics = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
-module.exports = { getAll, getOne, getItems, getMine, create, createPos, updateStatus, getMetrics };
+module.exports = { getAll, getOne, getItems, getMine, quote, create, createPos, updateStatus, getMetrics };

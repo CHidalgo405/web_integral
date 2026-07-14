@@ -9,6 +9,7 @@ router.get('/', requireRole('admin', 'cashier'), ctrl.getAll);
 router.get('/mine', ctrl.getMine);
 router.get('/metrics', requireRole('admin'), ctrl.getMetrics);
 router.post('/pos', requireRole('admin', 'cashier'), ctrl.createPos);
+router.post('/quote', requireRole('admin', 'customer'), ctrl.quote);
 router.get('/:id', ctrl.getOne);
 router.get('/:id/items', ctrl.getItems);
 // El checkout del frontend requiere sesión; la compra siempre queda ligada al usuario autenticado.

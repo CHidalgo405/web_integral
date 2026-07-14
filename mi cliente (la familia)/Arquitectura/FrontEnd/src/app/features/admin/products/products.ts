@@ -98,7 +98,7 @@ import { IconComponent } from '../../../shared/components/icon/icon';
                   <td>
                     <div class="product-info-cell">
                       <div class="product-cell-emoji">
-                        <img [src]="prod.images[0] || 'assets/images/productos/placeholder.png'" [alt]="prod.name" />
+                        <img [src]="prod.images[0] || 'https://placehold.co/400x400?text=Sin+Imagen'" [alt]="prod.name" />
                       </div>
                       <div>
                         <h4 class="product-cell-name">{{ prod.name }}</h4>
@@ -156,6 +156,10 @@ import { IconComponent } from '../../../shared/components/icon/icon';
                   </td>
                   <td>
                     <div class="action-buttons">
+                      <button (click)="fileInput.click()" class="action-btn btn-image" title="Subir Imagen">
+                        <app-icon name="image" size="14" color="var(--primary)" />
+                      </button>
+                      <input type="file" #fileInput style="display: none" accept="image/*" (change)="onFileSelected($event, prod.id)" />
                       <button (click)="openEditModal(prod)" class="action-btn btn-edit" title="Editar">
                         <app-icon name="pencil" size="14" color="var(--primary)" />
                       </button>
@@ -293,6 +297,45 @@ import { IconComponent } from '../../../shared/components/icon/icon';
             ></textarea>
           </div>
 
+          <div class="form-group">
+            <label for="p-image" class="label-control">
+              <app-icon name="image" size="12" color="var(--text-muted)" />
+              Imagen del Producto
+            </label>
+            <div
+              class="image-upload-zone"
+              [class.has-file]="selectedModalFile"
+              (click)="modalFileInput.click()"
+            >
+              @if (!selectedModalFile) {
+                <div class="upload-icon">
+                  <app-icon name="upload" size="22" color="var(--primary)" />
+                </div>
+                <span class="upload-text">Haz clic para elegir una imagen</span>
+                <span class="upload-subtext">JPG, PNG o WebP &bull; Máx. 5 MB</span>
+              } @else {
+                <div class="upload-preview">
+                  <img [src]="modalFilePreview" class="upload-preview-img" alt="preview" />
+                  <div class="upload-preview-info">
+                    <span class="upload-preview-name">{{ selectedModalFile.name }}</span>
+                    <span class="upload-preview-size">{{ (selectedModalFile.size / 1024).toFixed(0) }} KB</span>
+                    <button type="button" class="upload-change-btn" (click)="$event.stopPropagation(); modalFileInput.click()">
+                      Cambiar imagen
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+            <input
+              type="file"
+              #modalFileInput
+              id="p-image"
+              (change)="onModalFileSelected($event)"
+              accept="image/*"
+              style="display: none"
+            />
+          </div>
+
           <div class="form-group checkbox-group">
             <label class="switch-label">
               <input 
@@ -419,6 +462,8 @@ export class ProductManager {
     stockQuantity: 0,
     inStock: true,
   };
+  selectedModalFile: File | null = null;
+  modalFilePreview: string | null = null;
 
   categoryForm = {
     name: '',
@@ -454,6 +499,28 @@ export class ProductManager {
     return this.productService.getCategories().find((c) => c.id === categoryId)?.icon ?? 'package';
   }
 
+  onFileSelected(event: Event, productId: string): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      const file = input.files[0];
+      this.productService.uploadProductImage(productId, file);
+      input.value = '';
+    }
+  }
+
+  onModalFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      this.selectedModalFile = input.files[0];
+      const reader = new FileReader();
+      reader.onload = (e) => { this.modalFilePreview = e.target?.result as string; };
+      reader.readAsDataURL(this.selectedModalFile);
+    } else {
+      this.selectedModalFile = null;
+      this.modalFilePreview = null;
+    }
+  }
+
   adjustStock(product: Product, delta: number): void {
     const newQty = Math.max(0, product.stockQuantity + delta);
     const updated: Product = {
@@ -485,6 +552,8 @@ export class ProductManager {
       stockQuantity: 10,
       inStock: true,
     };
+    this.selectedModalFile = null;
+    this.modalFilePreview = null;
     this.isProductModalOpen.set(true);
   }
 
@@ -501,6 +570,8 @@ export class ProductManager {
       stockQuantity: product.stockQuantity,
       inStock: product.inStock,
     };
+    this.selectedModalFile = null;
+    this.modalFilePreview = null;
     this.isProductModalOpen.set(true);
   }
 
@@ -533,9 +604,9 @@ export class ProductManager {
         rating: 4.5,
         reviewCount: 15,
       };
-      this.productService.updateProduct(fullProduct);
+      this.productService.updateProduct(fullProduct, this.selectedModalFile || undefined);
     } else {
-      this.productService.addProduct(pData);
+      this.productService.addProduct(pData, this.selectedModalFile || undefined);
     }
 
     this.closeProductModal();
