@@ -4,7 +4,8 @@
 
 - `stock`: entra directamente a `/inventory` y puede consultar existencias, costos, mínimos y movimientos.
 - `admin`: puede abrir el mismo módulo desde **Admin → Abrir Inventario**.
-- Clientes, cajeros y gerentes no pueden registrar ajustes de stock.
+- `manager`: comparte el panel administrativo y puede abrir el mismo módulo.
+- Clientes y cajeros no pueden registrar ajustes manuales de stock.
 
 Para asignar al encargado, el administrador abre **Admin → Usuarios**, selecciona
 la cuenta y cambia su rol a **Almacén**. La persona debe cerrar sesión y volver a

@@ -5,8 +5,8 @@
 - `customer`: comprador de la tienda en línea. Solo accede a catálogo, perfil, carrito y sus pedidos.
 - `cashier`: empleado de caja. Entra directamente a `/cashier` y únicamente puede operar su propia caja y ventas.
 - `admin`: administra usuarios, inventario y pedidos; también puede abrir el punto de venta.
+- `manager`: comparte el panel y los permisos administrativos, incluido el acceso al punto de venta.
 - `stock`: cuenta con su propia interfaz de inventario y no tiene permisos POS.
-- `manager`: se conserva para la futura interfaz gerencial, sin permisos POS por ahora.
 
 La migración `Database/migrations/004_customer_cashier_roles.sql` separa clientes existentes de cajeros sin alterar inventario, ventas o contraseñas.
 
@@ -32,7 +32,7 @@ La migración `Database/migrations/004_customer_cashier_roles.sql` separa client
 
 ## Reglas de seguridad
 
-- Una venta POS requiere JWT con rol `cashier` o `admin`, un empleado vinculado y una caja abierta.
+- Una venta POS requiere JWT con rol `cashier`, `admin` o `manager`, un empleado vinculado y una caja abierta.
 - El cajero no puede consultar proveedores, gastos, auditorías globales ni ventas de otros empleados.
 - Precios, importes y disponibilidad se validan en PostgreSQL antes de confirmar la venta.
 - Las ventas en efectivo afectan la caja; las ventas con tarjeta se registran como pagadas pero no incrementan el efectivo esperado.
@@ -46,7 +46,7 @@ La migración `Database/migrations/004_customer_cashier_roles.sql` separa client
 - `POST /api/purchases/pos`
 - `GET /api/purchases?date=YYYY-MM-DD`
 - `GET /api/inventory/barcode/:barcode`
-- `POST /api/users/cashiers` — solo administrador
+- `POST /api/users/cashiers` — administrador o gerente
 
 ## Pruebas
 

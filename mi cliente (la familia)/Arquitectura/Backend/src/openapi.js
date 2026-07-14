@@ -119,7 +119,7 @@ const openapi = {
   openapi: '3.0.3',
   info: {
     title: 'Tiendita Maday API',
-    description: 'Swagger/OpenAPI documentation for the Tiendita Maday shop management backend.',
+    description: 'Swagger/OpenAPI documentation for Tiendita Maday. The manager role shares the administrative permission scope.',
     version: '1.0.0',
   },
   servers: [
@@ -550,7 +550,11 @@ const openapi = {
           id: uuid,
           employee_id: { ...uuid, nullable: true },
           username: { type: 'string' },
-          role: { type: 'string', enum: ['admin', 'manager', 'cashier', 'stock'] },
+          role: {
+            type: 'string',
+            enum: ['admin', 'manager', 'cashier', 'stock', 'customer'],
+            description: 'Manager shares the administrative permission scope while retaining its role label.',
+          },
           active: { type: 'boolean' },
           must_change_password: { type: 'boolean' },
           created_at: dateTime,
@@ -565,7 +569,12 @@ const openapi = {
           username: { type: 'string' },
           password: { type: 'string', format: 'password' },
           password_hash: { type: 'string', format: 'password' },
-          role: { type: 'string', enum: ['admin', 'manager', 'cashier', 'stock'], default: 'cashier' },
+          role: {
+            type: 'string',
+            enum: ['admin', 'manager', 'cashier', 'stock', 'customer'],
+            default: 'cashier',
+            description: 'Manager shares the administrative permission scope while retaining its role label.',
+          },
           active: { type: 'boolean', default: true },
           must_change_password: { type: 'boolean', default: false },
         },
