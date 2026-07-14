@@ -4,15 +4,37 @@
       <h1>Abastecimiento</h1>
       <p>Proveedores, órdenes de compra y recepción de mercancía</p>
     </div>
-    <div class="ops-actions"><button class="ops-btn secondary" (click)="openSupplier()"><app-icon name="plus"
-          size="16" /> Proveedor</button><button class="ops-btn" (click)="openOrder()"><app-icon name="clipboard"
-          size="16" color="white" /> Nueva orden</button></div>
+    <div class="ops-actions">
+      <button class="ops-btn secondary" (click)="openSupplier()">
+        <app-icon name="plus" size="16" /> Proveedor
+      </button>
+      <button class="ops-btn" (click)="openOrder()">
+        <app-icon name="clipboard" size="16" color="white" /> Nueva orden
+      </button>
+    </div>
   </header>
-  @if(error()){<div class="ops-error">{{error()}}</div>}
-  <nav class="ops-tabs"><button class="ops-tab" [class.active]="tab()==='suppliers'"
-      (click)="tab.set('suppliers')">Proveedores</button><button class="ops-tab" [class.active]="tab()==='orders'"
-      (click)="tab.set('orders')">Órdenes</button><button class="ops-tab" [class.active]="tab()==='receipts'"
-      (click)="tab.set('receipts')">Por recibir</button></nav>
+
+  @if(error()){
+  <div class="ops-error">{{error()}}</div>
+  }
+
+  @if(success()){
+  <div class="ops-success">{{success()}}</div>
+  }
+
+  <nav class="ops-tabs">
+    <button class="ops-tab" [class.active]="tab()==='suppliers'" (click)="tab.set('suppliers')">
+      Proveedores
+    </button>
+    <button class="ops-tab" [class.active]="tab()==='orders'" (click)="tab.set('orders')">
+      Órdenes
+    </button>
+    <button class="ops-tab" [class.active]="tab()==='receipts'" (click)="tab.set('receipts')">
+      Por recibir
+    </button>
+  </nav>
+
+  <!-- PROVEEDORES -->
   @if(tab()==='suppliers'){
   <section class="ops-panel">
     <div class="ops-table-wrap">
@@ -26,20 +48,36 @@
             <th></th>
           </tr>
         </thead>
-        <tbody>@for(item of suppliers();track item.id){<tr>
-            <td data-label="Proveedor"><strong>{{item.name}}</strong><br><small>{{item.address}}</small></td>
+        <tbody>
+          @for(item of suppliers();track item.id){
+          <tr>
+            <td data-label="Proveedor">
+              <strong>{{item.name}}</strong>
+              <br><small>{{item.address}}</small>
+            </td>
             <td data-label="Contacto">{{item.contact_name||'—'}}</td>
             <td data-label="Teléfono">{{item.phone||'—'}}</td>
             <td data-label="Correo">{{item.email||'—'}}</td>
-            <td data-label="Acciones"><button class="ops-icon-btn" title="Editar" (click)="openSupplier(item)"><app-icon name="pencil"
-                  size="15" /></button></td>
-          </tr>}@empty{<tr>
+            <td data-label="Acciones">
+              <button class="ops-icon-btn" title="Editar" (click)="openSupplier(item)">
+                <app-icon name="pencil" size="15" />
+              </button>
+            </td>
+          </tr>
+          }
+          @empty{
+          <tr>
             <td colspan="5" class="ops-empty">No hay proveedores activos.</td>
-          </tr>}</tbody>
+          </tr>
+          }
+        </tbody>
       </table>
     </div>
   </section>
-  } @else {
+  }
+
+  <!-- ÓRDENES Y POR RECIBIR -->
+  @if(tab()==='orders' || tab()==='receipts'){
   <section class="ops-panel">
     <div class="ops-table-wrap">
       <table class="ops-table">
@@ -52,29 +90,107 @@
             <th></th>
           </tr>
         </thead>
-        <tbody>@for(order of orders();track order.id){
-          @if(tab()==='orders'||(tab()==='receipts'&&(order.status==='sent'||order.status==='partial'))){
+        <tbody>
+          @for(order of filteredOrders();track order.id){
           <tr>
-            <td data-label="Orden"><button class="ops-tab" (click)="viewOrder(order)">{{order.id.slice(0,8)}}</button></td>
+            <td data-label="Orden">
+              <button class="ops-tab" (click)="viewOrder(order)">
+                {{order.id.slice(0,8)}}
+              </button>
+            </td>
             <td data-label="Proveedor">{{order.supplier_name}}</td>
-            <td data-label="Entrega">{{order.expected_date||'Sin fecha'}}</td>
-            <td data-label="Estado"><span class="ops-badge" [class.warn]="order.status==='draft'">{{statusLabel(order.status)}}</span></td>
+            <td data-label="Entrega">{{formatDate(order.expected_date)}}</td>
+            <td data-label="Estado">
+              @if(order.status==='draft'){
+              <span class="ops-badge warn">Borrador</span>
+              }
+              @if(order.status==='sent'){
+              <span class="ops-badge info">Entregar</span>
+              }
+              @if(order.status==='partial'){
+              <span class="ops-badge info">Recibiendo</span>
+              }
+              @if(order.status==='received'){
+              <span class="ops-badge success">Recibida</span>
+              }
+              @if(order.status==='cancelled'){
+              <span class="ops-badge danger">Cancelada</span>
+              }
+            </td>
             <td data-label="Acciones">
-              <div class="ops-row-actions">@if(order.status==='draft'){<button class="ops-btn secondary"
-                  (click)="sendOrder(order)">Enviar</button>}@if(order.status==='sent'||order.status==='partial'){<button
-                  class="ops-btn" (click)="openReceive(order)">Recibir</button>}</div>
+              <div class="ops-row-actions">
+                <!-- En la pestaña Órdenes: mostrar acciones según estado -->
+                @if(tab()==='orders'){
+                @if(order.status==='draft'){
+                <button class="ops-btn" (click)="sendOrder(order)">
+                  Entregar
+                </button>
+                }
+                @if(order.status==='sent'){
+                <span class="ops-badge info">Entregado</span>
+                }
+                @if(order.status==='partial'){
+                <span class="ops-badge info">Recibiendo</span>
+                }
+                @if(order.status==='received'){
+                <span class="ops-badge success">Completada</span>
+                }
+                @if(order.status==='cancelled'){
+                <span class="ops-badge danger">Cancelada</span>
+                }
+                }
+
+                <!-- En la pestaña Por recibir: mostrar el botón Recibir -->
+                @if(tab()==='receipts'){
+                @if(order.status==='draft'){
+                <span class="ops-badge warn">Pendiente</span>
+                }
+                @if(order.status==='sent' || order.status==='partial'){
+                <button class="ops-btn" (click)="openReceive(order)">
+                  Recibir
+                </button>
+                }
+                @if(order.status==='received'){
+                <span class="ops-badge success">Completada</span>
+                }
+                @if(order.status==='cancelled'){
+                <span class="ops-badge danger">Cancelada</span>
+                }
+                }
+              </div>
             </td>
           </tr>
           }
+          @empty{
+          <tr>
+            <td colspan="5" class="ops-empty">
+              @if(tab()==='orders'){
+              No hay órdenes registradas.
+              }@else{
+              No hay órdenes pendientes de recibir.
+              }
+            </td>
+          </tr>
           }
         </tbody>
       </table>
     </div>
   </section>
   }
-  @if(selectedOrder()&&modal()===null){<section class="ops-panel" style="margin-top:16px">
-    <div class="ops-toolbar"><strong>Detalle {{selectedOrder()!.id.slice(0,8)}}</strong><button class="ops-close"
-        (click)="selectedOrder.set(null)">×</button></div>
+
+  <!-- DETALLE DE ORDEN -->
+  @if(selectedOrder() && modal()===null && !confirmModal()){
+  <section class="ops-panel" style="margin-top:16px">
+    <div class="ops-toolbar">
+      <strong>Detalle orden {{selectedOrder()!.id.slice(0,8)}}</strong>
+      <span class="ops-badge" [class.warn]="selectedOrder()!.status==='draft'"
+        [class.success]="selectedOrder()!.status==='received'"
+        [class.info]="selectedOrder()!.status==='sent' || selectedOrder()!.status==='partial'"
+        [class.danger]="selectedOrder()!.status==='cancelled'">
+        {{statusLabel(selectedOrder()!.status)}}
+      </span>
+      <button class="ops-close" (click)="closeDetail()">×</button>
+    </div>
     <div class="ops-table-wrap">
       <table class="ops-table">
         <thead>
@@ -82,64 +198,174 @@
             <th>Producto</th>
             <th>Solicitado</th>
             <th>Recibido</th>
+            <th>Pendiente</th>
             <th>Costo</th>
           </tr>
         </thead>
-        <tbody>@for(line of orderItems();track line.id){<tr>
+        <tbody>
+          @for(line of orderItems();track line.id){
+          <tr>
             <td data-label="Producto">{{line.inventory_name}}</td>
             <td data-label="Solicitado">{{line.quantity_ordered}}</td>
             <td data-label="Recibido">{{line.quantity_received}}</td>
+            <td data-label="Pendiente">{{line.quantity_ordered - line.quantity_received}}</td>
             <td data-label="Costo">{{money(line.unit_cost)}}</td>
-          </tr>}</tbody>
+          </tr>
+          }
+        </tbody>
       </table>
     </div>
-  </section>}
+  </section>
+  }
 </div>
-@if(modal()){<div class="ops-modal-backdrop">
+
+<!-- MODALES -->
+@if(modal()){
+<div class="ops-modal-backdrop">
   <aside class="ops-drawer">
     <div class="ops-drawer-head">
-      <h2>{{modal()==='supplier'?'Proveedor':modal()==='order'?'Nueva orden':'Recibir orden completa'}}</h2><button
-        class="ops-close" (click)="modal.set(null)">×</button>
+      <h2>
+        @if(modal()==='supplier'){Proveedor}
+        @else if(modal()==='order'){Nueva orden}
+        @else {Recibir orden completa}
+      </h2>
+      <button class="ops-close" (click)="closeModal()">×</button>
     </div>
-    @if(modal()==='supplier'){<form class="ops-form" (ngSubmit)="saveSupplier()"><label>Nombre *<input class="ops-input"
-          name="name" [(ngModel)]="supplierDraft.name" required></label>
-      <div class="ops-grid-2"><label>Contacto<input class="ops-input" name="contact"
-            [(ngModel)]="supplierDraft.contact_name"></label><label>Teléfono<input class="ops-input" name="phone"
-            [(ngModel)]="supplierDraft.phone"></label></div><label>Correo<input class="ops-input" type="email"
-          name="email" [(ngModel)]="supplierDraft.email"></label><label>Dirección<input class="ops-input" name="address"
-          [(ngModel)]="supplierDraft.address"></label><label>Notas<textarea class="ops-textarea" name="notes"
-          [(ngModel)]="supplierDraft.notes"></textarea></label><button class="ops-btn" type="submit">Guardar
-        proveedor</button>
-    </form>}
-    @if(modal()==='order'){<form class="ops-form" (ngSubmit)="saveOrder()"><label>Proveedor *<select class="ops-select"
-          name="supplier" [(ngModel)]="orderDraft.supplier_id">
+
+    <!-- MODAL PROVEEDOR -->
+    @if(modal()==='supplier'){
+    <form class="ops-form" (ngSubmit)="saveSupplier()">
+      <label>
+        Nombre *
+        <input class="ops-input" name="name" [(ngModel)]="supplierDraft.name" required>
+      </label>
+      <div class="ops-grid-2">
+        <label>
+          Contacto
+          <input class="ops-input" name="contact" [(ngModel)]="supplierDraft.contact_name">
+        </label>
+        <label>
+          Teléfono
+          <input class="ops-input" name="phone" [(ngModel)]="supplierDraft.phone">
+        </label>
+      </div>
+      <label>
+        Correo
+        <input class="ops-input" type="email" name="email" [(ngModel)]="supplierDraft.email">
+      </label>
+      <label>
+        Dirección
+        <input class="ops-input" name="address" [(ngModel)]="supplierDraft.address">
+      </label>
+      <label>
+        Notas
+        <textarea class="ops-textarea" name="notes" [(ngModel)]="supplierDraft.notes"></textarea>
+      </label>
+      <button class="ops-btn" type="submit">
+        {{supplierDraft.id ? 'Actualizar' : 'Guardar'}} proveedor
+      </button>
+    </form>
+    }
+
+    <!-- MODAL ORDEN -->
+    @if(modal()==='order'){
+    <form class="ops-form" (ngSubmit)="saveOrder()">
+      <label>
+        Proveedor *
+        <select class="ops-select" name="supplier" [(ngModel)]="orderDraft.supplier_id">
           <option *ngFor="let s of suppliers()" [value]="s.id">{{s.name}}</option>
-        </select></label><label>Entrega esperada<input class="ops-input ops-date-input" type="text" name="expected"
-          [value]="orderDraft.expected_date || ''" (input)="orderDraft.expected_date = $any($event.target).value"
-          placeholder="Selecciona fecha" id="orderDate"></label>@for(line of draftItems;track $index){<div
-        class="ops-grid-2"><label>Producto<select class="ops-select" [name]="'product'+$index"
-            [(ngModel)]="line.inventory_id">
+        </select>
+      </label>
+      <label>
+        Entrega esperada
+        <input class="ops-input ops-date-input" type="text" name="expected" [value]="orderDraft.expected_date || ''"
+          (input)="orderDraft.expected_date = $any($event.target).value" placeholder="Selecciona fecha" id="orderDate">
+      </label>
+
+      @for(line of draftItems;track $index){
+      <div class="ops-grid-2">
+        <label>
+          Producto
+          <select class="ops-select" [name]="'product'+$index" [(ngModel)]="line.inventory_id">
             <option value="">Selecciona</option>
             <option *ngFor="let p of inventory()" [value]="p.id">{{p.name}}</option>
-          </select></label><label>Cantidad<input class="ops-input" type="number" min="1" [name]="'qty'+$index"
-            [(ngModel)]="line.quantity_ordered"></label><label>Costo unitario<input class="ops-input" type="number"
-            min="0" step=".01" [name]="'cost'+$index" [(ngModel)]="line.unit_cost"></label><button
-          class="ops-btn secondary" type="button" (click)="removeDraftItem($index)">Quitar</button></div>}<button
-        class="ops-btn secondary" type="button" (click)="addDraftItem()">Agregar producto</button><label>Notas<textarea
-          class="ops-textarea" name="orderNotes" [(ngModel)]="orderDraft.notes"></textarea></label><button
-        class="ops-btn" type="submit">Crear borrador</button></form>}
-    @if(modal()==='receive'){<form class="ops-form" (ngSubmit)="receive()">
-      <p>Esta operación recibirá todas las cantidades pendientes y actualizará el inventario.</p>@for(line of
-      orderItems();track line.id){<div class="ops-grid-2"><label>Producto<input class="ops-input"
-            [value]="line.inventory_name"
-            disabled></label>@if(product(line.inventory_id)?.has_expiration){<label>Caducidad *<input
-            class="ops-input ops-date-input" type="text" [name]="'expiry'+line.id"
+          </select>
+        </label>
+        <label>
+          Cantidad
+          <input class="ops-input" type="number" min="1" [name]="'qty'+$index" [(ngModel)]="line.quantity_ordered">
+        </label>
+        <label>
+          Costo unitario
+          <input class="ops-input" type="number" min="0" step=".01" [name]="'cost'+$index" [(ngModel)]="line.unit_cost">
+        </label>
+        <button class="ops-btn secondary" type="button" (click)="removeDraftItem($index)">Quitar</button>
+      </div>
+      }
+      <button class="ops-btn secondary" type="button" (click)="addDraftItem()">Agregar producto</button>
+      <label>
+        Notas
+        <textarea class="ops-textarea" name="orderNotes" [(ngModel)]="orderDraft.notes"></textarea>
+      </label>
+      <button class="ops-btn" type="submit">Crear borrador</button>
+    </form>
+    }
+
+    <!-- MODAL RECIBIR -->
+    @if(modal()==='receive'){
+    <form class="ops-form" (ngSubmit)="receive()">
+      <p>Esta operación recibirá todas las cantidades pendientes y actualizará el inventario.</p>
+      @for(line of orderItems();track line.id){
+      <div class="ops-grid-2">
+        <label>
+          Producto
+          <input class="ops-input" [value]="line.inventory_name" disabled>
+        </label>
+        @if(product(line.inventory_id)?.has_expiration){
+        <label>
+          Caducidad *
+          <input class="ops-input ops-date-input" type="text" [name]="'expiry'+line.id"
             [value]="receiptDates[line.inventory_id] || ''"
             (input)="receiptDates[line.inventory_id] = $any($event.target).value" placeholder="Selecciona fecha"
-            [id]="'expiry'+line.id"></label>}@else{<label>Cantidad<input class="ops-input"
-            [value]="line.quantity_ordered-line.quantity_received" disabled></label>}</div>}<label>Notas<textarea
-          class="ops-textarea" name="receiptNotes" [(ngModel)]="receiptNotes"></textarea></label><button class="ops-btn"
-        type="submit">Confirmar recepción</button>
-    </form>}
+            [id]="'expiry'+line.id">
+        </label>
+        }@else{
+        <label>
+          Cantidad a recibir
+          <input class="ops-input" [value]="line.quantity_ordered - line.quantity_received" disabled>
+        </label>
+        }
+      </div>
+      }
+      <label>
+        Notas
+        <textarea class="ops-textarea" name="receiptNotes" [(ngModel)]="receiptNotes"></textarea>
+      </label>
+      <button class="ops-btn" type="submit">Confirmar recepción</button>
+    </form>
+    }
   </aside>
-</div>}
+</div>
+}
+
+<!-- MODAL DE CONFIRMACIÓN PERSONALIZADO -->
+@if(confirmModal()){
+<div class="ops-modal-backdrop-confirm">
+  <aside class="ops-drawer-confirm">
+    <div class="ops-drawer-head">
+      <h2>Confirmar acción</h2>
+      <button class="ops-close" (click)="closeConfirm()">×</button>
+    </div>
+    <div class="ops-confirm-content">
+      <div class="ops-confirm-icon">
+        <app-icon name="alert-triangle" size="48" color="var(--warning)" />
+      </div>
+      <p>{{confirmMessage()}}</p>
+      <div class="ops-confirm-actions">
+        <button class="ops-btn secondary" (click)="closeConfirm()">Cancelar</button>
+        <button class="ops-btn" (click)="confirmAction()">Aceptar</button>
+      </div>
+    </div>
+  </aside>
+</div>
+}
