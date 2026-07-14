@@ -33,9 +33,10 @@ export const appConfig: ApplicationConfig = {
     ),
     provideServiceWorker('ngsw-worker.js', {
       enabled: !isDevMode(),
-      registrationStrategy: 'registerWhenStable:30000',
+      // Railway puede publicar una versión nueva en cualquier momento. Registrar
+      // de inmediato evita esperar hasta 30 s antes de empezar a buscarla.
+      registrationStrategy: 'registerImmediately',
     }),
   ],
 };
-
 

@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
 import { SwUpdate } from '@angular/service-worker';
 import { BottomNav } from './shared/components/bottom-nav/bottom-nav';
@@ -120,14 +120,20 @@ import { filter } from 'rxjs';
     }
   `],
 })
-export class App implements OnInit {
+export class App implements OnInit, OnDestroy {
   private router = inject(Router);
   private swUpdate = inject(SwUpdate);
   
   showBottomNav = false;
   updateAvailable = false;
+  private updateInProgress = false;
+  private updateCheckInterval?: number;
 
   private hiddenRoutes = ['/auth', '/checkout', '/admin', '/cashier', '/inventory', '/product'];
+  private protectedWorkflows = ['/checkout', '/admin', '/cashier', '/inventory'];
+  private readonly visibilityHandler = () => {
+    if (document.visibilityState === 'visible') this.checkForUpdate();
+  };
 
   constructor() {
     this.router.events
@@ -135,20 +141,51 @@ export class App implements OnInit {
       .subscribe((e) => {
         this.showBottomNav = !this.hiddenRoutes.some((r) => e.urlAfterRedirects.startsWith(r));
         window.scrollTo(0, 0);
+        this.checkForUpdate();
       });
   }
 
-  ngOnInit() {
+  ngOnInit(): void {
     if (this.swUpdate.isEnabled) {
       this.swUpdate.versionUpdates.subscribe((event) => {
         if (event.type === 'VERSION_READY') {
           this.updateAvailable = true;
+          // En páginas de consulta actualizamos automáticamente. En caja,
+          // inventario, administración y checkout se conserva el aviso para no
+          // interrumpir formularios u operaciones en curso.
+          if (!this.isProtectedWorkflow()) {
+            window.setTimeout(() => this.updateApp(), 750);
+          }
         }
       });
+      this.checkForUpdate();
+      this.updateCheckInterval = window.setInterval(() => this.checkForUpdate(), 30_000);
+      document.addEventListener('visibilitychange', this.visibilityHandler);
     }
   }
 
-  updateApp() {
-    this.swUpdate.activateUpdate().then(() => document.location.reload());
+  ngOnDestroy(): void {
+    if (this.updateCheckInterval !== undefined) window.clearInterval(this.updateCheckInterval);
+    document.removeEventListener('visibilitychange', this.visibilityHandler);
+  }
+
+  async updateApp(): Promise<void> {
+    if (this.updateInProgress) return;
+    this.updateInProgress = true;
+    try {
+      await this.swUpdate.activateUpdate();
+      document.location.reload();
+    } catch {
+      this.updateInProgress = false;
+    }
+  }
+
+  private checkForUpdate(): void {
+    if (!this.swUpdate.isEnabled || this.updateInProgress) return;
+    this.swUpdate.checkForUpdate().catch(() => undefined);
+  }
+
+  private isProtectedWorkflow(): boolean {
+    return this.protectedWorkflows.some((route) => this.router.url.startsWith(route));
   }
 }

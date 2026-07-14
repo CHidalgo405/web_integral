@@ -25,10 +25,11 @@ FROM node:20-alpine AS runtime
 
 WORKDIR /app
 
-RUN npm install -g serve
+RUN npm install -g serve@14.2.6
 
 COPY --from=build /app/dist/la-familia/browser ./browser
+COPY --from=build /app/serve.json ./browser/serve.json
 
 EXPOSE 8080
 
-CMD sh -c "serve -s browser -l ${PORT:-8080}"
+CMD sh -c "serve -s browser -l ${PORT:-8080} -c serve.json --no-clipboard"

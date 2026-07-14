@@ -139,6 +139,17 @@ restringirlo solo al frontend:
 Actualiza la variable `API_BASE_URL` en el servicio Frontend y vuelve a
 desplegar (Deployments → Redeploy) — no hace falta tocar código.
 
+## Actualizaciones rápidas del frontend
+
+El frontend comprueba si Railway publicó una versión nueva cada 30 segundos,
+al volver a la pestaña y después de navegar. Las pantallas de consulta se
+actualizan automáticamente; checkout, administración, caja e inventario
+muestran primero el aviso de actualización para no interrumpir una operación.
+
+`serve.json` desactiva el caché HTTP de `index.html`, `ngsw.json` y
+`ngsw-worker.js`. Los archivos compilados con nombre versionado continúan
+administrados por el service worker para conservar la velocidad de carga.
+
 ---
 
 ## Plan B — si Root Directory sigue sin funcionar
