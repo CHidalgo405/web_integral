@@ -17,6 +17,10 @@ const getOne = async (req, res, next) => {
 
 const create = async (req, res, next) => {
   try {
+    const { name } = req.body;
+    if (!name || !name.trim()) {
+      return res.status(400).json({ error: 'El nombre de la categoría es obligatorio' });
+    }
     const { rows } = await Categories.create(req.body);
     res.status(201).json(rows[0]);
   } catch (err) { next(err); }
