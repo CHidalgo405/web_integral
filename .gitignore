@@ -15,6 +15,10 @@ FrontEnd/.angular/
 # Backend build output
 Backend/dist/
 
+# Python documentation tooling
+__pycache__/
+*.py[cod]
+
 # Docker
 postgres_data/
 
