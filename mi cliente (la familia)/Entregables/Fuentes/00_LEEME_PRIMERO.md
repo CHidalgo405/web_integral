@@ -1,110 +1,252 @@
-# Paquete de entrega al cliente
+# Índice maestro y mapa de la entrega
 **Proyecto:** Tiendita Maday
 **Cliente:** La Familia
-**Versión documentada:** 1.1
-**Fecha de corte del código:** 14 de julio de 2026
-**Fecha de documentación:** 15 de julio de 2026
-**Estado:** Entrega documental para revisión y aceptación
+**Versión documental:** 2.0
+**Fecha de preparación:** 16 de julio de 2026
+**Repositorio remoto:** https://github.com/CHidalgo405/web_integral
+**Rama oficial:** main
+**Revisión base anterior a este índice:** 53b2123
+**Estado:** Paquete documental completo para revisión; salida productiva condicionada
 
-> Este documento es el punto de entrada del paquete. Explica qué se entrega, cómo comenzar y qué datos deben completarse antes de firmar la aceptación.
+> Este es el único PDF índice del paquete. Permite localizar el código, los documentos, las fuentes editables, las evidencias y los formatos de presentación. La existencia de un archivo no equivale a aceptación final ni sustituye las pruebas pendientes.
 
 <!-- PAGEBREAK -->
 
-## 1. Propósito de la entrega
+## 1. Cómo usar este mapa
 
-Este paquete concentra la información necesaria para usar, operar, respaldar y aceptar formalmente Tiendita Maday. Los documentos separan las instrucciones de negocio, que utiliza la familia en la operación diaria, de las instrucciones técnicas, que corresponden a la persona responsable del servicio.
+Tiendita Maday reúne compra en línea, punto de venta, inventario, administración y control operativo para La Familia. Este índice organiza la entrega por finalidad y señala qué documento responde a cada requisito solicitado.
 
-La documentación usa **Tiendita Maday** como nombre del sistema y **La Familia** como cliente. Antes de publicar material comercial se debe confirmar si la marca visible definitiva será Tiendita Maday, Verdulería Retama u otro nombre aprobado por el cliente.
+Para una revisión rápida:
 
-## 2. Contenido del paquete
+1. Compruebe el repositorio y los 14 entregables numerados de la sección 4.
+2. Use la matriz de cobertura de la sección 5 para localizar cada requisito.
+3. Siga la ruta de lectura adecuada de la sección 6.
+4. Revise las brechas abiertas de la sección 8 antes de autorizar producción.
+5. Complete el checklist de evaluación y el acta durante la demostración.
 
-| Archivo | Para quién | Propósito |
+### 1.1 Convenciones
+
+- **Presente:** el archivo fue localizado en el repositorio en la fecha de preparación.
+- **Verificado:** el contenido o la evidencia fue revisado y se indica su revisión de origen.
+- **Por completar:** requiere datos, decisión, firma, acceso externo o ejecución en el ambiente definitivo.
+- **Referencia histórica:** ayuda a entender el proceso, pero no gobierna la versión actual.
+
+> Si un nombre, una cifra o un rol difiere de material histórico, prevalecen el código de la rama `main`, las migraciones actuales y los entregables 00-13.
+
+## 2. Resumen ejecutivo del estado
+
+| Dimensión | Estado al corte | Evidencia principal |
 |---|---|---|
-| `00_LEEME_PRIMERO.pdf` | Todas las partes | Índice, inicio rápido y estado de entrega. |
-| `01_Manual_de_Usuario.pdf` | Propietario, gerente, cajero, almacén y clientes | Uso cotidiano del sistema por rol, con capturas de pantalla reales y pasos detallados. |
-| `02_Guia_de_Operacion_Respaldo_y_Recuperacion.pdf` | Responsable técnico y propietario | Despliegue, actualizaciones, respaldos, restauración e incidentes. |
-| `03_Reporte_de_Pruebas_y_Limitaciones.pdf` | Cliente y equipo de desarrollo | Evidencia ejecutada, resultados, riesgos y pendientes. |
-| `04_Acta_de_Entrega_y_Aceptacion.pdf` | Representantes autorizados | Lista de verificación, reservas y firmas de aceptación. |
-| `Fuentes/` | Equipo responsable | Versiones editables, capturas de pantalla y generador reproducible de los documentos. |
+| Código fuente | Presente en frontend, backend y base de datos | Repositorio `web_integral`, rama `main` |
+| Aplicación | Funcional y demostrable con cinco roles | Manual 01, evidencias 09 y guion 11 |
+| Backend | 19 pruebas aprobadas, 0 fallidas | Reporte 03 |
+| Integraciones backend | 2 pruebas omitidas por falta de base aislada | Reporte 03 y acta 04 |
+| Frontend | Compilación aprobada en 3.858 segundos | Reporte 03 |
+| Pruebas frontend | Vitest no encontró pruebas ejecutables | Reporte 03 |
+| Evidencia manual | Cinco roles y 25 capturas | Reporte 03 y evidencias 09 |
+| Respaldo y restauración | Procedimiento documentado; restauración sin evidencia | Guía 02, reporte 03 y acta 04 |
+| Documentación | Entregables 00-13 presentes | Carpeta `Entregables` |
+| Aceptación | Requiere decisión, reservas y firmas | Checklist 12 y acta 04 |
 
-## 3. Inicio rápido para el cliente
+### 2.1 Conclusión del paquete
 
-1. Confirmar con el equipo la **URL oficial del frontend** y abrirla desde un navegador actualizado.
-2. Confirmar que el propietario puede iniciar sesión con una cuenta `admin` o `manager`.
-3. Cambiar las contraseñas temporales y activar solamente las cuentas necesarias.
-4. Revisar la configuración de tienda, moneda, ubicación, zonas de entrega y métodos de pago.
-5. Registrar o importar productos, precios, costos, existencias y códigos de barras.
-6. Crear cuentas separadas para cajeros y almacén; nunca compartir la cuenta administrativa.
-7. Realizar una venta de prueba, un ajuste de inventario y un cierre de caja.
-8. Confirmar que existe un respaldo reciente y que el responsable sabe restaurarlo.
-9. Revisar el reporte de pruebas y documentar cualquier reserva en el acta de aceptación.
+El sistema cuenta con código funcional, arquitectura, manuales, evidencia Git, pruebas y material de presentación suficientes para una demostración y una decisión informada. La autorización productiva debe condicionarse al cierre o aceptación expresa de las brechas registradas en la sección 8.
 
-![Página de inicio del cliente en la versión documentada.](capturas/10_cliente_inicio.png)
+## 3. Mapa del repositorio
 
-## 4. Roles principales
+Todos los caminos siguientes son relativos a la raíz del repositorio remoto.
 
-| Rol | Uso principal | Acceso sensible |
+| Ubicación | Contenido y uso |
+|---|---|
+| `mi cliente (la familia)/Arquitectura/FrontEnd` | Aplicación Angular, PWA, vistas por rol, configuración y construcción frontend |
+| `mi cliente (la familia)/Arquitectura/Backend` | API Express, rutas, servicios, seguridad, migrador y pruebas backend |
+| `mi cliente (la familia)/Arquitectura/Database` | Esquema, inicialización, migraciones y documentación de PostgreSQL |
+| `mi cliente (la familia)/Entregables` | PDFs finales, presentación ejecutiva y este índice |
+| `mi cliente (la familia)/Entregables/Fuentes` | Markdown editable, generador de PDFs y generador de presentación |
+| `mi cliente (la familia)/Entregables/Fuentes/capturas` | Evidencia visual usada en manuales, pruebas y diapositivas |
+| `mi cliente (la familia)/Metodologia` | Material histórico del proceso de trabajo |
+
+### 3.1 Archivos técnicos canónicos
+
+- `mi cliente (la familia)/Arquitectura/Database/schema.mmd`: modelo relacional documentado.
+- `mi cliente (la familia)/Arquitectura/Database/init.sql`: inicialización de base de datos.
+- `mi cliente (la familia)/Arquitectura/Database/migrations`: cambios reproducibles de esquema.
+- `/api-docs`: contrato OpenAPI cuando el backend está configurado y en ejecución.
+- Archivos `package.json`: versiones, dependencias y comandos de cada aplicación.
+
+### 3.2 Qué no usar como única fuente
+
+La carpeta `Metodologia` conserva evidencia histórica, pero puede mencionar Angular 17, nombres de marca anteriores o roles que ya cambiaron. No debe sustituir el manual técnico, la arquitectura actual, el código ni las migraciones.
+
+## 4. Inventario definitivo de entregables
+
+Los 14 elementos numerados deben permanecer juntos. Los nombres son estables para facilitar su revisión.
+
+| ID | Archivo | Finalidad | Formato |
+|---|---|---|---|
+| 00 | `00_LEEME_PRIMERO.pdf` | Índice maestro, cobertura y orden de revisión | PDF |
+| 01 | `01_Manual_de_Usuario.pdf` | Procesos, reportes, seguridad, usuarios y funciones por rol | PDF |
+| 02 | `02_Guia_de_Operacion_Respaldo_y_Recuperacion.pdf` | Operación, continuidad, respaldo, restauración e incidentes | PDF |
+| 03 | `03_Reporte_de_Pruebas_y_Limitaciones.pdf` | Casos, resultados, incidencias, correcciones y brechas | PDF |
+| 04 | `04_Acta_de_Entrega_y_Aceptacion.pdf` | Recepción, transferencia, reservas, decisión y firmas | PDF |
+| 05 | `05_Documento_General_del_Proyecto.pdf` | Problema, objetivos, alcance y requerimientos | PDF |
+| 06 | `06_Arquitectura_del_Sistema.pdf` | Diagrama, componentes, servicios, API y flujo | PDF |
+| 07 | `07_Diseno_de_Interfaces_e_Identidad_Visual.pdf` | Wireframes, mockups, prototipos, marca y responsive | PDF |
+| 08 | `08_Documento_de_Implementacion.pdf` | Frameworks, lenguajes, librerías, BD y servicios | PDF |
+| 09 | `09_Evidencias_de_Desarrollo_y_Participacion.pdf` | Capturas, Git, ramas y participación normalizada | PDF |
+| 10 | `10_Manual_Tecnico_de_Instalacion_y_Configuracion.pdf` | Instalación y configuración del entorno y servidor | PDF |
+| 11 | `11_Guion_de_Demostracion_Funcional.pdf` | Flujo en vivo, CRUD, reportes, validaciones y errores | PDF |
+| 12 | `12_Checklist_de_Evaluacion_SHD.pdf` | Formato de evaluación del cliente | PDF |
+| 13 | `13_Presentacion_Ejecutiva_Tiendita_Maday.pptx` | Evidencias técnicas, resultados y trabajo futuro | PPTX |
+
+### 4.1 Fuentes reproducibles
+
+Cada PDF numerado tiene una fuente Markdown con el mismo identificador en `Entregables/Fuentes`. Los PDFs se generan con `generar_entregables.py`. La presentación se genera con `generar_presentacion.mjs`. Las capturas referenciadas permanecen en `Fuentes/capturas`.
+
+## 5. Matriz de cobertura de requisitos
+
+### 5.1 Entregables generales
+
+| Requisito | Evidencia o ubicación | Cobertura |
 |---|---|---|
-| `admin` | Propietario o administrador del sistema | Control administrativo, usuarios, finanzas y configuración. |
-| `manager` | Gerencia de tienda | Comparte la operación administrativa; debe asignarse solo a personal de confianza. |
-| `cashier` | Punto de venta y operaciones propias | Caja abierta, ventas y corte de su turno. |
-| `stock` | Existencias y movimientos | Ajustes de entrada/salida con trazabilidad. |
-| `customer` | Compra en línea | Catálogo, carrito, direcciones, pedidos y perfil personal. |
+| Repositorio remoto con código funcional | GitHub, rama `main`, carpetas de Arquitectura | Presente |
+| Un solo PDF de índice | Entregable 00, este documento | Presente |
 
-> Cada persona debe tener su propia cuenta. El historial de caja, inventario y pedidos pierde valor si varias personas comparten credenciales.
+### 5.2 Documentación técnica SHP
 
-## 5. Datos que deben completarse antes de la firma
+| Requisito | Documento principal | Complemento |
+|---|---|---|
+| Problema, objetivos, alcance y requisitos | 05 Documento General | 01 y 08 |
+| Arquitectura, componentes, servicios, API y flujo | 06 Arquitectura | 08 y `/api-docs` |
+| Wireframes, mockups, prototipos, identidad y responsive | 07 Diseño de Interfaces | Capturas en Fuentes |
+| Framework, lenguajes, librerías, BD y APIs | 08 Implementación | 10 Manual Técnico |
+| Capturas, commits, ramas y participación | 09 Evidencias | Historial Git y capturas |
+| Casos, evidencia, resultados, correcciones e incidencias | 03 Pruebas | 04 Acta |
+| Instalación y configuración | 10 Manual Técnico | 02 Operación |
+| Procesos, reportes, seguridad, usuarios y funciones | 01 Manual de Usuario | 11 Guion |
 
-| Dato | Valor acordado |
-|---|---|
-| Nombre comercial definitivo | ______________________________________________ |
-| URL del sitio | ______________________________________________ |
-| URL de la API | ______________________________________________ |
-| Propietario de Railway | ______________________________________________ |
-| Propietario del dominio | ______________________________________________ |
-| Responsable de respaldos | ______________________________________________ |
-| Correo real de soporte | ______________________________________________ |
-| Teléfono y horario de soporte | ______________________________________________ |
-| Periodo de garantía | ______________________________________________ |
-| Fecha prevista de entrada en producción | ______________________________________________ |
+### 5.3 Presentación ejecutiva SHD
 
-## 6. Cuentas y servicios que deben transferirse
+| Requisito | Documento o material | Cobertura |
+|---|---|---|
+| Flujo, CRUD, reportes, validaciones y errores | 11 Guion de Demostración | Preparado para ensayo |
+| Repositorio, commits, organización, BD, arquitectura, APIs | 13 Presentación Ejecutiva | Incluido en diapositivas |
+| Objetivos, beneficios, mejoras, problemas, soluciones y futuro | 13 Presentación Ejecutiva | Incluido en diapositivas |
+| Evaluación del cliente en 13 criterios | 12 Checklist SHD | Listo para imprimir o enviar |
 
-- [ ] Repositorio GitHub y permisos del propietario.
-- [ ] Proyecto Railway y sus servicios de frontend, backend y PostgreSQL.
-- [ ] Dominio y configuración DNS, si aplica.
-- [ ] Aplicación PayPal y confirmación de modo sandbox o producción.
-- [ ] Google OAuth y orígenes/redirecciones autorizados.
-- [ ] Cloudinary para imágenes de inventario.
-- [ ] Servicio EmailJS o servicio de correo equivalente.
-- [ ] Correo y teléfono publicados como soporte.
-- [ ] Ubicación del respaldo y responsable de probar la restauración.
+### 5.4 Entrega y decisión
 
-Las contraseñas y secretos se entregan mediante un gestor de contraseñas o canal cifrado. **No deben escribirse en este paquete ni almacenarse en Git.**
+| Requisito de cierre | Documento | Estado esperado |
+|---|---|---|
+| Inventario, transferencia de cuentas y secretos | 04 Acta | Completar durante la entrega |
+| Resultados de aceptación y reservas | 04 Acta y 03 Pruebas | Registrar antes de firmar |
+| Calificación del cliente | 12 Checklist | Completar al finalizar la presentación |
+| Firmas y copia idéntica para ambas partes | 04 Acta | Pendiente de representantes autorizados |
 
-## 7. Estado documental y reservas conocidas
+## 6. Rutas de lectura por audiencia
 
-Este paquete describe el comportamiento observado en el código con fecha de corte 14 de julio de 2026. El reporte de pruebas registra que el backend aprobó sus pruebas no dependientes de base aislada y que el frontend compiló. El 15 de julio de 2026 se ejecutó además un recorrido visual de los cinco roles en un entorno local; las capturas de ese recorrido ilustran el Manual de Usuario y la evidencia del reporte. Siguen pendientes las pruebas integrales automatizadas con base aislada y la suite frontend ejecutable.
+### 6.1 Cliente, propietario o gerente
 
-La documentación técnica histórica contiene referencias a Angular 17 y roles antiguos. El código actual utiliza Angular 21.2 y los roles `admin`, `manager`, `cashier`, `stock` y `customer`. Para operar la versión actual prevalecen esta entrega, el código etiquetado y el archivo de migraciones.
+1. `00` para conocer el paquete y las brechas.
+2. `01` para operar la aplicación y entender los roles.
+3. `03` para conocer qué fue probado y qué no.
+4. `11` para seguir la demostración.
+5. `12` para evaluar la presentación.
+6. `04` para registrar reservas y decidir la aceptación.
 
-## 8. Orden recomendado de lectura
+### 6.2 Responsable técnico
 
-1. El propietario y gerente leen el Manual de Usuario.
-2. La persona técnica revisa la Guía de Operación, Respaldo y Recuperación.
-3. Ambas partes revisan el Reporte de Pruebas y Limitaciones.
-4. Se completan los datos pendientes y se ejecuta una prueba de aceptación.
-5. Solo entonces se firma el Acta de Entrega y Aceptación.
+1. `05` para requisitos y alcance.
+2. `06` para arquitectura y flujo de información.
+3. `08` para tecnologías e integraciones.
+4. `10` para instalar y configurar.
+5. `02` para operar, respaldar y recuperar.
+6. `03` y `09` para validar pruebas y trazabilidad.
 
-## 9. Control de la entrega
+### 6.3 Equipo expositor
 
-| Elemento | Identificador |
-|---|---|
-| Repositorio | `Christba03/Tiendita-Maday` |
-| Rama de documentación | `docs/entregables-cliente` |
-| Versión de documentos | 1.1 |
-| Fecha de corte del código | 14 de julio de 2026 |
-| Idioma | Español |
-| Formato final | PDF, con fuentes Markdown y capturas reproducibles |
+1. Ensayar el recorrido de `11` con datos de demostración.
+2. Presentar `13` sin sustituir la demostración en vivo.
+3. Tener abierto el repositorio, el esquema y la gráfica Git.
+4. Entregar `12` al cliente y registrar sus observaciones.
+5. Completar `04` sólo después de revisar casos y reservas.
 
-> La firma del acta no debe realizarse con campos vacíos. Si existe un pendiente aceptado, debe escribirse como reserva, asignar responsable y establecer fecha compromiso.
+## 7. Evidencia y revisiones de origen
+
+### 7.1 Pruebas
+
+Los resultados técnicos fueron ejecutados sobre la revisión `123372c`. Los commits posteriores de esta preparación modifican documentación y presentación, no la aplicación. Si se cambia código antes de la firma, se deben repetir las pruebas afectadas y actualizar el reporte.
+
+### 7.2 Participación Git
+
+La evidencia de participación usa el historial alcanzable y normaliza alias conocidos. En la revisión base de la presentación se contabilizaron 212 commits: Christian 63, Carlos 69, Kevin 38, Zahid 25, Diego 10, Daniel 7 y Adán 0 identificados.
+
+El valor cero de Adán no demuestra ausencia de trabajo. Significa que no se localizó un nombre o correo asociable en el historial disponible. Cualquier atribución adicional debe anexar usuario, correo, tablero, pull request o evidencia externa verificable.
+
+### 7.3 Capturas
+
+Las capturas documentan cinco perfiles: cliente, caja, almacén, gerente y administrador. Sirven como evidencia visual de la revisión observada; no sustituyen una prueba automatizada ni prueban por sí solas el ambiente productivo.
+
+## 8. Brechas abiertas antes de producción
+
+| ID | Brecha conocida | Riesgo | Criterio de cierre |
+|---|---|---|---|
+| R-01 | Vitest no encuentra pruebas frontend ejecutables | Regresiones de interfaz sin detección automática | Suite ejecutada y reporte sin fallas críticas |
+| R-02 | Dos integraciones backend de POS e inventario fueron omitidas | Diferencias transaccionales no verificadas | Pruebas sobre base aislada aprobadas |
+| R-03 | Restauración de respaldo no ejecutada | Respaldo posiblemente inutilizable | Restauración validada y tiempos registrados |
+| R-04 | Ambiente, proveedores, accesos y marca final por confirmar | Configuración incompleta o custodia ambigua | URLs, propietarios, secretos y marca aprobados |
+| R-05 | Identidad Git de Adán no confirmada | Participación incompleta o mal atribuida | Usuario, correo o evidencia externa anexada |
+
+Estas brechas aparecen también en el reporte 03, la presentación 13 o el acta 04. No deben ocultarse en la exposición. La decisión correcta es cerrarlas, aceptarlas como reservas con responsable y fecha, o reprogramar la firma final.
+
+## 9. Checklist para el día de la presentación
+
+### 9.1 Antes de iniciar
+
+- [ ] Hacer pull de `main` y registrar la revisión usada.
+- [ ] Confirmar frontend, backend, PostgreSQL y datos de demostración.
+- [ ] Preparar cuentas de los cinco roles sin compartir contraseñas reales.
+- [ ] Evitar pagos live, secretos productivos y datos personales.
+- [ ] Abrir el repositorio, el esquema, el reporte de pruebas y las diapositivas.
+- [ ] Imprimir o enviar digitalmente el checklist 12.
+
+### 9.2 Durante la demostración
+
+- [ ] Mostrar alta, consulta, modificación y desactivación controlada.
+- [ ] Recorrer cliente, POS, inventario, administración y reportes.
+- [ ] Provocar al menos una validación de campo, un rechazo de permiso y un error controlado.
+- [ ] Explicar arquitectura, API, base de datos y servicios externos.
+- [ ] Mostrar la evidencia Git sin atribuir trabajo no verificable.
+- [ ] Registrar preguntas, incidentes y resultados de aceptación.
+
+<!-- PAGEBREAK -->
+
+### 9.3 Antes de firmar
+
+- [ ] Completar revisión, URLs, ambiente y representantes en el acta 04.
+- [ ] Marcar resultados de los casos mínimos.
+- [ ] Copiar las brechas que sigan abiertas como reservas.
+- [ ] Asignar responsable, fecha y criterio de cierre a cada reserva.
+- [ ] Marcar una sola decisión de aceptación.
+- [ ] Conservar una copia idéntica firmada para cada parte.
+
+## 10. Control y mantenimiento del paquete
+
+### 10.1 Regla de actualización
+
+Cada cambio futuro debe indicar qué revisión de código describe. Si se modifica funcionalidad, migraciones, roles, servicios, resultados o capturas, se debe actualizar el documento afectado y regenerar su PDF. Si cambia el alcance aceptado, se emite una nueva acta o un anexo firmado.
+
+### 10.2 Validación mínima de integridad
+
+- [ ] Existen exactamente los entregables numerados 00-13.
+- [ ] Los PDFs abren, muestran todas sus páginas y conservan encabezados y pies.
+- [ ] La presentación abre y contiene 15 diapositivas.
+- [ ] Las fuentes editables corresponden a los archivos finales.
+- [ ] El repositorio remoto coincide con la rama y revisión registradas.
+- [ ] No hay contraseñas, tokens ni secretos dentro de los documentos o Git.
+
+### 10.3 Fuente de verdad
+
+Para operación y aceptación prevalecen, en orden: la revisión Git registrada, las migraciones y el esquema de esa revisión, el reporte reproducible de pruebas, las reservas firmadas y los manuales finales. Las diapositivas resumen la entrega, pero no reemplazan el código, los reportes ni el acta.
+
+> Punto de cierre: el paquete documental está completo; los campos de cliente, accesos, ambiente, resultados de aceptación y firmas se completan con las personas autorizadas. Una brecha abierta debe permanecer visible hasta que exista evidencia verificable de cierre.
