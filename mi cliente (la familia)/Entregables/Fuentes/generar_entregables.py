@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+import subprocess
 from pathlib import Path
 
 from reportlab.lib import colors
@@ -461,7 +462,33 @@ def make_database_modules() -> KeepTogether:
 
 def make_git_chart() -> KeepTogether:
     d = Drawing(500, 295)
-    values = [("Christian", 63), ("Carlos", 56), ("Kevin", 38), ("Zahid", 25), ("Diego", 10), ("Daniel", 7), ("Adán*", 0)]
+    identities = {
+        "Carlos": ("chidalgo405", "carlosignacio"),
+        "Kevin": ("kevin11ts", "kevin sandoval", "20233l001135"),
+        "Adán*": ("adan", "adán"),
+        "Christian": ("christba",),
+        "Zahid": ("zahid",),
+        "Diego": ("diego",),
+        "Daniel": ("mrsonistar", "danieltidsmc", "20223i101142"),
+    }
+    counts = {name: 0 for name in identities}
+    try:
+        history = subprocess.run(
+            ["git", "-C", str(HERE.parents[2]), "log", "--all", "--format=%an|%ae"],
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.splitlines()
+        for row in history:
+            normalized = row.casefold()
+            for name, aliases in identities.items():
+                if any(alias in normalized for alias in aliases):
+                    counts[name] += 1
+                    break
+    except (OSError, subprocess.CalledProcessError):
+        counts.update({"Christian": 63, "Carlos": 56, "Kevin": 38, "Zahid": 25, "Diego": 10, "Daniel": 7})
+    order = ["Christian", "Carlos", "Kevin", "Zahid", "Diego", "Daniel", "Adán*"]
+    values = [(name, counts[name]) for name in order]
     max_value = max(value for _, value in values)
     y = 235
     for index, (name, value) in enumerate(values):
