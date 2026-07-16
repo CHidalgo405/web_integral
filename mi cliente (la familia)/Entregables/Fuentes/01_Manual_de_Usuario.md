@@ -1,11 +1,12 @@
 # Manual de usuario
 **Sistema:** Tiendita Maday
 **Cliente:** La Familia
-**Versión:** 1.1
-**Fecha:** 15 de julio de 2026
+**Versión:** 2.0
+**Fecha de revisión:** 16 de julio de 2026
+**Revisión documentada:** `852c5ce` en `main`
 **Perfiles cubiertos:** Cliente, cajero, almacén, gerente y administrador
 
-> Guía práctica de operación con capturas de pantalla reales del sistema. Los nombres exactos de algunos botones pueden variar ligeramente con futuras actualizaciones, pero los permisos y flujos descritos corresponden a la versión documentada.
+> Guía práctica de operación con capturas reales del sistema. Cubre procesos, consultas de control, seguridad, gestión de usuarios y funciones principales. Los nombres de algunos botones pueden variar en revisiones posteriores; valide siempre el commit desplegado.
 
 <!-- PAGEBREAK -->
 
@@ -290,3 +291,84 @@ En recepciones de mercancía, use el módulo **Abastecimiento** (pestañas Prove
 - [ ] Se revisaron diferencias de caja.
 - [ ] No existen cuentas activas de personal dado de baja.
 - [ ] El respaldo más reciente está dentro del objetivo acordado.
+
+<!-- PAGEBREAK -->
+
+## 9. Reportes y consultas de control
+
+Tiendita Maday ofrece vistas operativas para tomar decisiones y conservar trazabilidad. No todas generan un archivo descargable; cuando se requiera un informe firmado, registre periodo, filtros, responsable y commit, y utilice la impresión del navegador o una exportación autorizada sin alterar los datos.
+
+| Consulta o reporte | Responsable habitual | Qué revisar | Evidencia recomendada |
+|---|---|---|---|
+| Panel de Control | Gerente/administrador | Ventas, pedidos, clientes, tendencia, stock crítico y más vendidos. | Captura fechada y periodo. |
+| Mis ventas / corte | Cajero y gerente | Folio, hora, método, total, efectivo esperado/contado y diferencia. | Folios, corte y explicación. |
+| Movimientos de inventario | Almacén/gerente | Producto, entrada/salida, cantidades, motivo, nota, responsable y fecha. | Filtro aplicado y movimiento. |
+| Pedidos por estado | Administración | Pendientes, preparación, ruta y entrega. | Pedido y cambio de estado. |
+| Finanzas y auditoría de caja | Propietario | Gastos, cortes y diferencias acumuladas. | Periodo, responsable y reversos. |
+| Caducidades | Almacén/administración | Lotes vencidos o próximos a vencer y acción tomada. | Lote, fecha y retiro/promoción. |
+
+### 9.1 Cómo obtener evidencia confiable
+
+1. Confirme el ambiente y la cuenta con la que está operando.
+2. Seleccione la fecha o filtro necesario; anótelo si no aparece en la captura.
+3. Verifique que totales y folios correspondan al periodo solicitado.
+4. Oculte correos, direcciones, tokens y cualquier dato personal que no sea indispensable.
+5. Guarde el archivo con fecha, tipo y responsable, por ejemplo `2026-07-16_corte_caja_turno-matutino.pdf`.
+6. Si una cifra no coincide, no edite la evidencia: abra una incidencia y conserve ambas versiones.
+
+### 9.2 Conciliaciones recomendadas
+
+- compare ventas con tarjeta contra la terminal externa;
+- compare efectivo esperado contra efectivo contado y documente diferencias;
+- compare salidas por venta y ajustes contra el historial de inventario;
+- compare pedidos pagados contra confirmaciones del proveedor;
+- revise caducidades y mermas antes del cierre de periodo.
+
+## 10. Gestión segura de usuarios
+
+### 10.1 Alta
+
+1. Confirme que la persona requiere acceso y defina su responsable.
+2. Cree una cuenta individual; no reutilice cuentas de otra persona.
+3. Asigne el rol mínimo necesario.
+4. Entregue la contraseña temporal por un canal separado y seguro.
+5. Pida inicio de sesión y cambio de contraseña.
+6. Registre fecha de alta, rol y autorización.
+
+### 10.2 Cambio de rol
+
+1. Obtenga autorización del gerente o propietario.
+2. Cambie únicamente el rol necesario.
+3. Pida al usuario cerrar sesión y volver a entrar.
+4. Verifique que puede acceder a su módulo y no a áreas superiores.
+5. Registre quién autorizó y quién realizó el cambio.
+
+### 10.3 Baja
+
+1. Desactive la cuenta al terminar la relación laboral o cuando deje de necesitar acceso.
+2. No borre movimientos históricos asociados a la persona.
+3. Revoque accesos externos a GitHub, Railway, correo o proveedores si aplican.
+4. Rote cualquier secreto compartido conocido por esa persona.
+5. Confirme que no puede volver a iniciar sesión.
+
+> Administrador, gerente y propietario son accesos de alto impacto. Revise estas cuentas al menos trimestralmente y después de cualquier cambio de personal.
+
+## 11. Matriz de cobertura del manual
+
+| Requisito | Secciones que lo cubren | Evidencia incluida |
+|---|---|---|
+| Procesos | 2 a 5 y 8 | Compra, caja, inventario, administración y cierres. |
+| Reportes | 3.3, 4.2, 5.1, 5.5 y 9 | Ventas, corte, movimientos, panel y finanzas. |
+| Seguridad | 1, 5.2, 6 y 10 | Acceso, roles, contraseñas, altas, cambios y bajas. |
+| Gestión de usuarios | 5.2 y 10 | Directorio, rol mínimo, alta, cambio y desactivación. |
+| Funciones principales | 2 a 5 | Capturas de los cinco perfiles. |
+| Manejo de errores | 1.3, tablas de caja y sección 7 | Validaciones, fallos frecuentes y escalamiento. |
+
+## 12. Registro de revisión
+
+| Versión | Fecha | Revisión | Cambio principal |
+|---|---|---|---|
+| 1.1 | 15-jul-2026 | Revisión previa | Recorrido visual de cinco roles. |
+| 2.0 | 16-jul-2026 | `852c5ce` | Reportes, conciliación, ciclo de usuarios y matriz de cobertura. |
+
+**Limitación:** este manual documenta el comportamiento observado y esperado de la revisión indicada. No sustituye el reporte de pruebas, la guía de operación ni una capacitación con datos y servicios del ambiente definitivo.
