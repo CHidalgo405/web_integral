@@ -1,58 +1,58 @@
-# Acta de entrega y aceptacion
+# Acta de entrega y aceptación
 **Proyecto:** Tiendita Maday
 **Cliente:** La Familia
-**Version del formato:** 1.0
-**Fecha de preparacion:** 14 de julio de 2026
+**Versión del formato:** 1.1
+**Fecha de preparación:** 15 de julio de 2026
 **Estado:** Borrador para completar y firmar
 
-> Este documento no acredita aceptacion mientras existan campos esenciales vacios o falten las firmas autorizadas. Las reservas aceptadas deben tener responsable y fecha compromiso.
+> Este documento no acredita aceptación mientras existan campos esenciales vacíos o falten las firmas autorizadas. Las reservas aceptadas deben tener responsable y fecha compromiso.
 
 <!-- PAGEBREAK -->
 
-## 1. Identificacion de las partes
+## 1. Identificación de las partes
 
-| Campo | Informacion |
+| Campo | Información |
 |---|---|
-| Cliente / razon social | La Familia / __________________________________________ |
+| Cliente / razón social | La Familia / __________________________________________ |
 | Representante del cliente | __________________________________________ |
 | Equipo o proveedor | __________________________________________ |
 | Representante de entrega | __________________________________________ |
 | Fecha efectiva de entrega | ____ / ____ / ______ |
-| Version de aplicacion | __________________________________________ |
+| Versión de aplicación | __________________________________________ |
 | Commit o etiqueta entregada | __________________________________________ |
-| URL de produccion | __________________________________________ |
+| URL de producción | __________________________________________ |
 | URL de API | __________________________________________ |
 
 ## 2. Objeto
 
-Por medio de la presente se deja constancia de la entrega del sistema web Tiendita Maday y de la documentacion indicada en esta acta. La aceptacion se limita a la version, alcance, condiciones, reservas y evidencias expresamente registradas; no incorpora compromisos verbales ni funcionalidades futuras no descritas.
+Por medio de la presente se deja constancia de la entrega del sistema web Tiendita Maday y de la documentación indicada en esta acta. La aceptación se limita a la versión, alcance, condiciones, reservas y evidencias expresamente registradas; no incorpora compromisos verbales ni funcionalidades futuras no descritas.
 
 ## 3. Alcance funcional presentado
 
-- Autenticacion, recuperacion y control de acceso por roles.
-- Catalogo, categorias, productos, precios, imagenes y codigos de barras.
-- Carrito, direcciones, checkout, entrega/recoleccion y pedidos.
+- Autenticación, recuperación y control de acceso por roles.
+- Catálogo, categorías, productos, precios, imágenes y códigos de barras.
+- Carrito, direcciones, checkout, entrega/recolección y pedidos.
 - Punto de venta, apertura/cierre de caja y ventas del cajero.
 - Inventario, ajustes y movimientos auditables.
-- Administracion de usuarios y roles.
-- Proveedores, abasto y recepcion de mercancia.
+- Administración de usuarios y roles.
+- Proveedores, abasto y recepción de mercancía.
 - Promociones, caducidades y funciones administrativas.
 - Integraciones configurables con PayPal, Google, correo y Cloudinary.
 - API, PostgreSQL, migraciones y despliegue contenerizado/Railway.
 
-La funcionalidad se considera incluida solo cuando esta presente en la revision identificada y configurada con los servicios de terceros necesarios.
+La funcionalidad se considera incluida solo cuando está presente en la revisión identificada y configurada con los servicios de terceros necesarios.
 
 ## 4. Entregables documentales
 
 | Entregable | Recibido | Observaciones |
 |---|---|---|
 | 00 LEEME PRIMERO | [ ] | __________________________________ |
-| 01 Manual de Usuario | [ ] | __________________________________ |
-| 02 Guia de Operacion, Respaldo y Recuperacion | [ ] | __________________________________ |
+| 01 Manual de Usuario (con capturas) | [ ] | __________________________________ |
+| 02 Guía de Operación, Respaldo y Recuperación | [ ] | __________________________________ |
 | 03 Reporte de Pruebas y Limitaciones | [ ] | __________________________________ |
-| Codigo fuente y migraciones | [ ] | __________________________________ |
-| Documentacion tecnica y OpenAPI | [ ] | __________________________________ |
-| Acceso a repositorio y version etiquetada | [ ] | __________________________________ |
+| Código fuente y migraciones | [ ] | __________________________________ |
+| Documentación técnica y OpenAPI | [ ] | __________________________________ |
+| Acceso a repositorio y versión etiquetada | [ ] | __________________________________ |
 
 ## 5. Transferencia de control
 
@@ -71,62 +71,62 @@ La funcionalidad se considera incluida solo cuando esta presente en la revision 
 
 Las claves fueron transferidas mediante: ________________________________________________. Las partes confirman que no se incluyeron secretos en Git ni en esta acta.
 
-## 6. Prueba de aceptacion
+## 6. Prueba de aceptación
 
-| Caso | Resultado | Evidencia / observacion |
+| Caso | Resultado | Evidencia / observación |
 |---|---|---|
-| Acceso de administrador y gestion de usuario | Aprobado / Pendiente / No aplica | __________________ |
+| Acceso de administrador y gestión de usuario | Aprobado / Pendiente / No aplica | __________________ |
 | Apertura, venta en efectivo y cierre de caja | Aprobado / Pendiente / No aplica | __________________ |
-| Venta con tarjeta y conciliacion | Aprobado / Pendiente / No aplica | __________________ |
-| Entrada/salida de inventario con auditoria | Aprobado / Pendiente / No aplica | __________________ |
-| Compra cliente con recoleccion | Aprobado / Pendiente / No aplica | __________________ |
+| Venta con tarjeta y conciliación | Aprobado / Pendiente / No aplica | __________________ |
+| Entrada/salida de inventario con auditoría | Aprobado / Pendiente / No aplica | __________________ |
+| Compra cliente con recolección | Aprobado / Pendiente / No aplica | __________________ |
 | Compra cliente con entrega | Aprobado / Pendiente / No aplica | __________________ |
 | PayPal en sandbox | Aprobado / Pendiente / No aplica | __________________ |
-| Recuperacion de contrasena | Aprobado / Pendiente / No aplica | __________________ |
+| Recuperación de contraseña | Aprobado / Pendiente / No aplica | __________________ |
 | Carga de imagen de producto | Aprobado / Pendiente / No aplica | __________________ |
-| Respaldo y restauracion aislada | Aprobado / Pendiente / No aplica | __________________ |
+| Respaldo y restauración aislada | Aprobado / Pendiente / No aplica | __________________ |
 
-## 7. Resultados tecnicos conocidos al preparar el acta
+## 7. Resultados técnicos conocidos al preparar el acta
 
 - Backend: 19 pruebas aprobadas, 0 fallidas y 2 integraciones omitidas por falta de base aislada.
-- Frontend: compilacion aprobada con advertencias de presupuesto y dependencias CommonJS.
-- Frontend: comando de pruebas no aprobado porque Vitest no encontro pruebas ejecutables.
-- Prueba visual completa de los cinco roles: pendiente.
-- Respaldo y restauracion: pendiente de evidencia.
+- Frontend: compilación aprobada con advertencias de presupuesto y dependencias CommonJS.
+- Frontend: comando de pruebas no aprobado porque Vitest no encontró pruebas ejecutables.
+- Prueba visual de los cinco roles: ejecutada el 15 de julio de 2026 en entorno local con evidencia fotográfica (ver reporte de pruebas); pendiente de repetirse en el entorno definitivo.
+- Respaldo y restauración: pendiente de evidencia.
 
 Estos elementos deben revisarse junto con `03_Reporte_de_Pruebas_y_Limitaciones.pdf` y reflejarse como reservas si no se resuelven antes de firmar.
 
 ## 8. Reservas y pendientes aceptados
 
-| Numero | Pendiente o reserva | Prioridad | Responsable | Fecha compromiso | Criterio de cierre |
+| Número | Pendiente o reserva | Prioridad | Responsable | Fecha compromiso | Criterio de cierre |
 |---|---|---|---|---|---|
 | 1 | __________________________ | Alta/Media/Baja | __________ | __________ | __________________ |
 | 2 | __________________________ | Alta/Media/Baja | __________ | __________ | __________________ |
 | 3 | __________________________ | Alta/Media/Baja | __________ | __________ | __________________ |
 | 4 | __________________________ | Alta/Media/Baja | __________ | __________ | __________________ |
 
-## 9. Soporte, garantia y costos
+## 9. Soporte, garantía y costos
 
-| Condicion | Acuerdo |
+| Condición | Acuerdo |
 |---|---|
-| Inicio de garantia | ____ / ____ / ______ |
-| Fin o duracion | __________________________________________ |
-| Horario de atencion | __________________________________________ |
-| Correo / telefono | __________________________________________ |
-| Tiempo objetivo para incidente critico | __________________________________________ |
+| Inicio de garantía | ____ / ____ / ______ |
+| Fin o duración | __________________________________________ |
+| Horario de atención | __________________________________________ |
+| Correo / teléfono | __________________________________________ |
+| Tiempo objetivo para incidente crítico | __________________________________________ |
 | Correcciones incluidas | __________________________________________ |
 | Mejoras o cambios fuera de alcance | __________________________________________ |
 | Responsable de renovaciones de terceros | __________________________________________ |
 
-Salvo acuerdo escrito, la garantia corrige defectos reproducibles del alcance entregado y no incluye nuevas funciones, datos capturados incorrectamente, indisponibilidad de terceros, perdida de credenciales ni cambios solicitados despues de la aceptacion.
+Salvo acuerdo escrito, la garantía corrige defectos reproducibles del alcance entregado y no incluye nuevas funciones, datos capturados incorrectamente, indisponibilidad de terceros, pérdida de credenciales ni cambios solicitados después de la aceptación.
 
-## 10. Declaracion de decision
+## 10. Declaración de decisión
 
-Marque una sola opcion:
+Marque una sola opción:
 
-- [ ] **Aceptacion final.** El cliente recibe la version indicada sin reservas abiertas.
-- [ ] **Aceptacion condicionada.** El cliente recibe la version con las reservas de la seccion 8.
-- [ ] **No aceptada.** Se requiere corregir los puntos anexos antes de una nueva revision.
+- [ ] **Aceptación final.** El cliente recibe la versión indicada sin reservas abiertas.
+- [ ] **Aceptación condicionada.** El cliente recibe la versión con las reservas de la sección 8.
+- [ ] **No aceptada.** Se requiere corregir los puntos anexos antes de una nueva revisión.
 
 Observaciones generales:
 
@@ -147,13 +147,13 @@ ________________________________________________________________________________
 
 ## 12. Cierre de transferencia
 
-- [ ] Los datos de identificacion y URLs estan completos.
-- [ ] La revision entregada esta etiquetada y accesible.
+- [ ] Los datos de identificación y URLs están completos.
+- [ ] La revisión entregada está etiquetada y accesible.
 - [ ] El cliente controla las cuentas y servicios indicados.
 - [ ] Se rotaron secretos temporales o compartidos.
 - [ ] Existe al menos un respaldo reciente bajo control del cliente.
-- [ ] Se explico como restaurar y escalar un incidente.
+- [ ] Se explicó cómo restaurar y escalar un incidente.
 - [ ] Los pendientes tienen responsable y fecha.
-- [ ] Ambas partes conservan una copia identica del acta firmada.
+- [ ] Ambas partes conservan una copia idéntica del acta firmada.
 
-> Anexe a esta acta la version final del reporte de pruebas, la lista de reservas y cualquier evidencia de restauracion o pagos que forme parte de la decision.
+> Anexe a esta acta la versión final del reporte de pruebas, la lista de reservas y cualquier evidencia de restauración o pagos que forme parte de la decisión.
