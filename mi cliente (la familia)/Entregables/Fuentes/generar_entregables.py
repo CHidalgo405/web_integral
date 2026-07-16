@@ -10,9 +10,11 @@ from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import inch
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.lib.utils import ImageReader
 from reportlab.platypus import (
     BaseDocTemplate,
     Frame,
+    Image,
     KeepTogether,
     PageBreak,
     PageTemplate,
@@ -40,11 +42,18 @@ RED = colors.HexColor("#A33A2B")
 def register_fonts() -> tuple[str, str, str, str]:
     font_dir = Path("C:/Windows/Fonts")
     candidates = {
-        "body": font_dir / "arial.ttf",
-        "bold": font_dir / "arialbd.ttf",
-        "italic": font_dir / "ariali.ttf",
-        "bolditalic": font_dir / "arialbi.ttf",
+        "body": font_dir / "segoeui.ttf",
+        "bold": font_dir / "seguisb.ttf",
+        "italic": font_dir / "segoeuii.ttf",
+        "bolditalic": font_dir / "seguisbi.ttf",
     }
+    if not all(path.exists() for path in candidates.values()):
+        candidates = {
+            "body": font_dir / "arial.ttf",
+            "bold": font_dir / "arialbd.ttf",
+            "italic": font_dir / "ariali.ttf",
+            "bolditalic": font_dir / "arialbi.ttf",
+        }
     if all(path.exists() for path in candidates.values()):
         pdfmetrics.registerFont(TTFont("TMBody", str(candidates["body"])))
         pdfmetrics.registerFont(TTFont("TMBody-Bold", str(candidates["bold"])))
@@ -176,6 +185,17 @@ def styles():
             spaceBefore=5,
             spaceAfter=8,
         ),
+        "caption": ParagraphStyle(
+            "Caption",
+            parent=base["BodyText"],
+            fontName=FONT_ITALIC,
+            fontSize=8.3,
+            leading=11,
+            textColor=MID_GRAY,
+            alignment=TA_CENTER,
+            spaceBefore=3,
+            spaceAfter=10,
+        ),
         "footer": ParagraphStyle(
             "Footer",
             parent=base["BodyText"],
@@ -234,10 +254,12 @@ class ClientDocTemplate(BaseDocTemplate):
             canvas.setFillColor(MID_GRAY)
             canvas.drawString(self.leftMargin, height - 0.38 * inch, "Tiendita Maday | Entrega para La Familia")
             canvas.drawRightString(width - self.rightMargin, height - 0.38 * inch, self.document_name[:70])
+            canvas.setFillColor(colors.HexColor("#FBF8F2"))
+            canvas.rect(0, 0, width, 0.62 * inch, fill=1, stroke=0)
         canvas.setFont(FONT, 7.5)
         canvas.setFillColor(MID_GRAY)
-        canvas.drawString(self.leftMargin, 0.34 * inch, "Version 1.0 | 14 de julio de 2026")
-        canvas.drawRightString(width - self.rightMargin, 0.34 * inch, f"Pagina {doc.page}")
+        canvas.drawString(self.leftMargin, 0.34 * inch, "Versión 1.1 | 15 de julio de 2026")
+        canvas.drawRightString(width - self.rightMargin, 0.34 * inch, f"Página {doc.page}")
         canvas.restoreState()
 
 
@@ -287,6 +309,32 @@ def make_table(rows: list[list[str]]) -> Table:
     return table
 
 
+def make_image(caption: str, path: Path) -> KeepTogether:
+    reader = ImageReader(str(path))
+    px_width, px_height = reader.getSize()
+    width = min(5.9 * inch, letter[0] - 1.44 * inch)
+    height = width * px_height / px_width
+    image = Image(str(path), width=width, height=height)
+    framed = Table([[image]], colWidths=[width + 8], hAlign="CENTER")
+    framed.setStyle(
+        TableStyle(
+            [
+                ("BOX", (0, 0), (-1, -1), 0.75, colors.HexColor("#CDD5C8")),
+                ("LEFTPADDING", (0, 0), (-1, -1), 4),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 4),
+                ("TOPPADDING", (0, 0), (-1, -1), 4),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+            ]
+        )
+    )
+    parts = [Spacer(1, 4), framed]
+    if caption:
+        parts.append(Paragraph(inline(caption), STYLES["caption"]))
+    else:
+        parts.append(Spacer(1, 8))
+    return KeepTogether(parts)
+
+
 def parse_markdown(text: str) -> tuple[str, list]:
     lines = text.splitlines()
     title = next((line[2:].strip() for line in lines if line.startswith("# ")), "Documento")
@@ -326,6 +374,14 @@ def parse_markdown(text: str) -> tuple[str, list]:
         if stripped.startswith("|" ) and stripped.endswith("|"):
             flush_paragraph()
             table_rows.append([cell.strip() for cell in stripped.strip("|").split("|")])
+            continue
+        image_match = re.match(r"^!\[(.*)\]\((.+)\)$", stripped)
+        if image_match:
+            flush_paragraph()
+            flush_table()
+            image_path = HERE / image_match.group(2)
+            if image_path.exists():
+                story.append(make_image(image_match.group(1), image_path))
             continue
         flush_table()
         if stripped.startswith("# "):
