@@ -1,163 +1,252 @@
-# Reporte de pruebas y limitaciones
+# Reporte de pruebas, incidencias y correcciones
 **Sistema:** Tiendita Maday
 **Cliente:** La Familia
-**Versión del reporte:** 1.1
-**Fecha de ejecución:** 14 de julio de 2026 (automatizadas) y 15 de julio de 2026 (recorrido visual)
-**Revisión base:** `138d4e5` (`main` antes de agregar esta documentación)
+**Versión del reporte:** 2.0
+**Fecha de ejecución actual:** 16 de julio de 2026
+**Revisión probada:** `123372c` en `main`
 
-> Resultado general: compilación frontend aprobada con advertencias; pruebas backend aprobadas en el alcance ejecutado; recorrido visual de los cinco roles ejecutado en entorno local con evidencia. La aceptación integral sigue condicionada a las pruebas automatizadas con base aislada, la suite frontend y las integraciones externas reales.
+> Resultado general: build frontend aprobado con advertencias; 19 pruebas backend aprobadas y 2 omitidas; suite frontend no aprobada porque Vitest no encuentra archivos ejecutables; recorrido manual previo de cinco roles respaldado por 25 capturas. La aceptación final continúa condicionada.
 
 <!-- PAGEBREAK -->
 
-## 1. Alcance y método
+## 1. Alcance y entorno
 
-La validación se ejecutó sobre el código local del repositorio. Se utilizaron los comandos declarados por cada proyecto. No se utilizaron credenciales de producción ni se realizaron cobros reales.
+La verificación actual se ejecutó después de sincronizar `origin/main`. No se usaron credenciales de producción ni pagos live.
 
-| Componente | Comando o método | Resultado |
+| Elemento | Valor |
+|---|---|
+| Sistema operativo | macOS del equipo de verificación |
+| Node.js | 24.14.0 LTS |
+| Rama / commit | `main` / `123372c` |
+| Backend | Node test runner |
+| Frontend | Angular build + Vitest mediante `ng test` |
+| Recorrido visual | Evidencia local del 15-jul-2026 |
+| Restauración | No ejecutada |
+
+### 1.1 Resumen
+
+| Componente | Comando / método | Resultado |
 |---|---|---|
-| Backend | `npm test` | 21 registradas: 19 aprobadas, 0 fallidas, 2 omitidas. |
-| Frontend | `npm run build` | Compilación aprobada; salida generada. |
-| Frontend | `npm test -- --watch=false` | No aprobado: Vitest informa que no encontró archivos de prueba ejecutables. |
-| Prueba visual | Navegador automatizado sobre Docker Compose local | Ejecutada el 15-jul-2026: recorrido de los cinco roles con capturas. |
-| Restauración de respaldo | Base aislada | No ejecutada. |
+| Backend | `npm test` | 21 registradas: 19 aprobadas, 0 fallidas, 2 omitidas; código 0. |
+| Frontend | `npm run build` | Aprobado en 3.858 s; código 0 con advertencias. |
+| Frontend | `npm test -- --watch=false` | No aprobado: “No test files found”; código 1. |
+| Prueba visual | Recorrido local de cinco roles | Ejecutado; 25 capturas. |
+| POS e inventario reales | Recorrido contra PostgreSQL local | Flujos felices ejecutados. |
+| Respaldo/restauración | Base aislada | Pendiente. |
 
-## 2. Resultados backend
+## 2. Casos de prueba documentados
 
-El proceso terminó con código 0 en 62.8 segundos. Las 19 pruebas aprobadas cubren principalmente autorización, validación de checkout, reglas de envío y validación de opiniones.
-
-### 2.1 Controles aprobados
-
-- Endpoints de negocio rechazan solicitudes sin autenticar.
-- El cliente no puede modificar catálogo ni consultar recursos internos.
-- El cajero alcanza el flujo POS pero permanece fuera de recursos administrativos.
-- Almacén alcanza ajustes y permanece fuera de administración.
-- Gerencia hereda los permisos administrativos previstos.
-- Checkout normaliza productos duplicados y rechaza cantidades inválidas.
-- Tarifas de envío se calculan desde reglas del servidor.
-- Descuentos se limitan y distribuyen entre líneas elegibles.
-- Límites y continuidad de zonas de entrega se validan.
-- Opiniones validan calificación, longitud e identificadores UUID.
-
-### 2.2 Pruebas omitidas
-
-| Prueba | Motivo | Variable requerida |
-|---|---|---|
-| Ajuste de inventario registra movimiento auditable | Requiere PostgreSQL de prueba aislado. | `INVENTORY_TEST_DATABASE_URL` |
-| POS abre caja, vende, descuenta stock y cierra | Requiere PostgreSQL de prueba aislado. | `POS_TEST_DATABASE_URL` |
-
-El final del proceso también registró un intento de conexión PostgreSQL sin una contraseña válida. No cambió el código de salida, pero confirma que el entorno general no sustituyó las dos pruebas integrales omitidas.
-
-## 3. Resultados frontend
-
-### 3.1 Compilación
-
-La compilación Angular terminó con código 0 en 12.8 segundos. El paquete inicial fue de aproximadamente 365 kB sin comprimir y 100 kB de transferencia estimada, además de módulos de carga diferida.
-
-Se registraron advertencias:
-
-- La hoja de fuente Source Code Pro supera el presupuesto configurado por 6.76 kB.
-- Dependencias de `canvg`, `core-js`, `raf`, `rgbcolor` y `html2canvas` usan CommonJS/AMD y pueden reducir optimizaciones.
-- El equipo de validación utilizó Node.js 23.11, una versión impar no LTS; producción debe usar Node 20 LTS según la arquitectura del servicio.
-
-### 3.2 Pruebas automatizadas
-
-El comando de pruebas construyó los paquetes de especificación, pero Vitest terminó con código 1 y el mensaje **No test files found**. Aunque existen archivos con extensión `.spec.ts`, actualmente no constituyen una suite ejecutable reconocida por la configuración.
-
-## 4. Recorrido visual del 15 de julio de 2026
-
-Se levantó el sistema completo con Docker Compose local (frontend, backend y PostgreSQL con datos de demostración) y se recorrieron los cinco roles con un navegador automatizado. Las capturas completas ilustran el Manual de Usuario; aquí se resume lo verificado:
-
-- **Autenticación:** inicio de sesión correcto para los roles `customer`, `cashier`, `stock` y `admin`; cada rol llegó a su área correspondiente y la pantalla de recuperación de contraseña carga.
-- **Cliente:** catálogo con imágenes, detalle de producto, alta al carrito con confirmación, carrito con totales y primer paso del checkout.
-- **Cajero:** apertura de caja con fondo inicial, venta en efectivo de $82.00 con dos productos, cálculo de cambio, confirmación del cobro y visualización del corte con efectivo esperado y diferencia. El stock de los productos vendidos se descontó en la base de datos.
-- **Almacén:** consulta de existencias, entrada manual de 10 piezas con motivo y nota, y verificación del movimiento auditable (responsable, cantidades y fecha) en el historial.
-- **Administración:** panel de control con métricas, productos, pedidos, usuarios, abastecimiento, caducidades, promociones, finanzas y configuración de tienda con zonas de entrega en mapa.
-
-![Venta en efectivo confirmada desde el punto de venta durante el recorrido.](capturas/23_cajero_cobro.png)
-
-![Movimiento de inventario auditable registrado durante el recorrido.](capturas/32_almacen_movimientos.png)
-
-> El recorrido cubre el flujo feliz en un entorno local con datos de demostración. No sustituye las pruebas integrales automatizadas con base aislada ni la prueba de integraciones externas (PayPal, Google, correo, Cloudinary).
-
-### 4.1 Hallazgo observado durante el recorrido
-
-Una venta en efectivo realizada a las 19:47 hora local no apareció en **Mis ventas** con el filtro del día en curso; apareció al seleccionar la fecha del día siguiente. La causa observada es que la agrupación por día usa la fecha UTC del servidor, por lo que las ventas nocturnas (aproximadamente después de las 18:00 hora del centro de México) se listan en el día siguiente. El efectivo esperado del turno sí se calculó correctamente. Se registra como limitación en la sección 5.
-
-## 5. Matriz de cobertura
-
-| Área | Automatizada | Integración real | Recorrido manual | Estado |
+| ID | Caso | Resultado esperado | Resultado actual | Estado |
 |---|---|---|---|---|
-| Autenticación y permisos backend | Sí | Parcial | Ejecutado | Satisfactorio en alcance unitario/rutas. |
-| Checkout y envío | Sí | Parcial | Parcial (hasta identificación) | Reglas principales aprobadas. |
-| Punto de venta | Permisos | Omitida | Ejecutado (flujo feliz) | Venta real contra PostgreSQL local aprobada; falta prueba automatizada aislada. |
-| Inventario | Permisos | Omitida | Ejecutado (flujo feliz) | Movimiento auditable verificado; falta prueba automatizada aislada. |
-| Frontend | No ejecutable | No | Ejecutado (flujo feliz) | Brecha de cobertura automatizada. |
-| Correo | No | No | Pendiente | Requiere credenciales/configuración. |
-| PayPal | No | No | Pendiente | Probar sandbox y conciliación. |
-| Google OAuth | No | No | Pendiente | Probar origen y cliente final. |
-| Cloudinary | No | No | Pendiente | Probar carga y lectura. |
-| Respaldo/restauración | No | No | Pendiente | Debe probarse antes de operación crítica. |
+| CP-01 | Compilar frontend | Generar bundle sin error | Bundle generado; 361.49 kB iniciales, 98.99 kB transferencia estimada | Aprobado con advertencias |
+| CP-02 | Rechazo sin autenticación | Endpoints de negocio rechazan petición | Prueba aprobada | Aprobado |
+| CP-03 | Permisos por rol | Cliente/cajero/stock no acceden a admin; manager hereda gestión | Pruebas aprobadas | Aprobado |
+| CP-04 | Validación de checkout | Rechazar cantidades inválidas y normalizar duplicados | Prueba aprobada | Aprobado |
+| CP-05 | Cálculo de entrega | Servidor define zona, límites y tarifa | Pruebas aprobadas | Aprobado |
+| CP-06 | Validación de reseñas | Rating, comentario y UUID válidos | Pruebas aprobadas | Aprobado |
+| CP-07 | Venta POS manual | Abrir, vender, descontar stock y preparar corte | Ejecutado el 15-jul con captura | Aprobado manual |
+| CP-08 | Ajuste de inventario manual | Cambiar stock y guardar auditoría | Ejecutado el 15-jul con captura | Aprobado manual |
+| CP-09 | Suite frontend | Ejecutar especificaciones y producir resultados | Vitest no encuentra tests | No aprobado |
+| CP-10 | Integración POS automática | Ciclo completo sobre base desechable | Omitida sin `POS_TEST_DATABASE_URL` | Pendiente |
+| CP-11 | Integración inventario automática | Ajuste y auditoría sobre base desechable | Omitida sin URL de prueba | Pendiente |
+| CP-12 | Restauración | Recuperar respaldo en base aislada | No ejecutada | Pendiente |
 
-## 6. Limitaciones y riesgos conocidos
+## 3. Resultado backend
 
-| Prioridad | Hallazgo | Riesgo | Acción recomendada |
-|---|---|---|---|
-| Alta | Pruebas POS e inventario omitidas. | Errores transaccionales podrían aparecer con PostgreSQL real. | Ejecutar contra base desechable inicializada con `init.sql`. |
-| Alta | Frontend sin suite ejecutable. | Regresiones de interfaz y guards no se detectan automáticamente. | Corregir configuración Vitest y agregar pruebas de flujos críticos. |
-| Alta | Restauración no probada. | Un respaldo existente podría no ser recuperable. | Realizar simulacro y registrar evidencia. |
-| Alta | Canales de soporte y propietario de servicios no confirmados. | Incidentes sin responsable y pérdida de control de cuentas. | Completar acta y rotar credenciales. |
-| Media | Ventas nocturnas se agrupan en el día UTC siguiente en Mis ventas y el corte por fecha. | Confusión del cajero al buscar sus operaciones; conciliación diaria desfasada. | Ajustar la agrupación por día a la zona horaria de la tienda. |
-| Media | Documentos históricos mencionan Angular 17 y roles antiguos. | Operación o mantenimiento con instrucciones incorrectas. | Actualizar arquitectura y diseño de datos. |
-| Media | Nombres Tiendita Maday, Verdulería Retama y La Familia mezclados. | Confusión comercial y legal. | Aprobar una marca oficial y normalizarla. |
-| Media | Advertencias de optimización frontend. | Paquete mayor o rendimiento inferior al posible. | Presupuestar fuente y revisar dependencias CommonJS. |
-| Media | Términos y contactos incluidos en la UI requieren revisión del cliente. | Información legal o de soporte inexacta. | Revisión legal/comercial antes de producción. |
-| Baja | Documentos duplicados sin etiqueta de versión final. | El cliente puede usar una versión antigua. | Archivar fuentes y marcar finales. |
+El proceso terminó con código 0 en **10.411 segundos**:
 
-## 7. Pruebas pendientes para aceptación
+- 21 tests registrados.
+- 19 aprobados.
+- 0 fallidos.
+- 2 omitidos.
+- 0 cancelados.
 
-### 7.1 Técnicas
+### 3.1 Cobertura aprobada
 
-- [ ] Crear PostgreSQL de prueba desechable desde `Database/init.sql`.
-- [ ] Ejecutar las dos pruebas integrales con sus variables de entorno.
-- [ ] Corregir y ejecutar la suite frontend.
-- [ ] Ejecutar compilación con Node 20 LTS y configuración de producción.
-- [ ] Probar migraciones desde una copia de la base actual.
-- [ ] Crear un respaldo y restaurarlo en una base nueva.
+- Rutas de negocio rechazan solicitudes no autenticadas.
+- Cliente no modifica catálogo ni consulta recursos internos.
+- Cajero alcanza validaciones POS y no administración.
+- Almacén alcanza ajuste y no administración.
+- Gerencia hereda permisos administrativos previstos.
+- Checkout normaliza artículos duplicados y rechaza cantidades inválidas.
+- El servidor calcula envío y limita descuentos.
+- Zonas respetan continuidad, primer límite y adyacencias.
+- Reseñas validan rating, longitud e identificadores UUID.
 
-### 7.2 Negocio
+Durante pruebas negativas aparecen trazas de errores esperados como “Agrega al menos un producto” o “Producto inválido”. Esas trazas corresponden a casos que verifican rechazo; no incrementaron el conteo de fallas. Conviene reducir el ruido de consola en el entorno test sin ocultar errores reales.
 
-- [ ] Administrador inicia sesión y administra un usuario.
-- [ ] Cajero abre caja, vende en efectivo y cierra sin diferencia.
-- [ ] Se registra una tarjeta aprobada por terminal externa sin cobro duplicado.
-- [ ] Almacén registra entrada y salida con movimiento auditable.
-- [ ] Cliente completa pedido de recolección.
-- [ ] Cliente completa pedido de entrega y la tarifa es correcta.
-- [ ] PayPal sandbox confirma y concilia un pedido.
-- [ ] Recuperación de contraseña llega al correo real.
-- [ ] Imagen de producto se almacena y vuelve a cargar.
-- [ ] Pedido y existencia permanecen correctos después de actualizar la página.
+### 3.2 Integraciones omitidas
 
-Los puntos de cajero y almacén fueron pre-verificados en el recorrido local del 15 de julio (sección 4); deben repetirse en el entorno definitivo del cliente durante la prueba de aceptación.
-
-## 8. Criterio de salida recomendado
-
-La versión puede presentarse para una **aceptación condicionada**, ya que compila, los controles backend ejecutados no muestran fallas y el recorrido visual local de los cinco roles se completó sin errores funcionales. No se recomienda una aceptación final sin reservas hasta aprobar al menos:
-
-1. Integraciones POS e inventario en una base aislada.
-2. Recorrido manual de los cinco roles en el entorno definitivo.
-3. Prueba de pagos en sandbox y correo real.
-4. Simulacro de respaldo y restauración.
-5. Corrección o acuerdo explícito sobre la ausencia de pruebas frontend.
-
-## 9. Evidencia resumida
-
-| Fecha | Evidencia | Resultado |
+| Prueba | Condición | Variable |
 |---|---|---|
-| 14-jul-2026 | Backend `npm test` | 19 pass, 0 fail, 2 skip, código 0. |
-| 14-jul-2026 | Frontend `npm run build` | Aprobado con advertencias, código 0. |
-| 14-jul-2026 | Frontend `npm test -- --watch=false` | No test files found, código 1. |
-| 15-jul-2026 | Recorrido visual de los cinco roles (Docker local) | Completado; 25 capturas en `Fuentes/capturas/`. |
-| 15-jul-2026 | Venta en efectivo y movimiento de inventario contra PostgreSQL local | Aprobados; stock y auditoría correctos. |
-| 15-jul-2026 | Filtro por día en Mis ventas | Hallazgo: agrupación por fecha UTC (sección 4.1). |
+| Movimiento de inventario auditable | PostgreSQL desechable inicializado | `INVENTORY_TEST_DATABASE_URL` o URL POS |
+| Apertura, venta, stock y cierre POS | PostgreSQL desechable inicializado | `POS_TEST_DATABASE_URL` |
 
-> Este reporte no certifica seguridad, cumplimiento legal, rendimiento a escala ni disponibilidad de terceros. Describe exactamente la evidencia ejecutada y los huecos observados.
+El log informó conexión PostgreSQL al finalizar, pero las pruebas integrales permanecieron marcadas `SKIP`; una conexión general no sustituye una base aislada ni convierte esos casos en aprobados.
+
+## 4. Resultado frontend
+
+### 4.1 Build
+
+La compilación terminó con código 0 en **3.858 segundos**.
+
+| Métrica | Resultado |
+|---|---:|
+| Bundle inicial sin comprimir | 361.49 kB |
+| Transferencia inicial estimada | 98.99 kB |
+| Módulos lazy mostrados | 84 o más (salida resumida) |
+| Salida | `dist/la-familia/browser` |
+
+Advertencias:
+
+- Fuente Source Code Pro: 27.61 kB frente a presupuesto 20 kB.
+- Dependencias CommonJS/AMD provenientes de canvg/core-js/raf/rgbcolor/html2canvas.
+- El build es funcional, pero esas advertencias pueden afectar optimización.
+
+### 4.2 Suite automatizada
+
+`npm test -- --watch=false` construyó tres bundles de especificación:
+
+- `app.component.spec.ts`
+- `app.spec.ts`
+- `features/admin/expirations/expirations.spec.ts`
+
+Vitest 4.1.6 terminó con código 1 y **No test files found**, aun cuando los include muestran esas rutas. La suite no produce tests aprobados; debe corregirse integración Angular/Vitest o formato/registro de especificaciones.
+
+## 5. Recorrido funcional previo
+
+El 15 de julio de 2026 se levantó frontend, backend y PostgreSQL con datos de demostración y se recorrieron los cinco roles.
+
+### 5.1 Autenticación y cliente
+
+- Login de cliente, cajero, almacén y admin.
+- Recuperación de contraseña visible.
+- Catálogo, detalle, carrito y primer paso de checkout.
+- Pedidos y perfil.
+
+### 5.2 Punto de venta
+
+- Apertura con fondo.
+- Ticket de dos productos.
+- Cobro en efectivo por $82.00.
+- Cálculo de cambio.
+- Confirmación y descuento de stock.
+- Consulta de corte y efectivo esperado.
+
+![Cobro en efectivo ejecutado durante el recorrido.](capturas/23_cajero_cobro.png)
+
+### 5.3 Inventario
+
+- Consulta de existencias.
+- Entrada manual de 10 piezas.
+- Motivo y nota.
+- Movimiento con responsable, cantidad anterior/nueva y fecha.
+
+![Movimiento de inventario auditable.](capturas/32_almacen_movimientos.png)
+
+### 5.4 Administración
+
+- Dashboard.
+- Productos, pedidos y usuarios.
+- Abastecimiento, caducidades y promociones.
+- Finanzas y configuración con mapa.
+
+> El recorrido cubre flujos felices locales. No sustituye automatización integral, pruebas de carga, seguridad, accesibilidad ni integraciones externas finales.
+
+## 6. Incidencias detectadas
+
+| ID | Prioridad | Incidencia | Impacto | Estado |
+|---|---|---|---|---|
+| INC-01 | Alta | Frontend no ejecuta tests | Regresiones de UI/guards no detectadas automáticamente | Abierta |
+| INC-02 | Alta | POS e inventario automáticos omitidos | Riesgo transaccional no cubierto en CI | Abierta |
+| INC-03 | Alta | Restauración no probada | Respaldo podría no ser recuperable | Abierta |
+| INC-04 | Media | Ventas nocturnas pueden aparecer en día UTC siguiente | Consulta/corte diario confuso en zona centro de México | Abierta |
+| INC-05 | Media | Fuente excede presupuesto | Incremento de CSS/tiempo de carga | Abierta |
+| INC-06 | Media | Dependencias CommonJS | Menor optimización | Abierta |
+| INC-07 | Media | Varias bibliotecas/proveedores de correo | Configuración y mantenimiento ambiguos | Abierta |
+| INC-08 | Media | Nombres Maday/La Familia/Retama mezclados | Confusión comercial y documental | Abierta |
+| INC-09 | Media | Icono PWA aún es marcador Angular | Marca no lista para publicación | Abierta |
+| INC-10 | Baja | Tests negativos imprimen stack traces | Ruido en logs de CI | Abierta |
+
+## 7. Correcciones realizadas
+
+| Hallazgo | Commit | Corrección observable | Verificación |
+|---|---|---|---|
+| OTP generado del lado cliente | `c71594e` | Backend controla el código | Revisión de cambio y flujo |
+| Registro con validación insuficiente | `73f0610` | Validaciones en formulario | Recorrido/UI |
+| Fechas de promociones | `e1b7558` | Formato legible | Captura/módulo |
+| Acciones de perfil desalineadas | `3b4ce80` | Botones centrados | UI |
+| Riesgo de totales manipulados | `9c74895`, `93a6742` | Checkout valida/recalcula servidor | Test unitario/servicio |
+| Ajustes de inventario tras merge | `b22d115` | Trazabilidad preservada | Recorrido |
+| Interfaz en escritorio | `d4aafe2`, `5a43090`, `0b843b8` | Vistas y tarjetas responsivas | Capturas 1280 × 800 |
+
+No se marca una incidencia como cerrada solo porque existe un commit: el criterio de cierre exige una prueba reproducible en la revisión final.
+
+## 8. Matriz de cobertura
+
+| Área | Automatizada | Manual | Integración externa final | Evaluación |
+|---|---|---|---|---|
+| Autenticación/RBAC backend | Sí | Sí | Google pendiente final | Satisfactoria parcial |
+| Checkout/envío | Sí en reglas | Parcial | PayPal sandbox pendiente | Satisfactoria parcial |
+| POS | Permisos/reglas | Flujo feliz | Terminal externa no aplica al sistema | Pendiente automática |
+| Inventario | Permisos/reglas | Flujo feliz | No | Pendiente automática |
+| Frontend | No ejecutable | Cinco roles | No | Brecha alta |
+| Correo | No | Pantalla | Proveedor final pendiente | Pendiente |
+| Cloudinary | No | UI visible | Credenciales finales pendientes | Pendiente |
+| Respaldo/restauración | No | No | Proveedor/base final | Pendiente alta |
+| Seguridad | RBAC parcial | Flujo | Sin auditoría formal | No certificada |
+| Accesibilidad | No | Revisión básica | No | Pendiente |
+
+## 9. Pruebas pendientes
+
+### 9.1 Antes de aceptación final
+
+- [ ] Crear dos bases PostgreSQL desechables desde `init.sql`.
+- [ ] Ejecutar POS e inventario sin `SKIP`.
+- [ ] Corregir Vitest y obtener tests frontend reales.
+- [ ] Probar Google, correo, Cloudinary y PayPal sandbox.
+- [ ] Crear y restaurar un respaldo en base aislada.
+- [ ] Repetir recorrido en entorno definitivo.
+- [ ] Verificar zona horaria de ventas nocturnas.
+- [ ] Ejecutar revisión de seguridad y accesibilidad proporcional al riesgo.
+
+### 9.2 Datos mínimos a conservar por prueba
+
+| Dato | Ejemplo |
+|---|---|
+| Fecha/hora y responsable | 16-jul-2026 14:00 / equipo |
+| Commit | Hash corto y rama |
+| Entorno | Local / staging / producción |
+| Entrada | Rol, datos y precondición |
+| Resultado esperado/real | Texto concreto |
+| Evidencia | Log, captura, folio o reporte |
+| Incidencia | ID y prioridad |
+
+## 10. Criterio de salida
+
+La revisión puede usarse para **presentación y aceptación condicionada**:
+
+1. El frontend compila.
+2. Las 19 pruebas backend ejecutadas no fallan.
+3. Los cinco roles cuentan con evidencia visual.
+4. POS e inventario completaron flujos felices locales.
+5. Las brechas se documentan y tienen acciones concretas.
+
+No se recomienda aceptación final sin reservas mientras:
+
+- La suite frontend no ejecute.
+- POS/inventario integrales estén omitidos.
+- Respaldo/restauración no tenga evidencia.
+- Integraciones definitivas no hayan pasado sandbox.
+- La incidencia de fecha UTC no se corrija o acepte expresamente.
+
+## 11. Registro de ejecución
+
+| Fecha | Revisión | Evidencia | Resultado |
+|---|---|---|---|
+| 16-jul-2026 | `123372c` | Backend `npm test` | 19 pass, 0 fail, 2 skip, 10.411 s |
+| 16-jul-2026 | `123372c` | Frontend `npm run build` | Aprobado con advertencias, 3.858 s |
+| 16-jul-2026 | `123372c` | Frontend `npm test -- --watch=false` | No test files found, código 1 |
+| 15-jul-2026 | Revisión previa | 25 capturas, cinco roles | Recorrido completado |
+
+> Este reporte describe evidencia, no una certificación. No acredita rendimiento a escala, cumplimiento legal, seguridad integral ni disponibilidad de terceros.
